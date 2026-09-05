@@ -1,0 +1,20 @@
+schema_version: 1
+id: "TASK-001"
+title: ""
+root_issue_id: "REQ-YYYYMMDD-001"
+status: "PLANNED"
+spec_version: 1
+acceptance_criteria:
+  - "AC-001"
+depends_on: []
+base_policy: "latest_verified_integration_sha"
+base_ref: ""
+base_sha: ""
+allowed_paths: []
+protected_paths: []
+reference_implementations: []
+expected_deliverables: []
+verification_expectations: []
+risk: "medium"
+owner: ""
+notes: []

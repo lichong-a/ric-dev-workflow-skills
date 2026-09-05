@@ -1,0 +1,19 @@
+schema_version: 1
+id: "TC-001"
+root_issue_id: "REQ-YYYYMMDD-001"
+spec_version: 1
+acceptance_criteria:
+  - "AC-001"
+title: ""
+level: "integration"
+risk: "medium"
+preconditions: []
+test_data: []
+steps: []
+expected_results: []
+cleanup: []
+automation:
+  status: "planned"
+  path: null
+evidence_required: []
+tags: []

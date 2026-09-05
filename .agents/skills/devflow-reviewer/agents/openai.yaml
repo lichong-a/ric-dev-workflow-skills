@@ -1,0 +1,5 @@
+interface:
+  display_name: "DevFlow 审核者"
+  short_description: "独立审核 DevFlow 各阶段门禁、版本与代码证据并给出结论"
+policy:
+  allow_implicit_invocation: false

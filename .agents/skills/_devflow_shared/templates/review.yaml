@@ -1,0 +1,21 @@
+schema_version: 1
+review_id: "REVIEW-001"
+supersedes: null
+mode: "SPEC_REVIEW"
+reviewer: ""
+created_at: ""
+target:
+  root_issue_id: "REQ-YYYYMMDD-001"
+  task_id: null
+  spec_version: 1
+  test_plan_version: null
+  base_sha: null
+  head_sha: null
+  tested_sha: null
+verdict: "BLOCKED"
+summary: ""
+findings: []
+non_blocking_notes: []
+residual_risks: []
+evidence_reviewed: []
+unblock_conditions: []

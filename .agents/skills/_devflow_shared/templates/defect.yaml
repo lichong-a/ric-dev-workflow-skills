@@ -1,0 +1,21 @@
+schema_version: 1
+defect_id: "DEFECT-001"
+supersedes: null
+root_issue_id: "REQ-YYYYMMDD-001"
+found_on_sha: ""
+spec_version: 1
+severity: "P1"
+affected_acceptance_criteria: []
+environment: {}
+preconditions: []
+reproduction_steps: []
+expected: ""
+actual: ""
+evidence:
+  logs: []
+  screenshots: []
+  network: []
+  other: []
+suspected_category: "unknown"
+planner_attribution: null
+status: "OPEN"

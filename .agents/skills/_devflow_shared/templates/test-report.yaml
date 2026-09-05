@@ -1,0 +1,25 @@
+schema_version: 1
+test_report_id: "TEST-001"
+supersedes: null
+root_issue_id: "REQ-YYYYMMDD-001"
+tested_sha: ""
+spec_version: 1
+test_plan_version: 1
+environment: {}
+started_at: ""
+finished_at: ""
+summary:
+  passed: 0
+  failed: 0
+  blocked: 0
+commands: []
+acceptance_criteria_results: []
+regression_results: []
+baseline_comparison:
+  baseline_sha: ""
+  pre_existing_failures: []
+  new_failures: []
+open_defects: []
+not_run: []
+residual_risks: []
+verdict: "BLOCKED"

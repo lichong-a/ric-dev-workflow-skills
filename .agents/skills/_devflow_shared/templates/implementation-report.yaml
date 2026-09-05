@@ -1,0 +1,26 @@
+schema_version: 1
+implementation_id: "IMPL-001"
+supersedes: null
+root_issue_id: "REQ-YYYYMMDD-001"
+task_id: "TASK-001"
+defect_id: null
+spec_version: 1
+base_sha: ""
+head_sha: ""
+change_budget_compliance:
+  allowed_paths_only: false
+  protected_paths_untouched: false
+  dependency_changes: "none"
+  public_contract_changes: "none"
+  database_changes: "none"
+changed_files: []
+summary: ""
+reused_existing_patterns: []
+design_decisions: []
+tests: []
+documentation: []
+migrations: []
+rollback: []
+known_risks: []
+not_run: []
+pre_existing_failures_observed: []

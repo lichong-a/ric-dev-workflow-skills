@@ -1,0 +1,5 @@
+interface:
+  display_name: "DevFlow 实现者"
+  short_description: "在严格源 SHA、路径与变更预算内完成一个已批准开发任务"
+policy:
+  allow_implicit_invocation: false
