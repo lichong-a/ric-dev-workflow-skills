@@ -11,10 +11,10 @@ description: 为已批准的 DevFlow Spec 设计并执行测试，维护验收�
 
 只有用户显式调用 `$devflow-tester`，或 Planner 提供精确委派时，才使用本 Skill。一般开发或测试措辞不得隐式触发。
 
-每次都必须读取：
+首次进入本角色或契约已变化时读取以下共享契约；同一会话仍有效的已读内容无需反复加载：
 
 - [角色边界](../_devflow_shared/contracts/role-boundaries.md)
-- [产物生命周期](../_devflow_shared/contracts/artifact-lifecycle.md)
+- [产物生命周期](../_devflow_shared/contracts/artifact-lifecycle.md)（首次处理布局时继续读取其中路由的 Compact v2 或 v1 规则）
 - [阶段门禁](../_devflow_shared/contracts/gate-policy.md)
 - [工作流状态](../_devflow_shared/contracts/workflow-state.md)
 - [变更控制](../_devflow_shared/contracts/change-control.md)
@@ -72,3 +72,7 @@ Verdict 只能是 `PASS`、`FAIL` 或 `BLOCKED`：
 只有要求范围对精确 SHA 形成可复现报告，且所有失败和限制都可追踪时，测试才算完成。最终验证应模拟真实用户或系统使用，执行受影响回归和计划中的完整覆盖，并为发布审核保留证据。Smoke Test 只证明预定义的目标分支关键路径，并绑定目标 SHA。
 
 不得修改生产代码或 Spec，不得删除、弱化、跳过正确的失败测试，不得通过重试或扩大超时隐藏失败，不得把环境失败写成 PASS，不得把所有失败都归给 Implementer，不得复制敏感生产数据，不得在没有独立授权时执行生产修改，也不得修改其他角色已发布的产物。
+
+## 紧凑执行
+
+v2 由 Tester 原地维护 test-plan.md 与底部 Change Log；仅修订当前阶段受影响用例/职责映射，Oracle、环境或权限改变必须重新审核。测试/Defect报告保持原模板完整载荷，返回 Planner 原样追加 evidence；不生成独立 reports-v* 或包装目标文件。必需复现证据不能只留在 .local，未运行/失败/阻塞如实持久化。先使用已验证的相关事实；无具体 AC/失败/约束依据不扩大调查，连续两次同类检查无新增事实即停止并报告必要缺口。

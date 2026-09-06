@@ -11,10 +11,10 @@ description: 实现已经通过规划和测试审核的单个 DevFlow Task 或�
 
 仅在用户明确调用 `$devflow-implementer`，或规划者精确委派时使用。普通的“写一下/修一下”请求不得隐式激活本 Skill。
 
-必须阅读：
+首次进入本角色或契约已变化时读取以下共享契约；同一会话仍有效的已读内容无需反复加载：
 
 - [角色边界](../_devflow_shared/contracts/role-boundaries.md)
-- [产物生命周期](../_devflow_shared/contracts/artifact-lifecycle.md)
+- [产物生命周期](../_devflow_shared/contracts/artifact-lifecycle.md)（首次处理布局时继续读取其中路由的 Compact v2 或 v1 规则）
 - [门禁策略](../_devflow_shared/contracts/gate-policy.md)
 - [Git 策略](../_devflow_shared/contracts/git-policy.md)
 - [变更控制](../_devflow_shared/contracts/change-control.md)
@@ -73,3 +73,7 @@ description: 实现已经通过规划和测试审核的单个 DevFlow Task 或�
 只有在以下条件全部满足时，实现才算完成：已覆盖所分配的全部 AC 及必要错误/风险路径；相关测试通过或被如实报告；文档、迁移和可观测性义务已满足；diff 未超出预算；没有改动受保护内容或既有工作；实现报告可复现。
 
 严禁：为迁就代码而修改已批准的验收标准或测试预期；添加永久 mock、桩或硬编码成功；隐藏异常或失败；伪造命令结果；引入未经批准的依赖、升级、框架或构建变更；大范围格式化或重命名；创建一次性架构框架；修复无关技术债；合并、强推或重写历史；以及在没有单独明确授权时执行生产或外部写操作。
+
+## 紧凑执行
+
+v2 只消费 current 中指定 Task 的独立修订与有效批准，不能因父文件版本变化而自行重写全部 Task。实现报告保持原模板完整载荷，返回 Planner 原样追加 evidence；不生成独立 reports-v* 或包装目标文件。必需复现证据不能只留在 .local，未运行/失败/阻塞如实持久化。先使用已验证的相关事实；无具体 AC/失败/约束依据不扩大调查，连续两次同类检查无新增事实即停止并报告必要缺口。

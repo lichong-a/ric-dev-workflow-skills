@@ -11,16 +11,16 @@ description: 接收软件开发、修复、续接既有项目、重构、迁移�
 
 当用户确实要求开发、修复、续接、迁移、重构或修改基础设施时，可以隐式使用本 Skill。解释知识、一般建议、独立审核、独立测试、单任务实现、文档编辑或非开发工作不得触发本 Skill。用户显式调用其他 DevFlow 角色时，必须尊重该角色边界。
 
-开始工作前，必须读取以下共享契约：
+首次进入本角色或契约已变化时读取以下共享契约；同一会话仍有效的已读内容无需反复加载：
 
 - [角色边界](../_devflow_shared/contracts/role-boundaries.md)
-- [产物生命周期](../_devflow_shared/contracts/artifact-lifecycle.md)
+- [产物生命周期](../_devflow_shared/contracts/artifact-lifecycle.md)（首次处理布局时继续读取其中路由的 Compact v2 或 v1 规则）
 - [工作流状态](../_devflow_shared/contracts/workflow-state.md)
 - [阶段门禁](../_devflow_shared/contracts/gate-policy.md)
 - [变更控制](../_devflow_shared/contracts/change-control.md)
 - [Git 策略](../_devflow_shared/contracts/git-policy.md)
 
-使用 `../_devflow_shared/templates/` 下的模板，在 `.devflow/changes/<REQ-ID>/` 中创建对应产物，并替换所有占位内容。不得发明或依赖任何 DevFlow CLI。
+新 Root Issue 使用 `../_devflow_shared/templates/compact/`，在 `.devflow/changes/<REQ-ID>/` 按阶段创建四个固定文件。旧 v1 按原模板继续运行；发现旧版本树时按[无损迁移](../_devflow_shared/references/legacy-migration.md)提出一次建议，未经该 Root 授权不迁移。不得发明或依赖 DevFlow CLI。
 
 从第一次角色委派开始就遵循[编排与交接](references/orchestration.md)，而不是等到实现阶段才加载。交接以持久产物为事实源，对话只负责传递精确身份和当前增量。
 
@@ -38,7 +38,7 @@ description: 接收软件开发、修复、续接既有项目、重构、迁移�
 ## 前置检查与模式识别
 
 1. 确认同一个 Root Issue 没有第二个 Planner。
-2. 创建 Intake，并分配不会覆盖现有记录的稳定 Root Issue ID。
+2. 续作先读 state 与已有迁移检查点；新请求分配稳定 Root Issue ID，在 current 的 Intake 章节记录需求。
 3. 将项目上下文识别为 `GREENFIELD`、`BROWNFIELD` 或 `BROWNFIELD_CONTINUATION`，并确定工作类型以及 `FAST`、`STANDARD` 或 `HIGH_RISK` 交付强度。
 4. 只要存在代码、历史、契约、用户、部分实现或脏工作区，就必须先阅读 [Brownfield 策略](../_devflow_shared/contracts/brownfield-policy.md) 和 [仓库侦察参考](../_devflow_shared/references/repository-discovery.md)，再开展设计或请求生产代码修改。
 5. 在首次正式 `SPEC_REVIEW` 前完成与范围相称的事实预检、交付规模判断和仓库既有流程映射；不得把可通过只读侦察解决的问题留给 Reviewer 逐轮发现。
@@ -46,9 +46,11 @@ description: 接收软件开发、修复、续接既有项目、重构、迁移�
 
 ## 工作流程
 
+以下主流程的 current/test-plan/evidence、四文件和不生成 tasks-v* 规则仅适用于 v2。对未完成授权迁移的 v1 Root，逻辑阶段与门禁相同，但继续使用原 Intake/Profile/Spec/Task/Report 版本路径和 state.transitions；已发布路径不覆盖，修订发布新路径。不得在 v1 中偷偷创建 v2 当前入口或精简旧 state。
+
 ### 1. 建立仓库基线
 
-对于 Brownfield 项目，发布 `repository-profile.md`、基线命令证据和保守的变更预算。对于 Continuation，还必须发布 `takeover-assessment.md`，把现有工作分类为已接受、未验证、部分完成、Stub、冲突、废弃、未知或未开始，并给出差距分析。
+对于 Brownfield 项目，在 current 的 Repository Profile 章节记录画像与预算，在 evidence 保留基线命令证据。对于 Continuation，还必须填写 Takeover Assessment 章节，把现有工作分类为已接受、未验证、部分完成、Stub、冲突、废弃、未知或未开始，并给出差距分析。
 
 识别目标仓库已有的 Issue、Spec、测试、CI、发布和状态协议。在仓库画像的现有章节中记录与 DevFlow Gate 的语义映射；等价证据只有在作者职责分离、版本或 SHA 绑定、适用范围和时效性均满足时才能直接引用。不得为同一事实维护两套互相竞争的产物或状态；冲突时采用更严格的规则并记录依据。
 
@@ -58,11 +60,11 @@ description: 接收软件开发、修复、续接既有项目、重构、迁移�
 
 ### 2. 定义行为和任务
 
-遵循 [需求分析](references/requirement-analysis.md)，先在草稿阶段完成事实预检和规模判断，再发布 Root Issue、版本化 Spec、仅在适用时创建的 UI Spec、决策、风险、回滚方案和变更预算。必须明确分开当前行为、目标行为和保持不变的行为。
+遵循 [需求分析](references/requirement-analysis.md)，先在草稿阶段完成事实预检和规模判断，再在 current 中维护 Root、Spec、适用的 UI、决策、风险、回滚和预算。默认一次聚焦侦察加一次缺口补查，连续两次无新增事实就停止同类搜索；继续调查必须关联当前 AC、已观察失败或必要约束。必须明确分开当前行为、目标行为和保持不变的行为。
 
 若请求包含可独立交付的用户价值、不同发布/权限/环境边界，或无法形成紧凑的审核交接，应在 G2 前拆为独立 Root Issue 或交付阶段，并保留完整能力清单、阶段依赖和延期项。原子且不可独立验收的行为保持在同一 Root Issue；不得机械拆分或通过缩小当前 Spec 遗漏原始目标。
 
-遵循 [任务拆分](references/task-decomposition.md)，创建无环 DAG。每个 Task 必须可独立实现、审核和验证，并绑定验收标准、依赖、基线策略、允许路径、保护路径、参考实现、交付物、验证要求和风险。
+遵循 [任务拆分](references/task-decomposition.md)，在 current 中维护当前阶段的无环 DAG 和独立修订 Task，不生成 tasks-v*、Review Target 包装或全套版本矩阵。每个 Task 必须可独立实现、审核和验证，并绑定验收标准、依赖、基线策略、允许路径、保护路径、参考实现、交付物、验证要求和风险。
 
 只有可发现事实已解决、必要假设和阻塞项已显式记录、当前交付阶段可独立审核时，才将精确版本交给 Reviewer 执行 `SPEC_REVIEW`。审核结果为 `APPROVE` 后，取得用户对同一产品行为版本的确认。随后要求 Tester 创建测试计划，再由 Reviewer 执行 `TEST_REVIEW`。以上三项批准没有同时保持有效前，不得进入正式实现。
 
@@ -84,9 +86,9 @@ description: 接收软件开发、修复、续接既有项目、重构、迁移�
 
 ## 状态与输出契约
 
-只有 Planner 可以更新 `state.yaml`。每次状态迁移都必须记录前一状态、后一状态、操作者、带时区时间、原因和证据。不得引用不存在、已被取代、版本过期或 SHA 过期的证据。规划类草稿在首次送审前可以原地完善；一经送审、产生独立结论或被状态引用即冻结，修正时必须创建新版本并保留历史。未变化的产物只引用，不复制。
+只有 Planner 可以更新 `state.yaml`。每次状态迁移都必须记录前一状态、后一状态、操作者、带时区时间、原因和证据。不得引用不存在、已被取代、版本过期或 SHA 过期的证据。v2 先原样追加角色证据和状态事件，再更新当前索引，按记录 ID 去重恢复。正文原地维护，送审对象用 Git 完整 SHA/路径/ID 或持久本地快照冻结；各 Task 独立修订，未变化对象只引用。提交和推送分别遵守授权，不为每次草稿编辑创建提交。
 
-最小输出包括 Intake、Root Issue、State、Spec 和 Task 产物；Brownfield 还需仓库画像、基线和变更预算；Continuation 还需接管评估；包含界面时还需 UI Spec。只有存在真实决策时才创建 Decision 或 Risk Acceptance。
+上述 Intake、Root、Spec、Task、画像/接管、适用 UI 与 Decision 是逻辑章节，不是一份内容一份文件。Tester 独立维护 test-plan，各角色输出由 Planner 原样汇入 evidence；state 只保存当前索引。Planner 核对身份与覆盖，不例行重复运行 Tester 已提供的完整套件。
 
 ## 阻塞与完成规则
 

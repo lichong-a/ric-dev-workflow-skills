@@ -25,7 +25,7 @@ PLANNED -> READY -> IN_PROGRESS -> CODE_REVIEW -> APPROVED -> MERGED
 
 ## 状态迁移不变量
 
-- 每次迁移都要记录操作者、带时区时间戳、前一状态、后一状态、原因及证据 ID/路径。
+- 每次迁移都要记录操作者、带时区时间戳、前一状态、后一状态、原因及证据 ID/路径。v2 先追加完整事件到 evidence，再更新 state 当前索引；v1 继续使用原 transitions 字段。v2 不复制 Task 正文、Review 全文或完整迁移历史。
 - `READY` 要求 Spec 已批准、当前行为版本已获用户批准，并且测试计划已批准。
 - 只有在全部依赖均为 `VERIFIED`、Task 的 base SHA 是最新已验证集成 SHA，且其写入区域只有一个所有者时，Task 才能进入 `READY`。
 - `APPROVED` 要求当前 `base_sha..head_sha` 已通过代码审核。

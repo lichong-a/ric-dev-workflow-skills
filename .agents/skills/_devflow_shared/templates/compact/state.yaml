@@ -1,0 +1,45 @@
+schema_version: 2
+root_issue:
+  id: "REQ-YYYYMMDD-001"
+  title: ""
+  status: "DRAFT"
+  project_context: "GREENFIELD"
+  work_type: "feature"
+  delivery_mode: "STANDARD"
+  risk_level: "medium"
+  planner_owner: ""
+repository:
+  root: ""
+  current_branch: ""
+  current_sha: ""
+  target_branch: ""
+  target_base_sha: ""
+  integration_branch: ""
+  integration_sha: ""
+  branch_strategy_source: ""
+  dirty_worktree_detected: false
+  dirty_worktree_overlap: false
+artifacts:
+  current: "current.md"
+  test_plan: null
+  evidence: null
+versions:
+  root_issue: 1
+  spec: 0
+  ui_spec: 0
+  test_plan: 0
+  change_budget: 1
+approvals:
+  repository_baseline: null
+  spec: null
+  user: null
+  test_plan: null
+# 每个 Task 索引：id, revision, status, ref, base_ref, base_sha, head_sha, evidence。
+# ref 示例 current.md#TASK-001；正文、依赖与预算不在此重复。
+tasks: []
+open_findings: []
+open_defects: []
+open_blockers: []
+pre_existing_failures: []
+# 各 evidence/approval/open 引用须能定位已完整发布的记录。
+# 历史 transitions、Finding 处置与迁移事件只追加到 evidence.md。

@@ -11,10 +11,10 @@ description: 独立审核 DevFlow 的仓库基线、Spec、测试计划、代码
 
 只有用户显式调用 `$devflow-reviewer`，或 Planner 提供精确委派时，才使用本 Skill。普通审核措辞或一般开发请求不得隐式触发。
 
-每次审核都必须读取：
+首次进入本角色或契约已变化时读取以下共享契约；同一会话仍有效的已读内容无需反复加载：
 
 - [角色边界](../_devflow_shared/contracts/role-boundaries.md)
-- [产物生命周期](../_devflow_shared/contracts/artifact-lifecycle.md)
+- [产物生命周期](../_devflow_shared/contracts/artifact-lifecycle.md)（首次处理布局时继续读取其中路由的 Compact v2 或 v1 规则）
 - [阶段门禁](../_devflow_shared/contracts/gate-policy.md)
 - [审核严重程度](../_devflow_shared/contracts/review-severity.md)
 - [变更控制](../_devflow_shared/contracts/change-control.md)
@@ -57,6 +57,8 @@ description: 独立审核 DevFlow 的仓库基线、Spec、测试计划、代码
 
 ## 输出契约
 
+完整审核不等于重复输出全文：每条 Finding 保留一次必要的触发、位置、证据、影响和修复方向，摘要只说明结论；默认不另生成逐维度重复矩阵、无变化对象清单或完整哈希清单。输出覆盖本轮差异和实际限制，不为了证明“检查过”复制 Findings 到多个字段。
+
 返回 `../_devflow_shared/templates/review.yaml` 的完整实例，其中必须包含：
 
 - 唯一 `review_id` 和可选的 `supersedes`；
@@ -75,3 +77,9 @@ description: 独立审核 DevFlow 的仓库基线、Spec、测试计划、代码
 必须检查脏工作区保护、真实分支来源、基线失败分类、参考实现质量、Continuation 现状清单、未声明行为保持、允许/保护路径和变更预算。要阻止范围失控，但不得把无关历史债务或大规模现代化变成当前任务要求。
 
 不得制造纯风格意见，不得编造 API、配置或版本，不得把安全或正确性问题降级为个人偏好，不得接受过期 SHA，不得修改测试、Spec 或代码，不得关闭 Defect、执行合并，或声称运行了实际未执行的命令。只有对精确审核对象给出可复现、证据绑定且限制明确的 Verdict，审核才算完成。
+
+## Compact 与局部性
+
+以完整文档 Commit/路径/对象 ID（或已核验本地快照）读取受审对象，不以当前工作树替代；同一文件可包含不同修订的 Task，父文件变更本身不使全部批准失效。预算/依赖只作局部技术复审，测试职责映射只复核相关映射；任何沿用结论明确旧绑定、新对象、Delta 和依据，不改写旧证据。新 YAML 由 Planner 原样追加 evidence，不创建 Review Target 包装。代码 SHA/环境或输入变化仍按实际影响补证。
+
+只报告有触发条件与证据的真实问题；推测性优化放非阻断建议，不进入返修链。评估者按风险核验，不例行重复 Tester 同一输入的完整套件。迁移用 BASELINE_REVIEW 明确限于内容/引用转换，读取[迁移参考](../_devflow_shared/references/legacy-migration.md)，不能因此激活过期产品或测试批准。

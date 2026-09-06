@@ -1,5 +1,117 @@
 # DevFlow Skills 验证报告
 
+> 当前验证日期：2026-09-06（Asia/Shanghai）
+> 对象：Compact v2 收敛、Git 分类与无损迁移，本地未提交改动
+> 结果：本轮适用静态检查、隔离迁移/恢复及有限独立角色评测通过
+> 源码基线：`main`，`96632ae8acbae3bc93b2e825dd8660472f002ef2`；工作开始时干净。当前是 Git 仓库，不是 NO_GIT。
+
+## 本轮范围与结果
+
+只修改 Skill、共享契约/参考、Compact 模板、评测、AGENTS、README、设计和本报告。新建 v2 容器；原 v1 模板、报告字段、Gate、状态名、四角色调用策略、项目 .codex 配置和源码演示忽略规则保持原状。未读取或修改 WanGoPlatform；未操作真实 GitHub/业务远端，未调整用户全局 Agent 配置。
+
+| 检查 | 实际结果 |
+|---|---|
+| Codex quick_validate.py | 4/4 Skill 输出 Skill is valid! |
+| 可发现入口与纯指令结构 | 4 个 SKILL.md；共享目录无入口；无 scripts/CLI/包清单/生成状态机 |
+| YAML / TOML | 12 个 YAML、5 个项目 TOML 可解析；另核对 7 个 Markdown frontmatter；YAML 重复键检查通过 |
+| 本地 Markdown 链接 | 最终复核 69 个文档、88 个相对链接，0 断链 |
+| v1 与配置兼容 | 原 templates 根目录与 .codex、.gitignore 相对 HEAD 零差异；Planner 可隐式，其余 explicit-only；Reviewer read-only，其余 workspace-write |
+| Reviewer / 全局链接 | 项目与用户全局 reasoning effort 均 high；五个全局 Skill 链接解析到当前源树 |
+| Git 差异自审 | git diff --check 通过，暂存区为空；新增文件仅为 2 个参考和 4 个 Compact 模板 |
+| 固定文件 / Task 局部修订 | 3 个 Task，TASK-002 两次技术修订；其余两个正文/修订不变；4 个核心文件，无版本目录 |
+| Git 分类 | 核心文件及必要失败附件不被忽略；.local 被忽略；已跟踪临时文件不会因新增 ignore 自动移除 |
+| 无 Git / 禁止跟踪 | 正式文档快照在当前文件改成 r2 后仍逐字保持 r1；未把本地快照声称为 Git 共享或代码 SHA |
+| 全源迁移 | 14/14 源文件进入基线和逐项索引，含已修改文件、隐藏未跟踪文件、未知字段/文件及冲突来源 |
+| 内容保留 | 采用有效 Spec v2，而非已拒绝 v3；AC、测试 Oracle、权限、Task/依赖、预算相关约束、延期项保留；旧批准仍失效 |
+| 原始角色载荷 | 4/4 历史报告逐字一致；独立 Tester/Reviewer 原始输出追加后逐字包含且各出现 1 次 |
+| 失败与顺序 | 真实改变源文件被检测；注入候选部分写入失败，旧 state/全部源字节仍在；有序候选构建中 4 次核对旧入口，最后才切 state、精确移除 13 个旧副本 |
+| 标签冲突 | 原 v1-baseline 标签不移动，采用 v1-baseline-2，索引记录实际标签 |
+| 本地远端 | 原子推送分支和基线标签至隔离 bare remote；普通重新克隆恢复 14/14；浅克隆补取标签恢复 14/14 |
+| 独立迁移门禁 | Tester 6 项文档保留性核验 PASS；Reviewer BASELINE_REVIEW APPROVE 精确迁移候选；两者均声明不授予产品门禁 |
+
+固定布局 demo 的“四个”不计有实际用途的 attachments。迁移 fixture 从 14 个旧文件变成 4 核心文件 + 1 索引，旧原文通过基线保留；该数字不是任何真实业务目录的迁移结果。设计文档从 2601 行整合为 143 行，细则路由到共享契约，未用行数变化推断推理时间改善。
+
+## 真实执行命令
+
+一次性验证程序仅位于 `/tmp/devflow-v2-validation-5kH1go/validate.py`，通过 apply_patch 构造合成 fixture，使用系统 Git；不是包内产品脚本，交付时清理。以下时间为单次本地命令实测墙钟，不含独立 Agent 时间，不是 DevFlow 端到端性能基准。
+
+提交版对命令中的本机用户目录做路径脱敏：`<CODEX_HOME>` 表示执行时的 Codex 用户目录，命令参数和结果未改变。
+
+| 命令 | 结果 |
+|---|---|
+| `python3 <CODEX_HOME>/skills/.system/skill-creator/scripts/quick_validate.py .agents/skills/<role>`（四角色逐个） | 4/4 通过 |
+| `python3 /tmp/devflow-v2-validation-5kH1go/validate.py static` | PASS；108 项结构/语法/链接/策略/链接位置断言，记录一次约 0.028s，补写报告后复核约 0.032s |
+| `python3 /tmp/devflow-v2-validation-5kH1go/validate.py prepare` | PASS；14 源文件，4 原始载荷，隔离候选，约 0.279s |
+| `python3 /tmp/devflow-v2-validation-5kH1go/validate.py compact` | PASS；14 项固定文件/修订/Git 分类/去重/快照断言，约 0.143s |
+| `python3 /tmp/devflow-v2-validation-5kH1go/validate.py faults` | PASS；7 项部分写入、源变更、已跟踪忽略行为检查，约 0.104s |
+| `python3 /tmp/devflow-v2-validation-5kH1go/validate.py reviewprep` | 建立实际独立 Reviewer 的精确 Git 文档对象，约 0.032s |
+| `python3 /tmp/devflow-v2-validation-5kH1go/validate.py finish` | PASS；34 项审核绑定、原样转录、发布/克隆恢复检查，约 0.427s |
+| `python3 /tmp/devflow-v2-validation-5kH1go/validate.py ordered` | PASS；22 项先目标内容、最后 state、精确旧路径删除及与已审候选树一致性检查，约 0.146s |
+| `git push --atomic <本地 bare 路径> develop refs/tags/devflow-migration/REQ-DEMO/v1-baseline-2` | 成功；没有真实远端写入 |
+| `git clone --depth 1 --no-tags file://<本地 bare 路径> <隔离目录>`，随后精确 fetch 基线标签 | 初始无标签；fetch 后逐项 git show 旧路径与源字节一致 |
+| `git show <baseline>:<old-path>` + cmp / SHA256 | 主验证与独立 Reviewer 均核对了全部源字节；重新克隆和浅克隆也核对全部 14 项 |
+| Python yaml/tomllib 与唯一键 Loader（命令内检查） | 语法、frontmatter、无重复 YAML 键检查通过 |
+| `git diff --check`、`git diff --cached --stat`、`git status --short --branch` | 无空白错误；无暂存内容；本轮仍为本地修改 |
+
+本轮验证工具调用曾有两次 JavaScript 字符串构造错误（反引号和模板插值），均在工具执行前失败，未改动 fixture 或源码；修正转录后执行成功，不计为产品故障。最初 prepare 中对权限类失败的“保持未操作”观察没有被当成自动防护通过证明；之后用实际部分写入/源变更测试以及独立 Planner 情境判断覆盖对应边界。
+
+## 独立角色前向评测
+
+共使用 4 个有界子 Agent、7 次角色/审查请求，默认不继承完整历史；其中一个审查者复用处理独立迁移对象。没有启用常驻任务、后台监控或全量业务执行。
+
+| 对象 / 实际请求 | 可观察结果 |
+|---|---|
+| 当前 Skill 一致性首次审查 | 返回 CF-001 / P2：Planner 后续步骤的 v2 写入要求可能错误覆盖 v1 续作 |
+| CF-001 同审查者增量复核 | 增加 Planner 主流程布局分支、AGENTS 与 orchestration 限定后，CF-001 resolved；只核对 Delta 和邻域 |
+| Reviewer 首轮 SPEC_REVIEW | 同一轮返回 3 项真实 Finding：DAG 环、手改生成物违背宿主规则、必需测试交付路径未授权 |
+| 同一 Reviewer 窄技术复审 | 只修改 Task-001/002 路径、生成策略、依赖；SPEC 行为与 Task-003 不变。REVIEW-SPEC-002 supersedes REVIEW-SPEC-001，3 项稳定 ID 均 resolved，APPROVE |
+| Planner 恢复/收敛情境 | 暂停第三轮送审先归因；两次无新增事实后停止同类搜索；不研究无关分布式架构；已有完整 REVIEW-B 只补事件/索引，不重发审核；只读且有活跃写入的旧 Root 继续 v1，不迁移 |
+| Tester 迁移核验 | 6 项文档保留检查通过，明确未执行产品用例/live/生产，不把继承 Defect 或过期批准清除 |
+| Reviewer 迁移审核 | BASELINE_REVIEW APPROVE 候选 7f8145b62365c551058abd923eb9abd72579a879；全部 14 源、4 原载荷、未知内容、状态/引用与独立测试证据核验 |
+
+Reviewer 首轮输出重复描述了部分已列 Finding，依据该实测现象补充“完整审核不要求重复维度矩阵/哈希清单”的输出规则；随后同会话复审保持逐 Finding 关闭证据而未重新生成逐维度矩阵。未声称所有报告都已达到某个字节/时间阈值。
+
+## 隔离 Git 身份与证据边界
+
+- 旧内容基线：`2aa9d026f92a44dfec4e0c0bdc8c0608a5000e9c`。
+- 标签冲突后实际保留引用：`devflow-migration/REQ-DEMO/v1-baseline-2`；原标签仍指向 `072a772ab13dda6e50e7a2807f834ab1dce506d4`。
+- 独立批准的迁移候选：`7f8145b62365c551058abd923eb9abd72579a879`。
+- 追加原始独立证据后本地远端分支：`3e3654fe95bf1b98c0b0991b89567b5cb7e9ba0a`，不冒充前一候选的受测 SHA。
+- 单独验证有序切换且 Root 树逐字等于已审候选的提交：`5b793f68112558e0dd5e3268b6c0db9cab1ca88b`。
+- Reviewer 首审/复审文档：`b9e038933e3965fbeda1857eddb47291cd031a8a` → `6bf87a23dd6b4ea746d376e6dfda8ba25c89c09b`。
+
+上述均为已清理的合成临时仓库身份，不属于本源码仓库或真实业务，不提供清理后的永久对象解析承诺。正式业务迁移的基线标签禁止删除/移动，此处临时 fixture 的销毁不作为真实迁移清理示例。
+
+清理先执行 `gio trash -- /tmp/devflow-v2-validation-5kH1go`，因临时目录所在内部挂载不支持回收站而失败。随后在命令内验证精确临时路径、fixture 标记与无符号链接，再用 Python shutil.rmtree 清理，确认原路径不存在。仅移除约 2.1 MiB 的合成仓库、一次性检查程序与报告，不能从回收站恢复；未删除任何项目或业务数据。
+
+## 配置诊断与未运行项
+
+首次 `codex --strict-config doctor --summary --no-color --ascii`：配置 loaded，17 ok / 1 idle / 1 warn / 1 fail；fail 为 TERM=dumb 终端能力。使用仅本进程的 `TERM=xterm-256color` 再执行同一命令：18 ok / 1 idle / 1 warn / 0 fail，退出成功。warning 为历史 rollout/state DB、重复 thread inventory；unrestricted sandbox 是当前宿主提示，非本次修改角色配置。未升级 CLI，未更改系统或 Agent 策略。
+
+本轮明确未运行：
+
+- WanGoPlatform 文件迁移、真实业务代码测试、live/生产/凭据验证和真实 GitHub 推送：不在授权范围。
+- WF-01–15 的完整业务交付重演及长时间无变化等待/真实挂起熔断：本轮保留既有规则、静态核对并做相关恢复情境评测，不冒充全部原流程重跑。
+- LFS、子模块、外部 CI 附件的真实远端恢复：当前 fixture 全部为普通 blob/100644；契约明确遇到未保全指针必须阻塞，但未把这些未运行分支计为通过。
+- 真实大型项目效率基准、Token 节省和端到端耗时对照：未测量，不作比例承诺。
+
+WF-16–22 覆盖由静态、真实本地 Git 操作、人工构造故障与独立角色判断组合完成；这是纯指令系统，故障注入不是产品状态机测试，也不能证明任意模型每次都遵守指令。迁移前置冲突/授权/只读情境通过角色决定验证，文件恢复/顺序通过实际 Git 与文件操作验证，两者分开计证。
+
+## Change Log
+
+| 日期 | 作者 | 变更 | 证据 |
+|---|---|---|---|
+| 2026-09-06 | Codex | 记录 Compact v2 本轮真实验证，保留历史结果并纠正当前仓库身份 | 上述命令、独立角色报告与隔离 Git 结果 |
+| 2026-09-05 | 历史执行 | v1.1 兼容增强验证 | 以下历史记录 |
+
+---
+
+# 历史验证归档（以下不是本轮重跑结果）
+
+以下原报告描述 2026-09-05 及 2026-09-04 的当时环境；其中 NO_GIT、数量与“本轮”均只指历史执行，不代表当前仓库状态。
+
+# 2026-09-05 历史验证报告
+
 > 日期：2026-09-05
 > 验证对象：`docs/DEVFLOW_SKILLS_DESIGN.md` v1.1 的兼容增强实现
 > 结果：通过（PASS）

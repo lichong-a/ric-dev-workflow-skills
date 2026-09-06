@@ -9,7 +9,7 @@
 ![Codex Skills](https://img.shields.io/badge/Codex-Skills-111827?style=flat-square)
 ![Instruction Only](https://img.shields.io/badge/Architecture-Instruction--Only-2563EB?style=flat-square)
 ![Four Roles](https://img.shields.io/badge/Roles-4-7C3AED?style=flat-square)
-![Schema Version](https://img.shields.io/badge/Schema-v1-059669?style=flat-square)
+![Schema Version](https://img.shields.io/badge/Schema-v2%20%2B%20v1-059669?style=flat-square)
 
 </div>
 
@@ -40,15 +40,18 @@ RIC DevFlow Skills 把这些约束做成一套纯指令式工作流。它不增�
 ```mermaid
 flowchart LR
     U[用户需求] --> P[Planner<br/>预检、分期、Spec 与 DAG]
-    P --> R1[Reviewer<br/>Spec / Test Review]
+    P --> R1[Reviewer<br/>Spec Review]
     R1 --> A[用户批准]
-    A --> T[Tester<br/>计划与独立验证]
-    T --> I[Implementer<br/>单 Task 实现]
+    A --> T[Tester<br/>测试计划]
+    T --> R4[Reviewer<br/>Test Review]
+    R4 --> I[Implementer<br/>单 Task 实现]
     I --> R2[Reviewer<br/>Code Review]
     R2 --> P2[Planner<br/>按依赖顺序集成]
-    P2 --> T2[Tester<br/>集成与 Smoke]
+    P2 --> T2[Tester<br/>集成与完整验证]
     T2 --> R3[Reviewer<br/>Release Review]
-    R3 --> D[完成]
+    R3 --> M[Planner<br/>目标合并]
+    M --> S[Tester<br/>目标 SHA Smoke]
+    S --> D[完成]
 ```
 
 ## 核心卖点
@@ -178,7 +181,7 @@ Reviewer 必须指定单一审核模式和精确对象：
 
 ```text
 使用 $devflow-reviewer，以 CODE_REVIEW 模式审核 REQ-20260905-001 / TASK-003。
-Spec 为 .devflow/changes/REQ-20260905-001/specs/spec-v2.md，
+Spec 为 <文档完整 SHA> 中 .devflow/changes/REQ-20260905-001/current.md 的 SPEC 对象修订 2，
 审核范围为 <base_sha>..<head_sha>，请一次性返回全部可发现的阻断 Finding。
 ```
 
@@ -201,28 +204,60 @@ Spec 为 .devflow/changes/REQ-20260905-001/specs/spec-v2.md，
 
 通常不需要手动逐个调用后三个角色；让 Planner 使用紧凑交接完成调度即可。显式调用更适合独立审计、测试补证或已经存在获批 Task 的场景。
 
-## 产物与门禁
+## 四个文件，当前正文与完整历史分开
 
-每个交付请求在目标仓库中使用独立目录：
-
+新 Root 按进度建立：
 ```text
-.devflow/changes/REQ-YYYYMMDD-NNN/
-├── state.yaml
-├── intake.md
-├── repository-profile.md
-├── root-issue.md
-├── specs/
-├── tasks/
-├── tests/
-├── reviews/
-├── implementations/
-├── defects/
-└── reports/
+.devflow/changes/<REQ-ID>/
+├── state.yaml       # Planner：当前状态、有效证据和开放问题索引
+├── current.md       # Planner：需求、画像、Spec、决策、预算、当前阶段 Task
+├── test-plan.md     # Tester：AC、预期、环境和验证退出条件
+├── evidence.md      # 各角色原始证据，只追加；Planner 原样转录
+├── attachments/    # 必要脱敏证据、快照和一次性迁移索引
+└── .local/         # 临时过程文件，不提交
 ```
 
-规划草稿在首次正式送审前可以原地完善。一旦送交独立 Reviewer、产生审核结论或被 `state.yaml` 引用，就会冻结；被拒绝的版本也不能覆盖，修正必须发布新版本并保留 `supersedes` 谱系。
+current/test-plan 保持最新版，底部 Change Log 记录修订、时间、作者、类型、受影响 ID、原因和证据。每个 Task 独立修订，局部预算调整不复制其他 Task。历史正文留在 Git 的精确提交中；被拒绝版本也可恢复，Review/Test/Implementation 原始记录不能改写。G0–G10、独立 Reviewer/Tester 和用户批准保持不变。
 
-完整流程保留 G0–G10 门禁，覆盖需求、仓库基线、Spec、用户批准、测试计划、实现、代码审核、集成验证、发布审核和合并后 Smoke。FAST 模式可以压缩产物，但不会取消角色分离、必要批准或 SHA 绑定。
+调查默认一轮聚焦加一轮缺口补查，连续两次无新事实停止同类搜索。预算与依赖做局部技术复审，测试职责映射只查相应映射；行为、权限、契约、测试预期改变仍重开受影响门禁。对效率的实际验证与局限见[验证报告](docs/DEVFLOW_SKILLS_VALIDATION.md)，不承诺固定提速百分比。
+
+### 哪些提交，什么时候提交？
+
+业务仓库默认提交四核心文件与必要脱敏附件/迁移索引。失败、BLOCKED、未运行报告也是正式证据。Prompt、搜索/Diff 中间件、调试日志、临时报告、会话 ID/cursor/PID/缓存放 .local；凭据和未脱敏数据不进入受跟踪产物。
+
+在业务仓库现有 .gitignore 中合并：
+```gitignore
+.devflow/changes/*/.local/
+```
+
+**不要复制本 Skill 源码仓库的 `.devflow/changes/` 排除规则**，它只为排除演示。ignore 不会移除已经跟踪的旧文件，先用 `git ls-files`、`git check-ignore -v --no-index <path>` 核对。
+
+草稿连续编辑，不逐次提交；正式送审前固定相关文档，代码审核前固定完整候选，验收/状态切换时合并提交对应证据。精确路径暂存，不混入其他用户改动。哪些内容应提交与是否有 commit/push 授权是两回事，后者由宿主规则与用户决定。
+
+文档身份是“完整 Commit SHA + 路径 + 对象 ID”；代码仍是 base/head/tested SHA。后续记账提交不冒充受测代码，也不要求文档保存自身 SHA。无 Git、不能跟踪或没有提交授权时，正式边界保存不可变持久快照，明确“仅本地可恢复”；缺少真实代码 SHA 的门禁仍阻塞。
+
+### 旧版本文件如何无损合并？
+
+Planner 发现 v1/spec-v*/tasks-v* 后，会给一次聚焦迁移建议；没有授权继续读旧布局，不自动删除。可以这样触发：
+
+```text
+使用 $devflow-planner 评估 REQ-... 的 v1 迁移，先列出完整源范围、
+当前有效版本、未知内容及冲突。暂不切换或清理。
+```
+
+看过范围后，明确授权该 Root 的本地迁移、指定旧内容的基线提交/持久标签及核验后移除旧副本；推送须另有授权。迁移会保留全部 tracked/untracked/dirty 原文及未知字段，不能只挑最大版本。当前有效与开放问题所需原始证据进入账本，其余历史通过基线保留，逐文件来源记录在 `attachments/migration-v1.md`。
+
+独立 Reviewer 批准精确候选、逐字恢复与语义核对通过后，最后切换 state，只移除索引中明确已保全的旧路径。未解决冲突、源变化、写入失败、未授权内容或只读仓库均不错误切换。过期产品批准/测试不会因迁移复活。
+
+历史恢复命令（尖括号替换为迁移索引的真实值）：
+```bash
+git show <baseline-full-sha>:<old-path>
+git show <doc-full-sha>:<current-path>
+git fetch <remote> refs/tags/<actual-baseline-tag>:refs/tags/<actual-baseline-tag>
+git rev-parse <actual-baseline-tag>^{commit}
+```
+
+基线标签通常为 `devflow-migration/<REQ-ID>/v1-baseline`，冲突时使用编号后缀、不覆盖旧标签。正常维护禁止删除/移动它。授权推送迁移时必须同时发布分支和实际基线标签，并从远端验证恢复；未推送记录“仅本地可用”。浅克隆需要补取标签；最新 ZIP 不保证包含旧原文。完整规则见[无损迁移参考](.agents/skills/_devflow_shared/references/legacy-migration.md)。
 
 ## 适用场景
 
@@ -263,15 +298,7 @@ Spec 为 .devflow/changes/REQ-20260905-001/specs/spec-v2.md，
 
 ## 验证
 
-当前版本已通过：
-
-- 四个 Skill 的 Codex `quick_validate.py`：4/4；
-- YAML 11/11、TOML 5/5 解析；
-- 64 个 Markdown 文档、46 个本地相对链接检查，0 断链；
-- 可发现的 Skill 恰好四个，且 `_devflow_shared` 不可发现；
-- Reviewer 项目级与用户全局配置均为 `model_reasoning_effort = "high"`；
-- `codex --strict-config doctor`：0 个配置失败；
-- 两个隔离 Brownfield demo，包括分期、局部 live 阻塞、Finding 一次性披露、同 Reviewer 增量复审、送审冻结和协议映射。
+静态检查、隔离 Git 迁移/恢复和独立角色评测的本轮实际结果统一记录在[验证报告](docs/DEVFLOW_SKILLS_VALIDATION.md)。历史 Brownfield 结果单独列出，不能当作本版重新执行的证明。
 
 你可以在 clone 后重新运行基础验证：
 
@@ -294,7 +321,7 @@ codex --strict-config doctor --summary --no-color --ascii
 
 ## 安全与兼容承诺
 
-- 保持 `schema_version: 1`，不要求迁移已有 `.devflow` 记录；
+- 新容器使用 `schema_version: 2`，原 v1 模板/载荷/读取与门禁兼容，不强制迁移已有记录；
 - 不硬编码目标分支、语言、框架、Issue 平台或具体模型；
 - 不把 Token、Cookie、私钥、生产数据或未脱敏日志写入证据；
 - 不用关闭规则、删除测试、无限重试或扩大超时制造假通过；
@@ -303,6 +330,6 @@ codex --strict-config doctor --summary --no-color --ascii
 
 ## 当前状态
 
-这是一个私有、纯指令式的 Codex Skill 包。当前版本已完成设计、静态门禁和隔离 Brownfield 行为演示；下一阶段最有价值的反馈，是在真实项目中持续记录审核轮次、交接大小、版本数量和端到端耗时，并据此做有证据的迭代。
+这是一个私有、纯指令式的 Codex Skill 包。本版采用 Compact 四文件及按授权执行的无损迁移。它是指令规则，不是强制执行的状态机；隔离演示不等于真实大项目的耗时基准，真实使用仍需观察审核轮次、上下文和端到端耗时。
 
 如果你希望 Codex 不只是“交出代码”，而是交出一条经得起接管、复核和回滚的软件交付链路，这套 Skills 就是为此准备的。
