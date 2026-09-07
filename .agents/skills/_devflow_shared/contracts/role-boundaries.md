@@ -30,6 +30,8 @@
 
 只有当前 Root 的 Planner 可以创建正式 Task 和直接调度角色；不得为每个 Task 再启动 Planner。Reviewer、Tester、Implementer 仅完成交接动作，不创建子 Root/Task、不重规划 DAG、不再派生 DevFlow 角色。独立只读侦察确有必要时由 Planner 直接调度，不能派生规划—实现—测试—审核链。
 
+“调度”指决策所有权。Codex 保持原调用方式；Claude Code / ZCode 按[原生平级调用](../../devflow-planner/references/orchestration.md#原生平级调用)由唯一 Planner 子代理决定动作，主会话仅代为发起同级调用和原样回传，不是第二个 Planner 或第五个角色，也没有规划、状态或证据写入权。四个子代理都不再派生代理，包括通过命令行绕行。宿主转发不改变上面的所有权矩阵。
+
 实现者可以在一个 Task 内维护步骤和检查点、分步实现与自测；这些不是新的审批对象。测试者把用例分组，审核者按维度检查，也不能把这些内部步骤升级成子任务。角色完成或遇到职责外问题后交回同一 Planner；会话恢复不创建新的任务层级。粒度和改图例外见[Task 与冻结 DAG](../../devflow-planner/references/task-decomposition.md)。
 
 ## 必需交接身份

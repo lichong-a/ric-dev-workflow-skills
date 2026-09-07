@@ -4,7 +4,7 @@
 
 **把一次编码请求，升级成可审计、可接管、可交付的软件工程闭环。**
 
-面向 Codex 的四角色软件交付 Skill：规划、独立审核、独立测试和受控实现。
+面向 Codex、Claude Code 和 ZCode 的共享四角色软件交付 Skill：规划、独立审核、独立测试和受控实现。
 
 ![Codex Skills](https://img.shields.io/badge/Codex-Skills-111827?style=flat-square)
 ![Instruction Only](https://img.shields.io/badge/Architecture-Instruction--Only-2563EB?style=flat-square)
@@ -26,7 +26,7 @@
 - 多轮审核是否会一次次释放新问题，导致成本和等待失控；
 - 中途换 Agent 后，能否从持久证据恢复，而不是重新阅读整段对话。
 
-RIC DevFlow Skills 把这些约束做成一套纯指令式工作流。它不增加新的 CLI、守护进程或状态机，而是让 Codex 在使用目标仓库原有 Git、测试、CI 和发布工具时，遵循清晰的角色边界、G0–G10 门禁和不可变证据规则。
+RIC DevFlow Skills 把这些约束做成一套纯指令式工作流。它不增加新的 CLI、守护进程或状态机，而是让宿主 Agent 在使用目标仓库原有 Git、测试、CI 和发布工具时，遵循清晰的角色边界、G0–G10 门禁和不可变证据规则。
 
 ## 一眼看懂
 
@@ -94,7 +94,7 @@ Reviewer 必须在一轮中完成全部适用维度，并一次性返回当时�
 
 ### 前置条件
 
-- 已安装支持 Skills 与 Custom Agents 的 Codex；
+- 已安装支持 Skills 与原生子代理的 Codex、Claude Code 或 ZCode，按下面对应平台安装；配置可解析不等于已完成客户端运行验证；
 - 本机有 Git；如使用下方 `gh repo clone` 命令，还需要已登录的 GitHub CLI；
 - 如从私有仓库安装，当前 GitHub 身份必须拥有仓库读取权限；
 - 目标项目仍应保留自己的 `AGENTS.md`、构建、测试、CI 和发布规则，DevFlow 会读取并映射它们，不会取代它们。
@@ -112,7 +112,7 @@ cd ric-dev-workflow-skills
 git clone https://github.com/lichong-a/ric-dev-workflow-skills.git
 ```
 
-### 2. 用户全局安装（推荐）
+### 2. 共享 Skill 用户级安装
 
 把五个目录链接到用户级 Skill 目录。四个角色会被发现，`_devflow_shared` 只作为共享资源库，不会成为第五个 Skill。
 
@@ -138,7 +138,11 @@ do
 done
 ```
 
-然后安装 Custom Agent 配置。下面的命令不会覆盖同名文件；若提示已存在，请先使用 `diff -u` 审阅，再决定是否更新。
+已有路径提示不是安装成功：先核对 `readlink -f` 和内容，确认四角色与 shared 来自同一个源树；失效链接或不同版本必须先解决，不能混用。后续平台安装前必须确认这一点。
+
+### 3. Codex 原生配置（原方式不变）
+
+安装 Custom Agent 配置。下面的命令不会覆盖同名文件；若提示已存在，请先使用 `diff -u` 审阅，再决定是否更新。
 
 ```bash
 mkdir -p "${HOME}/.codex/agents"
@@ -157,13 +161,82 @@ max_concurrent_threads_per_session = 6
 
 > 符号链接依赖当前 clone 路径。移动或删除仓库前，应先更新用户目录中的链接。安装或更新后，建议重新启动 Codex 或新建任务，确保 Skills 与 Custom Agents 被重新加载。
 
-### 3. 仅在单个项目中使用
+#### Codex 仅在单个项目中使用
 
 如果不希望全局启用，可以只把本仓库 `.agents/skills/` 中的五个目录复制或链接到目标项目的 `.agents/skills/`，并把 `.codex/agents/*.toml` 合并到目标项目的 `.codex/agents/`。再将 `[agents]` 配置合并到目标项目的 `.codex/config.toml`。
 
 不要覆盖目标项目已有的 `.agents`、`.codex` 或 `AGENTS.md`；逐项合并并保留更具体的项目规则。DevFlow 的运行期证据会写入目标仓库的 `.devflow/changes/<REQ-ID>/`。
 
+### 4. Claude Code 与 ZCode 原生配置
+
+| 平台 | Skills | 四角色 agents | 注意事项 |
+|---|---|---|---|
+| Claude Code | 本仓库 .claude/skills → ../.agents/skills；用户级可逐目录链接 | 本仓库 .claude/agents；安装到目标 .claude/agents 或 ~/.claude/agents | skills 为复数；保留已有 CLAUDE.md/settings，不覆盖整个目录 |
+| ZCode | 直接发现项目 .agents/skills 或 ~/.agents/skills，无需复制到 .zcode/skills | 本仓库 .zcode/agents 是四份配置源码；按官方支持安装到 ~/.zcode/agents | 仓库内文件存在不证明客户端已加载；当前不承诺项目级 agents 自动发现 |
+
+以下是安装示例，不是工作流 CLI。先在本源码仓库根目录运行，选择一个平台及目标目录；ZCode 使用用户级目录。Claude 项目级安装可将目标改为目标仓库的 .claude，并先放齐该项目的共享五目录。每次安装预检全部目标，发现冲突即停止；只有同源且有效的符号链接可以重复执行。
+
+```bash
+DEVFLOW_SOURCE_DIR="$(pwd -P)"
+DEVFLOW_HOST=claude
+DEVFLOW_INSTALL_DIR="${HOME}/.claude"
+# ZCode 改为：DEVFLOW_HOST=zcode；DEVFLOW_INSTALL_DIR="${HOME}/.zcode"
+# Claude 项目级示例：DEVFLOW_INSTALL_DIR="/path/to/project/.claude"
+(
+  set -eu
+  case "${DEVFLOW_HOST}" in claude|zcode) ;; *) exit 1 ;; esac
+  devflow_sources=()
+  devflow_targets=()
+  for role in planner reviewer tester implementer; do
+    devflow_sources+=("${DEVFLOW_SOURCE_DIR}/.${DEVFLOW_HOST}/agents/devflow-${role}.md")
+    devflow_targets+=("${DEVFLOW_INSTALL_DIR}/agents/devflow-${role}.md")
+  done
+  if [ "${DEVFLOW_HOST}" = claude ]; then
+    for entry in devflow-planner devflow-reviewer devflow-tester devflow-implementer _devflow_shared; do
+      devflow_sources+=("${DEVFLOW_SOURCE_DIR}/.agents/skills/${entry}")
+      devflow_targets+=("${DEVFLOW_INSTALL_DIR}/skills/${entry}")
+    done
+  fi
+  for i in "${!devflow_sources[@]}"; do
+    source_path="${devflow_sources[i]}"
+    target_path="${devflow_targets[i]}"
+    test -e "${source_path}"
+    if [ -e "${target_path}" ] || [ -L "${target_path}" ]; then
+      if [ -L "${target_path}" ] && [ -e "${target_path}" ] &&
+         [ "$(readlink -f "${target_path}")" = "$(readlink -f "${source_path}")" ]; then
+        continue
+      fi
+      printf '安装停止，保留冲突路径：%s\n' "${target_path}" >&2
+      exit 1
+    fi
+  done
+  for i in "${!devflow_sources[@]}"; do
+    target_path="${devflow_targets[i]}"
+    if [ ! -L "${target_path}" ]; then
+      mkdir -p "$(dirname "${target_path}")"
+      ln -s "${devflow_sources[i]}" "${target_path}"
+    fi
+  done
+)
+```
+
+ZCode 的 Skill 来源可以是已安装的用户共享五目录或当前项目五目录，不要只链接 agents 而遗漏它们。独立调用时先确认客户端实际发现的 Skill 位置；原生定义直接读取该源树，不依赖其他平台配置。若由主会话交接，直接传入已解析的角色入口绝对路径和共享根。
+
+更新源码后链接自动指向新内容；ZCode 代理定义修改后需新建会话，其他平台也建议新会话核对实际加载。移动源码前先记录并检查各链接目标，只修复明确属于本包的链接。卸载仅解除这次安装且已确认同源的逐个链接，不递归删除 .claude/.zcode/.agents，也不删除源树或其他平台仍使用的共享 Skills。
+
+同名 Skill/Agent 的优先级由宿主决定：ZCode Skills 用户级在项目级之前、同级 .zcode 在 .agents 之前；Claude Skills 用户级也可遮蔽项目级，而原生 agents 有不同优先级。不要用“项目一定优先”推断生效版本。检查技能/代理列表中的来源、启用状态与新会话；无法确定时停止调用。不能假定 Claude/ZCode 执行 Codex 的 openai.yaml 调用策略；后三角色的显式边界同时写在描述和正文中，这是指令约束，不宣称为两平台硬性开关。
+
+资料边界：ZCode 对 .agents/skills 的发现顺序来自随 3.11.2 安装包提供的 zcode-configuration-guide（静态文档事实）；在线 [ZCode Skill](https://zcode.z.ai/cn/docs/skill) 与 [子代理](https://zcode.z.ai/cn/docs/subagents)说明管理/加载方式。Claude 的目录、链接与代理字段见 [Skills](https://code.claude.com/docs/zh-CN/skills) 和 [sub-agents](https://code.claude.com/docs/zh-CN/sub-agents)。本包不采用 [动态 workflows](https://code.claude.com/docs/zh-CN/workflows)、Agent Teams 或脚本编排。当前实机验证范围以本包验证报告为准，未安装/未运行不能记为通过。
+
+### 新平台如何调度
+
+ZCode / Claude：主会话 → 四个平级子代理之一 → 主会话原样回传。Planner 决定下一角色并维护状态，主会话没有规划或正式证据写入权；四个子代理都不能再派生代理。主会话仅加载 Skill 不等于已经进入子代理，已启动的角色也不得再次调用自己。详见[原生平级调用](.agents/skills/devflow-planner/references/orchestration.md#原生平级调用)。
+
+Planner/Tester/Implementer 默认继承模型、开放必要的读取/搜索/Bash/编辑；Reviewer 只开放 Read/Grep/Glob，无 Bash/MCP/编辑。工具白名单不是文件路径沙箱，不能等同 Codex Reviewer 的 read-only sandbox；写入角色仍须遵守 Task 允许/保护路径。Reviewer 通过[已核验的历史阅读缓存](.agents/skills/devflow-planner/references/orchestration.md#只读审核阅读缓存)读取 Git 原文，证据仍绑定原始 SHA；缺必要材料就 BLOCKED，不以工具受限省略审核。缺 MCP/环境须单独处理，不默认扩大权限。
+
 ## 怎么用
+
+下方 $devflow-* 示例适用于 Codex/ZCode；Claude 使用 /devflow-*。原生角色也可通过宿主支持的显式入口选择；后三角色仍需精确对象，不因自动发现而允许普通请求隐式激活。
 
 ### 最常用：把开发请求交给 Planner
 
@@ -290,6 +363,11 @@ git rev-parse <actual-baseline-tag>^{commit}
 ├── .codex/
 │   ├── agents/
 │   └── config.toml
+├── .claude/
+│   ├── skills -> ../.agents/skills
+│   └── agents/                    # 四份 Markdown
+├── .zcode/
+│   └── agents/                    # 四份 Markdown
 ├── .devflow/README.md
 └── docs/
     ├── DEVFLOW_SKILLS_DESIGN.md
@@ -299,6 +377,7 @@ git rev-parse <actual-baseline-tag>^{commit}
 - 四个 `SKILL.md` 是聚焦的角色入口；
 - `_devflow_shared` 保存共享契约、模板、参考和场景评测，但没有 `SKILL.md`；
 - `.codex/agents/` 定义 Custom Agent 的推理强度、Sandbox 和角色约束；
+- .claude/agents 与 .zcode/agents 是各平台薄配置，四角色均存在；共享流程不复制；
 - `.devflow/README.md` 说明目标项目中的运行期证据布局；
 - `docs/` 保存完整设计与真实验证报告。
 
@@ -336,6 +415,6 @@ codex --strict-config doctor --summary --no-color --ascii
 
 ## 当前状态
 
-这是一个私有、纯指令式的 Codex Skill 包。本版采用 Compact 四文件及按授权执行的无损迁移。它是指令规则，不是强制执行的状态机；隔离演示不等于真实大项目的耗时基准，真实使用仍需观察审核轮次、上下文和端到端耗时。
+这是一个私有、纯指令式的三平台共享 Skill 包。本版保留 Codex 原配置，新增 Claude/ZCode 原生四角色定义，采用 Compact 四文件及按授权执行的无损迁移。它是指令规则，不是强制执行的状态机；配置适配与宿主实机验证分别记录，隔离演示不等于真实大项目的耗时基准。
 
-如果你希望 Codex 不只是“交出代码”，而是交出一条经得起接管、复核和回滚的软件交付链路，这套 Skills 就是为此准备的。
+如果你希望 Agent 不只是“交出代码”，而是交出一条可接管、复核和回滚的软件交付链路，这套 Skills 就是为此准备的。

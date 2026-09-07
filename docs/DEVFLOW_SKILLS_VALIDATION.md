@@ -1,6 +1,79 @@
 # DevFlow Skills 验证报告
 
 > 当前验证日期：2026-09-07（Asia/Shanghai）
+> 对象：2.2 三平台原生配置适配；本地未提交改动
+> 源码基线：main / e6f559b70c0917d0286a3acf0128c5b87f177567；开始时工作区干净
+> 结果：适用静态检查、隔离安装/Git demo、有限角色情境与独立规则自审通过；Claude/ZCode 原生运行未验证
+
+## 2.2 本轮改动与边界
+
+新增 .claude/agents 和 .zcode/agents 各四份实际 Markdown 定义，.claude/skills 为 ../.agents/skills 相对链接。共享入口与现有编排参考补充宿主/主子身份、平级转发和精确历史阅读缓存；同步角色边界、项目规则、README、设计及 WF-28–33 / TRIGGER-11–14。
+
+没有新增 Skill 正文副本、adapters、调度 Schema、工作流脚本或第五角色。Codex 配置、openai.yaml、原模板字段/状态/报告载荷未改；未操作 WanGoPlatform、未修改用户全局配置、未提交或推送。实现采用 skill-creator 的按需路由方式，平台差异留在薄配置和已有参考，不复制完整流程。
+
+## 2.2 实际命令与静态结果
+
+一次性测试工具位于 /tmp/devflow-native-validation-OQem8i/validate.py，属于本轮隔离验证辅助程序，不属于交付包。下表不是客户端实际启动记录。
+
+| 实际命令或检查 | 结果 |
+|---|---|
+| python3 <CODEX_HOME>/skills/.system/skill-creator/scripts/quick_validate.py .agents/skills/devflow-<role>，四角色逐一执行 | 4/4 Skill is valid! |
+| python3 /tmp/devflow-native-validation-OQem8i/validate.py static | 238 项检查；12 YAML、5 TOML、77 Markdown、15 frontmatter、120 相对链接；无重复 YAML 键或断链/失效锚点 |
+| 同一 static 的原生配置与结构检查 | 8 份实际定义、正确工具白名单；ZCode 独有 injectAgentsMd=true；四份真实 Skill，Claude 链接不制造副本；无 scripts/adapters/包清单 |
+| 同一 static 与基线逐字比较 | .codex、openai.yaml、全部既有模板共 29 个文件不变；Codex 调用策略与 Reviewer read-only 保持 |
+| python3 /tmp/devflow-native-validation-OQem8i/validate.py install | 31 项检查；实际运行 README 新平台 Bash 片段主体，Claude 9 个链接、ZCode 4 个链接；同源重复安装可复用；已有文件/失效链接阻止安装且不覆盖、不部分创建。另验证隔离 Codex 五目录链接、四份原 TOML 复制与相对引用 |
+| git diff --check | 通过 |
+| command -v claude | PATH 中未发现 Claude Code；未安装客户端 |
+| dpkg-query -W -f='${Package} ${Version}\n' zcode | zcode 3.11.2-6792；这是包版本，不是原生运行结果 |
+
+<CODEX_HOME> 仅代替实际命令中的本机用户目录。测试程序读取受检文档并生成隔离缓存/链接，不执行产品状态机；静态断言不能证明模型必定遵从指令。
+
+额外只读检查：使用 Node fs 读取本机 /opt/ZCode/resources/app.asar 中 out/host/index.js 的解析函数片段，确认原生 tools 支持逗号分隔字符串及列表，inherit 归一为继承，injectAgentsMd 被解析；未加载/执行整个应用模块。读取随安装包附带的 zcode-configuration-guide，确认 .agents/skills 发现路径。以上是安装包源码/文档静态证据，不是客户端会话验证。
+
+## 2.2 隔离 Git demo
+
+临时仓库只含合成 normalization 行为、测试和四核心示例文件；示例明确没有产品批准，不宣称完整 G0–G10 运行。
+
+- python3 /tmp/devflow-native-validation-OQem8i/validate.py seed：创建隔离 Git 基线 f3246e92382577e091c40f03696bc80601c1425c。
+- 通过 apply_patch 改候选、重命名及删除指定 fixture 文件，再运行 validate.py candidate：候选 4c94bd08f4953e010847f4ecef16d0ce19db8dfe。以上两个 SHA 只属于临时 demo，不是本源码仓库提交。
+- 候选固定后，通过 apply_patch 在工作树加入 WORKTREE ONLY 内容，保持它不属于候选。
+- validate.py demo：24 项检查通过。实际 git cat-file / merge-base / diff --no-ext-diff --no-textconv / show / ls-tree 验证对象、祖先、R100 重命名、删除及 120000 链接模式；6 份读取缓存与对应 Git 原文逐字相等，未混入脏工作树或跟随链接读取仓库外文件。
+- 缓存中的精确候选实际执行 python3 -B -m unittest -v：2/2 通过。只测试合成 normalization 行为，不是三平台运行测试。
+- git check-ignore 与 git ls-files：四核心文件已跟踪、不被忽略；.local 缓存被忽略；缺少 Git 路径返回失败，可与空内容区分。
+- validate.py recover：清除明确的生成缓存后，git show 仍逐字恢复候选源码，恢复检查通过。
+
+首次 demo 因一次性测试程序把 .local 目录计入“核心文件”而断言失败；修正为只计直接子文件并重新运行，24 项通过。失败不属于 Skill 运行问题，首次失败没有计为通过。
+
+## 2.2 有界独立评测
+
+共 3 个独立、不继承完整历史的评测会话，每个一次请求，没有追加评测轮次、实现子任务或真实平台调用。两个角色情境会话读取当前规则后给决定；另一个只读审阅全部规则/配置差异。未向评测者提供预期答案。
+
+| 实际观察 | 覆盖与结果 |
+|---|---|
+| 路由 A–D | Codex 不因 .claude/.zcode 存在改路径；Claude 主会话转交 Planner；ZCode 独立 Reviewer 直接返回调用者；已启动 Planner 返回 SPEC_REVIEW 交接而不再次派发。WF-28 / TRIGGER-11–13 决定符合预期 |
+| 路由 E–G | 身份不明、同名异版/缺 shared、原 Planner 生命周期未知时均停止相应派发/写入，不猜测、不混包、不启动第二个 Planner。WF-29/30 / TRIGGER-14 决定符合预期 |
+| 路由 H 原始载荷 | 主会话只按原调用关系转发；实际用 apply_patch 输出唯一获准的临时 relay-return.yaml。cmp 与原载荷一致，370 字节；两个 Finding、REQUEST_CHANGES、中文/Ω/引号/缩进均保留 |
+| 角色 1 | 完整候选继续在原 Task/DAG 内处理，不因内部自测修正派生测试/文档子 Task；补齐必要义务后才交完整候选审核 |
+| 角色 2–4 | Reviewer 缺提取/核验证据及实现报告则 BLOCKED；Tester 缺必需 live/MCP 不把本地通过写完整 PASS；Implementer 缺 base SHA/批准不写代码，也不借 Bash 派生其他客户端。WF-31/32 决定符合预期 |
+| 角色 5–6 | 可恢复原 Reviewer 做窄复审；不可恢复且已结束时新 Reviewer 按原谱系完整复审该对象；两个可观察阻断项同轮披露，偏好不进入返修链。WF-33 决定符合预期 |
+| 一次独立规则自审 | 阅读 11 个受跟踪文件 diff、8 份新增定义、链接及相关完整规则；核对 Codex 基线零差异，未确认 P0/P1/P2 问题。验证报告未纳入该次审核，后续由主代理自审 |
+
+原始转发载荷的 cmp 与 sha256sum 实际执行；两份 SHA-256 均为 af3c0af6c0dfbb009dfe2d184cba8c07f1638c16220df960ad5465d85b9305f0。它是合成转发样本，不是本项目的真实 Review 或 Gate 结果。
+
+WF-28–33 已按上表完成适用静态、fixture 或决定级覆盖，不代表六条完整研发流程实际运行。截断重传、状态写入中断恢复及宿主无进展等待仅经过规则自审，未注入真实客户端故障；不得把这些子情境算为实机通过。
+
+## 2.2 未运行项与清理
+
+- 未启动 Claude/ZCode 原生代理、权限拦截、会话恢复或端到端开发。Claude 未发现；ZCode 本轮仅只读检查安装包，不修改用户配置、不读取登录凭据。包配置/行为评测通过不等于宿主实机通过。
+- 未运行 Codex doctor、真实业务 CI/发布、性能/Token/研发耗时对照、完整 G0–G10 或旧 v1 全源迁移。配置未改和历史结果不能代替本轮实际运行。
+- 原规则继续保留 v1、过期证据、门禁及三轮 Defect 约束；本轮只重测与宿主适配有关的范围。
+- 临时安装链接、fixture Git 仓库、缓存、转发样本与测试程序仅在上述精确临时目录，完成脱敏采集后清理；不提交到本包或任何业务仓库。下面为历史验证，不计作本轮重跑。
+
+---
+
+# 2.1 历史验证报告（以下不是本轮重跑结果）
+
+> 当前验证日期：2026-09-07（Asia/Shanghai）
 > 对象：2.1 单层调度、Task 内分步实现、冻结 DAG 与审核适用性；本地未提交改动
 > 结果：适用静态检查、独立决定情境和一次规则一致性审查通过；未测量研发耗时
 > 源码基线：`main` / `a376bf1738fb774544152e9a58d3a65755d306b0`；开始时工作区干净

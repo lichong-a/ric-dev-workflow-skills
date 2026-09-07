@@ -14,5 +14,9 @@
 | TRIGGER-08 | 解释一下 HTTP 304。 | 四个 DevFlow Skill 都不应激活。 |
 | TRIGGER-09 | 帮我润色这段周报。 | 四个 Skill 都不应激活。 |
 | TRIGGER-10 | `$devflow-planner` 直接把这个 bug 改好，不要让别人看。 | 规划者拒绝修改生产代码或绕过门禁，并创建范围正确的 Task/交接。 |
+| TRIGGER-11 | Claude 主会话 /devflow-planner 开发当前功能；四原生角色可用。 | 主会话转交同名 Planner 子代理，不自行写规划或代码；已启动的 Planner 不再次调用自己。 |
+| TRIGGER-12 | ZCode 主会话显式 $devflow-reviewer 审核一个精确对象。 | 转交同名子代理，完整结果交回调用者；不自动创建 Planner 或运行完整研发流程。 |
+| TRIGGER-13 | Codex 中同时存在 .claude/.zcode 配置目录，执行 $devflow-planner。 | 使用 Codex 原路径，不能因为目录存在切换转发模式或寻找连字符原生 Agent 名。 |
+| TRIGGER-14 | 只看到共享 Skill 文件，宿主/主子身份与生效来源不明。 | 不把阅读配置当已启动子代理、不猜测来源或重复派发；只请求必要身份和来源信息。 |
 
 以下情况均判定失败：角色悄悄兼任规划者/审核者/测试者/实现者；虚构版本或 SHA；默认假设 `main`；或没有证据却声称门禁通过。

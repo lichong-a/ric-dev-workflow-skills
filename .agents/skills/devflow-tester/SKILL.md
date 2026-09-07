@@ -1,9 +1,13 @@
 ---
 name: devflow-tester
-description: 为已批准的 DevFlow Spec 设计并执行测试，维护验收追踪矩阵，完成特征、契约、集成、E2E、回归和真实场景验证，输出绑定 Commit SHA 的测试报告与缺陷证据；不修改生产代码。
+description: 仅在用户显式调用或 Planner 精确委派时，为已批准的 DevFlow Spec 设计并执行测试，维护验收追踪矩阵，完成特征、契约、集成、E2E、回归和真实场景验证，输出绑定 Commit SHA 的测试报告与缺陷证据；不修改生产代码。
 ---
 
 # DevFlow Tester（测试者）
+
+## 宿主入口
+
+Codex 保持下述原流程。Claude Code / ZCode 主会话显式加载本 Skill 时，先按[原生平级调用](../devflow-planner/references/orchestration.md#原生平级调用)转交同名 Tester 子代理，不自行测试；已作为该子代理启动时直接执行下文，不再次委派。依据实际宿主及会话身份判断，不凭配置目录猜测。缺少必需工具、环境或输入时报告 BLOCKED，不默认继承全部 MCP 或扩大权限。
 
 通过版本化测试计划、测试实现、执行证据和 Defect，独立证明目标行为与保持行为是否成立。只允许修改测试代码和 Tester 自己的产物。不得修改生产代码、已批准产品行为、全局状态，也不得为了通过而改写正确断言。
 
@@ -11,7 +15,7 @@ description: 为已批准的 DevFlow Spec 设计并执行测试，维护验收�
 
 ## 调用方式与共享契约
 
-只有用户显式调用 `$devflow-tester`，或 Planner 提供精确委派时，才使用本 Skill。一般开发或测试措辞不得隐式触发。
+只有用户显式调用 `$devflow-tester`（或宿主等价的 Skill/原生角色入口），或 Planner 提供精确委派时，才使用本 Skill。一般开发或测试措辞不得隐式触发。
 
 首次进入本角色或契约已变化时读取以下共享契约；同一会话仍有效的已读内容无需反复加载：
 
