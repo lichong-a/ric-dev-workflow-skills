@@ -33,7 +33,7 @@ Continuation 的相关单元分类与差距；当前可用环境及权限，缺�
 <a id="TASKS"></a>
 ## TASKS — 当前阶段 DAG
 
-<!-- 每个 Task 用稳定锚点与独立 revision。状态只在 state 中维护。 -->
+<!-- 默认完整纵向 Task；步骤不另立节点。初始节点/边经 G2 通过后冻结，例外写已有 DECISIONS/Change Log。门禁适用性及复用依据放 notes，不另建审核矩阵。每个 Task 用稳定锚点与独立 revision，状态只在 state 中维护。 -->
 <a id="TASK-001"></a>
 ### TASK-001 — 当前任务
 
@@ -52,7 +52,7 @@ Continuation 的相关单元分类与差距；当前可用环境及权限，缺�
 - owner: ""
 - notes: []
 
-任务级预算/非范围、验证环境权威/权限/退出条件；必要 base_ref/base_sha 从 state 的就绪索引读取。未来阶段只保留能力与依赖，不展开同样详细的任务。
+任务级预算/非范围、验证环境权威/权限/退出条件；必要 base_ref/base_sha 从 state 的就绪索引读取。内部实现清单可放 notes 或 .local，不分配子 Task ID、不逐步骤送审。未来阶段只保留能力与依赖，不展开同样详细的任务。
 
 ## Change Log
 

@@ -1,6 +1,6 @@
 # DevFlow 四角色 Skill 总体设计
 
-> 版本：2.0 · Compact 默认布局、Git 历史与无损迁移
+> 版本：2.1 · Compact 布局、单层调度与冻结 DAG
 >
 > 本文是系统导航和完成定义；具体规则只在共享契约维护，不复制全套模板或模式清单。v1.1 的文件版本布局由旧模板兼容，不要求已有 Root 强制迁移。
 
@@ -27,7 +27,9 @@ G0 需求 → G1 条件基线 → G2 Spec 审核 → G3 用户批准 → G4 测�
 
 门禁的精确输入和决策所有者见[门禁策略](../.agents/skills/_devflow_shared/contracts/gate-policy.md)。Root 主路径和全部辅助状态、Task 主路径与辅助状态仍由[工作流状态](../.agents/skills/_devflow_shared/contracts/workflow-state.md)定义，不增加迁移或 Compact 专用状态。
 
-首次 G2 前执行一次聚焦事实侦察、一次必要缺口补查和规模判断。当前决策条件满足就进入下一步；连续两次同类检查无新事实停止搜索，继续调查须关联当前 AC、已观察失败或必要约束。可独立价值/发布/权限/环境边界先分期，完整能力清单、跨阶段依赖和延期不丢失；只展开当前阶段 Task/测试，不机械拆分不可分原子行为。
+首次 G2 前执行一次聚焦事实侦察、一次必要缺口补查和规模判断。当前决策条件满足就进入下一步；连续两次同类检查无新事实停止搜索，继续调查须关联当前 AC、已观察失败或必要约束。默认一个完整纵向 Task；仅真实独立发布/验收边界在初始规划分期，保留完整目标，不因为文件多、上下文长或执行慢递归拆分。
+
+DAG 首次完成即作为送审基线，G2 通过后冻结。内部实现、测试/文档步骤、检查点和审核动作不单独建节点、不重跑 Root 流程。已证实的结构性障碍才通过已有 Decision/Change Log 做最小改图与受影响门禁复审，不自动重建全图。详细判断只在[Task 与冻结 DAG](../.agents/skills/devflow-planner/references/task-decomposition.md)维护。
 
 ## 3. 四角色及调用边界
 
@@ -39,6 +41,8 @@ G0 需求 → G1 条件基线 → G2 Spec 审核 → G3 用户批准 → G4 测�
 | [Implementer](../.agents/skills/devflow-implementer/SKILL.md) | 仅显式或委派 | 单获批 Task/实现类 Defect、单元/组件及模块内测试、实现报告 | 改需求、扩大预算、自审批准、合并 |
 
 完整约束见[角色边界](../.agents/skills/_devflow_shared/contracts/role-boundaries.md)。Reviewer 模式仍为 BASELINE_REVIEW、SPEC_REVIEW、TEST_REVIEW、CODE_REVIEW、RELEASE_REVIEW。迁移完整性用限定范围的 BASELINE_REVIEW，不新增模式。
+
+Root Planner 单层直接调度；其他三个角色不再派生 DevFlow 角色或子 Task。接收角色仅完成指定动作，步骤在原 Task/计划内进行，缺口交回原 Planner。已有 v1 也适用该调度约束，不要求为此迁移布局。
 
 Custom Agents 使用仓库现有 `.codex/agents/*.toml`：Reviewer 只读，其他角色 workspace-write；模型继承宿主。推理强度和 Sandbox 不通过 Skill 静默改动，调用 policy 保持 Planner 可隐式、其余 explicit-only。全局配置是独立文件，安装前审阅，不覆盖同名配置。
 
@@ -85,9 +89,9 @@ current/test-plan 原地维护最新版，底部 Change Log 记录修订、时�
 
 [变更控制](../.agents/skills/_devflow_shared/contracts/change-control.md)定义 EDITORIAL/TECHNICAL/BEHAVIORAL：
 
-- 预算/依赖仅局部技术复审；职责映射仅复核有关映射。
+- 原 Task 内执行顺序/检查点不单独审核；纯 EDITORIAL 记录差异并保留原批准绑定，不声称新修订已审。预算/约束仅局部技术复审；改依赖先满足冻结例外；职责映射仅复核有关映射。
 - 行为、权限、契约、兼容或测试预期变化重开受影响 G2/G3/G4 与下游证据。
-- 沿用批准必须有独立适用性记录，原绑定不改；新 SHA/环境/输入按实际影响补证，不伪造旧测试在新输入执行。
+- 未变对象直接沿用原绑定；批准适用到新的技术对象须有独立适用性记录。新 SHA/环境/输入按实际影响补证，不伪造旧测试在新输入执行。
 - 首轮返回当前对象全部可发现阻断 Finding；窄 Delta 由可用且独立的原 Reviewer 复查旧 Finding 与邻域。行为/架构/显著风险扩张或更换 Reviewer 才完整复审对应范围。
 - 两次同对象/模式 REQUEST_CHANGES 暂停送审归因；同 Defect 三轮失败停止补丁。分别计数，不因改名重置，不默认重建全套 Spec/DAG/测试模型。
 - 推测性优化、无关债务进入延期，不成为返修理由；新发现真实严重问题仍报告。
@@ -128,6 +132,8 @@ current/test-plan 原地维护最新版，底部 Change Log 记录修订、时�
 ## 10. 评测与完成定义
 
 [工作流评测](../.agents/skills/_devflow_shared/evals/workflow-cases.md)保留 WF-01–15，并新增 WF-16–22：固定文件/独立修订、Git 分类、全源迁移、失败恢复、本地远端历史恢复、独立角色行为、无 Git/不跟踪/只读/v1 兼容。另保留[触发评测](../.agents/skills/_devflow_shared/evals/trigger-cases.md)和[Brownfield 评测](../.agents/skills/_devflow_shared/evals/brownfield-cases.md)。
+
+WF-23–27 覆盖单交付多步骤、非递归执行、冻结图的普通变化与必要例外、按适用性省略额外审核。WF-06 三轮失败改为针对根因而非默认重规划；评测不要求对无关旧迁移场景整套重跑，但必须说明未运行边界。
 
 包完成条件：
 

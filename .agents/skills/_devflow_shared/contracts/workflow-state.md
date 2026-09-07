@@ -35,4 +35,6 @@ PLANNED -> READY -> IN_PROGRESS -> CODE_REVIEW -> APPROVED -> MERGED
 - 行为性 Spec 变更会使 Root Issue 返回 `SPEC_REVIEW`，并按 `change-control.md` 使下游状态失效。
 - 不得因为产物很小就跳过状态。FAST 交付可以压缩产物和合并审核轮次，但必须保留相同证据。
 
+以上 Task 状态只用于正式交付节点，不适用于内部步骤、用例、检查点或 Reviewer 动作。G0–G4 的有效 Root 级证据由 Task 引用，不为每个 Task 建一条 Root 状态链。不适用或有效证据已覆盖的额外检查按 gate-policy 省略；这不授权把未完成的必需 Task 状态伪装成已通过。
+
 若缺少必需版本、SHA、授权、环境或安全 worktree 边界，应使用 `BLOCKED`，并记录精确解阻条件。
