@@ -30,6 +30,79 @@ RIC DevFlow Skills 把这些约束做成一套纯指令式工作流。它不增�
 
 ## 一眼看懂
 
+**Planner 统一调度，Reviewer 独立把关，Tester 用证据验证，Implementer 在批准范围内实现。**
+
+下图按「需求与计划 → 单个 Task 交付 → 最终验收」展开。同色节点代表同一角色，实线表示通过后推进，虚线表示退回或继续下一项 Task。箭头展示产物的推进顺序；所有角色动作都由同一个 Planner 调度，完成后向它回传结果。
+
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Noto Sans CJK SC, Microsoft YaHei, Arial", "fontSize": "16px", "lineColor": "#94a3b8", "primaryTextColor": "#1e293b", "clusterBkg": "#f8fafc", "clusterBorder": "#cbd5e1", "edgeLabelBackground": "#ffffff"}, "flowchart": {"curve": "basis", "nodeSpacing": 28, "rankSpacing": 36, "padding": 14}}}%%
+flowchart TB
+    accTitle: DevFlow 四角色协作与返修流程
+    accDescr: Planner 统一调度，依次完成需求与计划、单个 Task 交付和最终验收。Reviewer 独立审核，Tester 设计测试并验证，实现类问题由 Implementer 修复。审核退回和测试失败交由 Planner 归因，再修正并重新审核或验证。
+    START([用户提出需求]) --> PREP
+
+    subgraph PREP["01 · 需求与计划"]
+        direction LR
+        P1("Planner<br/>接管仓库 · 规划需求")
+        R1("Reviewer<br/>审核 Spec 与 Task")
+        U("用户<br/>批准需求与重要取舍")
+        T1("Tester<br/>设计测试计划")
+        R2("Reviewer<br/>审核测试计划")
+        P1 --> R1 --> U --> T1 --> R2
+        R1 -. 修订需求 .-> P1
+        R2 -. 修订计划 .-> T1
+    end
+
+    PREP --> TASK
+
+    subgraph TASK["02 · 单个 Task 交付"]
+        direction LR
+        I("Implementer<br/>实现获批 Task · 自测")
+        R3("Reviewer<br/>审核代码 SHA")
+        P2("Planner<br/>集成已审核代码")
+        T2("Tester<br/>增量验证集成 SHA")
+        FIX("Planner<br/>归因 · 调度修正")
+        I --> R3 --> P2 --> T2
+        R3 -. 需修改 .-> FIX
+        T2 -. 测试失败 .-> FIX
+        FIX -. 实现修复 .-> I
+        FIX -. 测试修正 .-> T2
+        T2 -. 通过，分配下一 Task .-> I
+    end
+
+    TASK -->|所有 Task 均已验证| RELEASE
+
+    subgraph RELEASE["03 · 最终验收"]
+        direction LR
+        T3("Tester<br/>完整验证集成结果")
+        R4("Reviewer<br/>审核发布证据")
+        P3("Planner<br/>合并实际目标分支")
+        T4("Tester<br/>冒烟验证目标 SHA")
+        P4("Planner<br/>核对证据 · 关闭需求")
+        T3 --> R4 --> P3 --> T4 --> P4
+    end
+
+    RELEASE --> DONE([交付完成])
+
+    classDef planner fill:#eff6ff,stroke:#3b82f6,color:#1e3a8a,stroke-width:2px
+    classDef reviewer fill:#f5f3ff,stroke:#8b5cf6,color:#5b21b6,stroke-width:2px
+    classDef tester fill:#ecfdf5,stroke:#10b981,color:#065f46,stroke-width:2px
+    classDef implementer fill:#fff7ed,stroke:#f59e0b,color:#9a3412,stroke-width:2px
+    classDef user fill:#f1f5f9,stroke:#64748b,color:#334155,stroke-width:1.5px
+    classDef terminal fill:#0f172a,stroke:#0f172a,color:#ffffff,stroke-width:2px
+    class P1,P2,P3,P4,FIX planner
+    class R1,R2,R3,R4 reviewer
+    class T1,T2,T3,T4 tester
+    class I implementer
+    class U user
+    class START,DONE terminal
+    style PREP fill:#f8fafc,stroke:#cbd5e1,stroke-width:1px,rx:12,ry:12
+    style TASK fill:#f8fafc,stroke:#cbd5e1,stroke-width:1px,rx:12,ry:12
+    style RELEASE fill:#f8fafc,stroke:#cbd5e1,stroke-width:1px,rx:12,ry:12
+```
+
+> **如何读回路：** 审核不通过或测试失败时，先回到 Planner 归因，再交给负责的角色修正；新代码必须重新审核、重新验证。图中展开了常见的实现/测试返修；Spec、范围或测试计划中的预期/环境变化须复核受影响的批准，环境或授权缺失则记录 `BLOCKED` 和恢复条件。最终验收失败同样走这个回路，不能直接进入「交付完成」。门禁的适用范围与证据复用规则见[门禁策略](.agents/skills/_devflow_shared/contracts/gate-policy.md)。
+
 | 角色 | 默认调用方式 | 核心职责 | 写入边界 |
 |---|---|---|---|
 | `devflow-planner` | 可隐式调用，也可显式调用 | 需求接收、仓库接管、Spec、Task DAG、状态、调度、归因、合并与关闭 | 规划/状态产物和已过门禁的 Git 协调；不写生产代码 |
@@ -37,26 +110,11 @@ RIC DevFlow Skills 把这些约束做成一套纯指令式工作流。它不增�
 | `devflow-tester` | 仅显式调用或由 Planner 委派 | 测试计划、特征测试、集成/E2E/回归验证、缺陷证据 | 只写测试及自身证据；不改生产代码 |
 | `devflow-implementer` | 仅显式调用或由 Planner 委派 | 在一个已批准 Task 和变更预算内完成最小完整实现 | 只处理获批范围；不改 Spec、不自审、不合并 |
 
-```mermaid
-flowchart LR
-    U[用户需求] --> P[Planner<br/>预检、分期、Spec 与 DAG]
-    P --> R1[Reviewer<br/>Spec Review]
-    R1 --> A[用户批准]
-    A --> T[Tester<br/>测试计划]
-    T --> R4[Reviewer<br/>Test Review]
-    R4 --> I[Implementer<br/>单 Task 实现]
-    I --> R2[Reviewer<br/>Code Review]
-    R2 --> P2[Planner<br/>按依赖顺序集成]
-    P2 --> T2[Tester<br/>集成与完整验证]
-    T2 --> R3[Reviewer<br/>Release Review]
-    R3 --> M[Planner<br/>目标合并]
-    M --> S[Tester<br/>目标 SHA Smoke]
-    S --> D[完成]
-```
-
 ## 核心卖点
 
-### 1. Brownfield 是一等公民
+### 1. 优先支持已有项目的接手与迭代（Brownfield）
+
+**Brownfield 指在已有项目上继续开发**：例如给现有系统加功能、修复线上问题，或接着别人做了一半的功能继续完成。只要已有代码、测试、接口约定、数据迁移或未提交改动，就需要先理解并保护这些现状；这个词并不只指老旧或质量差的项目。与之相对，Greenfield 指从零开始的新项目。
 
 DevFlow 不假设项目从零开始。进入既有仓库时，它会先识别生效规则、真实目标分支、脏工作区、基线失败、相邻实现、契约和变更预算；续接半成品时，还会区分已接受、未验证、部分完成、Stub、冲突和未知工作。
 
