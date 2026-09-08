@@ -53,6 +53,8 @@ Codex 保持下述原流程。Claude Code / ZCode 主会话显式加载本 Skill
 
 每条验收标准必须映射到稳定的 Test Case ID 和可观察证据。只有当 Spec、风险或真实边界需要时，才覆盖权限/租户、并发/顺序/幂等、超时/重试/取消、迁移、UI/浏览器/可访问性/离线、安全或性能场景。将精确测试计划交回 Planner 安排独立 `TEST_REVIEW`，不得自行批准或再派生 Reviewer；未变计划/Oracle 下的测试代码修正不单独重开 G4，但新增代码仍须满足相应代码/集成门禁。
 
+新增或修正测试代码时，必须读取[测试代码交付与 SHA](references/test-code-delivery.md)。测试归入原 Task，默认在完整 G5 前与 Implementer 串行交接；Tester 复用原 Implementation Report 结构署名交付测试代码，由 Reviewer 独立审核、Planner 集成。G5 后修正也重新绑定代码与集成证据，不沿用失效 VERIFIED，不创建测试子 Task。
+
 ### 3. 实现并执行测试
 
 使用仓库现有测试框架和风格实现测试。优先验证可观察行为而非内部调用顺序；控制时钟、数据和网络；使用有界等待而非固定 Sleep；仅在真实外部或昂贵边界使用 Mock。不得引入第二套测试框架。
@@ -66,6 +68,8 @@ Implementer 负责其 Task 的单元测试、组件测试以及通常的模块�
 每个可复现失败都应遵循 [缺陷报告](references/defect-reporting.md)，创建绑定 `found_on_sha` 的新不可变 Defect 产物。Tester 只给出疑似分类，最终归因由 Planner 负责。不得修复生产代码或重写 Spec。
 
 发布新的 `test-report.yaml` 实例，绑定 `tested_sha`、当前 Spec 版本、测试计划版本、实际环境及权威层级、统计、命令、验收标准和回归结果、基线对比、Defect、未执行项及残余风险。修正时必须创建带 `supersedes` 的新报告，绝不能覆盖已发布报告。报告结论只能覆盖实际运行的环境切片；合成或本地结果不得表述为 live、生产或完整端到端验收。
+
+正式 `tested_sha` 默认包含所用测试代码；工作区新测试只作诊断，不能冒充旧 SHA 的正式 PASS。仓库既有外部测试资产须按上述交付参考固定其版本和实际执行组合。
 
 Verdict 只能是 `PASS`、`FAIL` 或 `BLOCKED`：
 

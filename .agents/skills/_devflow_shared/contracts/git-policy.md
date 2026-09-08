@@ -19,7 +19,7 @@ branch_strategy_source: ""
 ## 分支拓扑与不可变基线
 
 - 除非已有功能分支经验证就是续作集成分支，否则 Root Issue 的集成分支应基于实际目标分支。
-- 所有依赖均为 `VERIFIED` 后，从最新已验证集成 SHA 创建各 Task 分支，并记录 `base_ref` 和 `base_sha`。
+- 所有依赖满足[有效依赖](workflow-state.md#有效依赖与恢复)（有有效证据的 `VERIFIED` 或 `DONE`）后，从最新已验证集成 SHA 创建各 Task 分支，并记录 `base_ref` 和 `base_sha`。
 - 审核 `base_sha..head_sha`，而不是会移动的分支标签。
 - 实现者绝不合并。规划者按 DAG 顺序和仓库既有合并策略执行合并，并在每次合并后触发增量测试。
 - 不得强推或重写共享历史。
@@ -50,6 +50,7 @@ branch_strategy_source: ""
 
 - 草稿连续修改，不为每次编辑/commentary 提交。
 - 正式送审前固定有关文档版本；代码审核前固定完整候选提交（包含测试、生成物和必要文档）。
+- 同一 Task 的生产与独立测试代码由各自作者在 Planner 安排的串行写入窗口完成；作者分别固定报告的真实 SHA 范围，Planner 汇集报告并交付完整候选 G5。G5 后的测试修正也须重新审核、集成和验证，不能混入先前受测 SHA。具体顺序见[测试代码交付](../../devflow-tester/references/test-code-delivery.md)。
 - 验收或状态切换时合并提交对应证据与状态，精确路径暂存，检查 staged Diff 和既有改动归属。
 - 文档身份为完整 Commit SHA + 路径 + 对象 ID；代码证据仍为 `base_sha/head_sha/tested_sha`。
 - 后续追加证据的提交不等于已受测代码候选，不需要文档记录保存自身提交 SHA。引用早先已存在的文档 Commit，避免自引用造成无限补提交。

@@ -9,7 +9,7 @@
 | G2 Spec | Root Issue、Spec、UI/技术决策、DAG | 对应版本的 `SPEC_REVIEW: APPROVE` | 审核者 |
 | G3 用户批准 | 已审核的产品行为与重要取舍 | 绑定 Spec 版本的用户批准 | 用户 |
 | G4 测试计划 | 已批准 Spec | 对应计划版本的 `TEST_REVIEW: APPROVE` | 审核者 |
-| G5 Task 代码 | 已批准 Task 实现 | 对应 SHA 范围的 `CODE_REVIEW: APPROVE` | 审核者 |
+| G5 Task 代码 | 已批准 Task 的完整候选及各代码作者报告，含必要测试 | 对应 SHA 范围的 `CODE_REVIEW: APPROVE` | 审核者 |
 | G6 Task 集成 | Task 已合并至集成分支 | 对应 SHA 的增量测试 `PASS` | 测试者 |
 | G7 完整验证 | 所有 Task 均已验证 | 对应集成 SHA 的完整测试报告 `PASS` | 测试者 |
 | G8 发布 | 当前验证证据及迁移/配置/回滚文档 | 对应 SHA 的 `RELEASE_REVIEW: APPROVE` | 审核者 |
@@ -23,6 +23,8 @@
 ## 审核适用范围与直接省略
 
 G0–G4 是当前 Root/阶段的共享准备，不为每个 Task 或实现步骤重跑；G5/G6 面向完整 Task 候选及其集成 SHA；G7–G10 面向当前交付的最终验收。角色动作不是 DAG 节点，门禁也不递归套在门禁动作上。
+
+Tester 编写的测试属于原 Task 候选，不单独建立测试 Task。G5 后新增/修正测试代码仍使相关候选证据需要重新绑定，按[测试代码交付](../../devflow-tester/references/test-code-delivery.md)完成代码复审与 G6；测试计划审核不能替代测试代码审核。G6 后 Task 保持 `VERIFIED`，G9 通过及关闭条件齐备后才进入 `DONE`。
 
 Planner 在初始规划的现有 Decision/Task notes 中简记适用门禁和已有证据；不创建逐步骤审核矩阵或新 Schema。以下情况可直接不发起额外 Reviewer 调用，不必先找 Reviewer 批准“无需审核”：
 

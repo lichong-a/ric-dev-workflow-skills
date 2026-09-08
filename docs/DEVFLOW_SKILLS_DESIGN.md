@@ -1,6 +1,6 @@
 # DevFlow 四角色 Skill 总体设计
 
-> 版本：2.2 · 三平台原生配置、Compact 布局与平级调用
+> 版本：2.3 · 有效状态、测试代码交付与主动平级调用
 >
 > 本文是系统导航和完成定义；具体规则只在共享契约维护，不复制全套模板或模式清单。v1.1 的文件版本布局由旧模板兼容，不要求已有 Root 强制迁移。
 
@@ -11,6 +11,8 @@ DevFlow 是 instruction-only 的四角色软件交付系统。目标是可接管
 必须保留独立 Reviewer、Tester、用户批准、G0–G10、不可变证据与真实 SHA 绑定；效率不能通过削弱门禁获得。不新增第五个 Skill、工作流 CLI、Git 包装器、编排/常驻迁移脚本、包清单或生成状态机。目标仓库的原生 Git、测试、CI、Issue/发布协议是执行工具，语义等价的已有证据直接引用，不维护第二套事实。
 
 本版在既有 Compact/冻结 DAG 上增加 Claude Code 与 ZCode 的薄配置，Codex 执行方式不变；v1 记录、报告载荷、状态和 Verdict 继续有效。迁移只转换存储，不能批准产品变化。不操作 WanGoPlatform；全局 Skill 符号链接仍使用本源树，用户全局 Agent 配置本轮不写入。
+
+2.3 收敛现有契约：G6 后保持 Task VERIFIED，G9 与关闭条件齐备才 DONE；Tester 在原 Task 内交付测试代码并经独立代码审核；范围内入口与角色交接主动派发。只调整指令、参考与评测，不改变原 Schema、Codex 配置或自动迁移已有 Root。
 
 ## 2. 分类与主流程
 
@@ -26,6 +28,8 @@ G0 需求 → G1 条件基线 → G2 Spec 审核 → G3 用户批准 → G4 测�
 ```
 
 门禁的精确输入和决策所有者见[门禁策略](../.agents/skills/_devflow_shared/contracts/gate-policy.md)。Root 主路径和全部辅助状态、Task 主路径与辅助状态仍由[工作流状态](../.agents/skills/_devflow_shared/contracts/workflow-state.md)定义，不增加迁移或 Compact 专用状态。
+
+Task 集成完成不是目标交付关闭；依赖接受具有当前有效证据的 VERIFIED 或完整关闭的 DONE。恢复时不信任孤立状态名，旧 DONE 缺冒烟等矛盾通过追加事件纠正，历史报告不改写。
 
 首次 G2 前执行一次聚焦事实侦察、一次必要缺口补查和规模判断。当前决策条件满足就进入下一步；连续两次同类检查无新事实停止搜索，继续调查须关联当前 AC、已观察失败或必要约束。默认一个完整纵向 Task；仅真实独立发布/验收边界在初始规划分期，保留完整目标，不因为文件多、上下文长或执行慢递归拆分。
 
@@ -45,6 +49,10 @@ DAG 首次完成即作为送审基线，G2 通过后冻结。内部实现、测�
 Root Planner 单层直接调度；其他三个角色不再派生 DevFlow 角色或子 Task。接收角色仅完成指定动作，步骤在原 Task/计划内进行，缺口交回原 Planner。已有 v1 也适用该调度约束，不要求为此迁移布局。
 
 调度表示决策所有权而非必须嵌套工具调用。Claude/ZCode 主会话只负责转发，四角色均为平级原生子代理：Planner 决定动作并唯一写规划/状态/账本，主会话不兼任 Planner。显式独立角色结果直接返回调用者，不自动启动完整流程。入口区分宿主与主/子会话，主会话转交，子代理执行正文；Codex 不进入该分支。规则只在[原生平级调用](../.agents/skills/devflow-planner/references/orchestration.md#原生平级调用)维护。
+
+范围内开发请求不需用户点名角色；主会话确认原生角色和来源后实际派发，接到 Planner 交接继续调用下一角色，直至完成、阻塞或必要用户决定。用户批准与实际操作授权不因主动派发而省略，子代理不递归。调用前描述与入口正文共同提供路由，指令要求不能宣称为宿主强制开关。
+
+需要 Tester 编写独立测试时，按[测试代码交付](../.agents/skills/devflow-tester/references/test-code-delivery.md)在完整 G5 前串行交接；各作者报告保留原 SHA 范围，Reviewer 核对完整净差异。G5 后修正测试仍在原 Task 内复审、集成与验证；正式 tested_sha 包含所用测试，外部测试资产须固定身份。
 
 Custom Agents 使用仓库现有 `.codex/agents/*.toml`：Reviewer 只读，其他角色 workspace-write；模型继承宿主。推理强度和 Sandbox 不通过 Skill 静默改动，调用 policy 保持 Planner 可隐式、其余 explicit-only。全局配置是独立文件，安装前审阅，不覆盖同名配置。
 
@@ -157,3 +165,5 @@ WF-28–33 覆盖三平台入口/平级转发、规则来源与安装冲突、�
 - 演示仅安全临时目录，采集脱敏结果后清理；不写入 Skill 包或 WanGoPlatform。
 
 实际运行命令、日期、局限见[验证报告](DEVFLOW_SKILLS_VALIDATION.md)。业务 Root 只有全部适用 G0–G10 有效、开放阻断清零、回滚/迁移/配置/文档齐备且目标 SHA 冒烟完成，才能 DONE；包静态通过不代表业务门禁通过。
+
+从干净候选副本复跑的方法见[验证指南](DEVFLOW_SKILLS_VALIDATION_GUIDE.md)。WF-34–39 与 TRIGGER-15–18 覆盖有效依赖、目标关闭、多作者测试交付、测试返修基线、主动入口/连续派发及工具/授权缺口；行为评测者只接收原始输入，判定标准单独使用。报告绑定受检文件集合，历史结果不替代本轮执行。

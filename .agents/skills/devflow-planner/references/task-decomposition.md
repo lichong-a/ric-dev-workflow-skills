@@ -41,7 +41,7 @@ Task 只表达当前交付阶段内的工作。仅在首次 G2 前，对确有�
 
 ## 就绪条件
 
-只有满足以下全部条件时才标记 `READY`：所有依赖均为 `VERIFIED`；Spec/测试批准仍为当前有效；最新集成 SHA 已知且干净；worktree 隔离安全；允许/受保护路径精确；本 Task 必需的环境和权限已具备；写入区域只由一个实现者负责。否则保持 `PLANNED`，或带原因标记为 `BLOCKED`。
+只有满足以下全部条件时才标记 `READY`：所有依赖满足[有效依赖](../../_devflow_shared/contracts/workflow-state.md#有效依赖与恢复)（有有效证据的 `VERIFIED` 或已完整关闭的 `DONE`）；Spec/测试批准仍为当前有效；最新集成 SHA 已知且干净；worktree 隔离安全；允许/受保护路径精确；本 Task 必需的环境和权限已具备；每个写入窗口只有一名代码作者。否则保持 `PLANNED`，或带原因标记为 `BLOCKED`。原 Task 内 Implementer 与 Tester 的串行交接不构成新的 DAG 节点。
 
 ## 独立修订与完整交付预算
 

@@ -39,7 +39,7 @@ Codex 保持下述原流程。Claude Code / ZCode 主会话显式加载本 Skill
 
 ## 必需输入与前置检查
 
-必须提供 Root Issue ID、审核对象路径或身份、当前 Spec 版本，以及对应模式所需的证据。`CODE_REVIEW` 还必须提供 Task ID、Implementation Report，以及精确完整的 `base_sha` 和 `head_sha`；`RELEASE_REVIEW` 必须提供精确集成 SHA 和全部当前有效的 Review/Test Report；基线与测试模式必须提供其声明的版本、SHA、命令和证据。
+必须提供 Root Issue ID、审核对象路径或身份、当前 Spec 版本，以及对应模式所需的证据。`CODE_REVIEW` 还必须提供 Task ID、真实代码作者的 Implementation Report（可以包含 Tester 署名的测试代码报告），以及精确完整的 `base_sha` 和 `head_sha`；接受原 Task 的测试代码候选和已归因测试类 Defect，不要求冒充实现类问题。`RELEASE_REVIEW` 必须提供精确集成 SHA 和全部当前有效的 Review/Test Report；基线与测试模式必须提供其声明的版本、SHA、命令和证据。
 
 增量复审还必须提供上一份 Review、应由新 Review `supersedes` 的审核身份、待关闭 Finding ID、精确变更 Delta 及受影响邻域。完整产物应通过路径、版本和不可变身份引用；不得要求 Planner 重贴与当前审核无关的完整对话历史。
 

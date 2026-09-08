@@ -359,3 +359,587 @@ WF-16–22 覆盖由静态、真实本地 Git 操作、人工构造故障与独�
 这是纯指令系统，因此静态验证证明的是可发现性、语法、路由和契约一致性；隔离 demo 证明一条具有代表性的决策与产物路径，但不等同于长期真实项目中的延迟基准。本轮未启动额外独立多 Agent 前向评测，以遵守当前任务的代理授权边界。后续应在下一次真实 DevFlow 使用中观察审核轮次、版本数量、交接大小、无变化轮询和总墙上时间。
 
 后续 Codex 版本可能调整配置字段；本包刻意不硬编码模型名称，`fork_turns: "none"` 仅作为平台支持上下文继承控制时的当前示例。升级 Codex 时应重新对照可用工具 Schema 和官方文档验证。
+
+
+## 状态、测试交付与主动派发验证（2026-09-08）
+
+本节是本轮新增记录，以上历史报告保持原始字节；历史统计和未运行项不作为本轮结果。复跑方法集中于[验证指南](DEVFLOW_SKILLS_VALIDATION_GUIDE.md)，行为原始输入与独立判定分别保存在[工作流场景](../.agents/skills/_devflow_shared/evals/workflow-cases.md)的 WF-34–39 和[触发场景](../.agents/skills/_devflow_shared/evals/trigger-cases.md)的 TRIGGER-15–18。
+
+### 受检身份与执行环境
+
+- 源码基线：`main`，`84954fbda3c1d8c47ef2a5ee9fb43e18ab4a3c4a`。本轮交付尚未提交，不能用这个 HEAD 代表修改后的文件。
+- 受检候选：下方 97 个文件及符号链接的路径、模式和内容 SHA256；集合 SHA256 为 `622edd0004a90870640626018c355691d30b538079b1d48822a07dc4ed8ce4f8`。摘要算法采用指南第一段输出；报告自身参与链接检查，但排除摘要，避免自引用。
+- 环境：Python `3.14.4`、PyYAML `6.0.3`、Git `2.53.0`、Bash。四个 Skill 使用宿主随附 `quick_validate.py` 验证器。
+- 在源工作区直接执行指南片段，并在仅含受检源码、无用户计划文件的干净隔离 Git 副本复跑两段完整 Bash 块。副本中的提交仅用于隔离检查，不是本源码仓库提交，也不是角色门禁产物。
+
+### 静态与隔离操作结果
+
+| 实际执行 | 本轮结果与证据边界 |
+|---|---|
+| 验证指南第一段完整 Bash 块 | 退出 0；四 Skill 验证器 4/4 通过 |
+| YAML/TOML/frontmatter 解析与重复键检查 | YAML 12、TOML 5、frontmatter 15，全部通过 |
+| Markdown 相对链接与锚点 | 报告追加前的干净副本：79 文档、148 本地链接、23 锚点引用，0 失败；报告追加后的复检见本节末尾 |
+| 四角色、共享目录、符号链接及平台工具配置 | 通过；四个实际 Skill，无第五入口；Claude 相对链接与各平台定义符合约束 |
+| 验证指南第二段完整 Bash 块 | 退出 0；42 项隔离检查通过，临时 fixture 清理另行确认通过 |
+| Claude/ZCode 隔离安装 | 两平台首次安装、同源重跑、普通文件冲突、失效链接冲突均符合预期；冲突前预检，无部分安装；仅使用临时目标 |
+| 合成 Git 与测试代码交付 | 生产实现候选运行 1 条单元测试通过；新增辅助函数在实际候选上产生预期失败；从该失败 SHA 修正测试后，精确候选运行 2 条用例通过 |
+| Git 对象恢复与失败语义 | 测试修改限于测试路径；祖先关系、精确对象字节/模式、脏工作区排除、删除/重命名/符号链接、缺失对象失败及退出码 7 保留均通过 |
+| 兼容性逐字检查 | `.codex`、四份 `openai.yaml` 和原模板共 29 个文件内容保持不变；用户原有 `.zcode/plans/` 文件内容保持不变 |
+| `git diff --check` 与暂存区检查 | 通过；本轮未暂存、提交或推送源码 |
+
+本次隔离 Git fixture 的合成身份如下，便于区分执行时使用的组合；fixture 已按指南清理，不承诺这些演示对象今后仍可解析，可由完整片段重新创建。
+
+| 对象 | 执行时的合成 SHA |
+|---|---|
+| 基础输入 | `e8a12d666b0c17609dd8d162a946a82bca58c540` |
+| 生产实现及一条已通过测试 | `9da19fcfd8f769b58e299a7a58c153092a1ac7c4` |
+| 含失败测试辅助函数的候选 | `f2defa35149d6e5bb284e1c55c17efed19524342` |
+| 修正后实际运行两条测试的候选 | `644ee7dfcbec05f60f74593b61776aeec6d75c32` |
+| 仅用于删除、重命名和符号链接演示的后续提交 | `e7f4e3ada075bd578f392a32d383370781fe8d17` |
+
+`transport_sha` 没有被声称为测试通过的 SHA；以上 Git/测试事实也没有冒充 G5、G6、G9 或真实项目验收。
+
+### 失败注入与修正
+
+以下注入均在可丢弃副本或隔离执行环境中完成；不是对真实源树或用户配置的破坏性测试。正常副本在修正后重新执行两段完整指南，均退出 0。
+
+| 输入或环境变体 | 观察结果 |
+|---|---|
+| 重复 YAML 键 | 第一段退出 1 |
+| 不存在的相对链接 | 第一段退出 1 |
+| 不存在的标题锚点 | 第一段退出 1 |
+| 第一个 Skill 的名称无效 | 第一段退出 1，后续 Skill 验证未继续，不会被后续成功掩盖 |
+| `PYTHONOPTIMIZE=1` 分别执行两段 | 两段均在执行检查/安装前退出 1，明确要求禁用优化模式 |
+| README 安装目录赋值改写 | 第二段退出 1，未创建意外目标 |
+| README 安装目录赋值重复 | 第二段退出 1，未创建意外目标 |
+
+独立只读审查指出并复核关闭了以下实际问题：失败集成上的测试修正不能错误回到不含该测试的旧 PASS 基线；早期基线和 Root 测试计划不能被强制要求尚不存在的 Task；Python 优化模式不能移除检查断言；安装目录参数必须在替换前确认唯一且精确匹配。最终规则和失败注入覆盖这些修正。审查者执行了只读文本检查和有限最小复现，没有将主代理的指南执行结果声明为独立重跑。
+
+### 独立子代理前向评测
+
+实际启动两个独立 Codex 子代理会话，分别评估状态/测试交付和入口/连续派发；另有一个只读审查子代理。两组评测输入只含原始请求、必要事实与允许读取的规则路径，未提前提供预期答案，也未让评测者读取用例判定、README 或本报告。评测完成后由主代理按场景判定。这是规则输入下的决定级评测；实际工具操作限于读取和独立评测会话调用，没有启动 ZCode/Claude 原生会话或伪造业务门禁记录。
+
+| 原始场景组 | 实际观察到的决定 |
+|---|---|
+| 两个有依赖的 Task | 前项 G6 通过后保持 `VERIFIED`；证据有效时解锁后项，待 G9 及关闭条件满足再关闭 Task 与 Root |
+| 有效与失效的 `DONE` | 完整有效证据可以复用；只有 G6 的旧 `DONE` 通过新事件纠正为 `VERIFIED`；失效审核证据不能凭状态放行 |
+| Tester 在原 Task 添加测试 | 保留 Implementer 的 A..B 报告与 Tester 的 B..C 报告；独立审核完整 A..C，正式测试绑定含测试代码的集成 SHA |
+| 首次 G6 失败与 G5 后测试修正 | 从含失败测试的当前 M 修正；记录 TEST 问题、重新绑定审核与验证，不新增测试子 Task，不借用旧 PASS |
+| 未提交测试、测试预期、外部资产 | 未提交测试仅属诊断；普通实现修正不重开 G4；预期变化复核受影响批准；外部资产需要不可变版本及组合 |
+| ZCode 普通 CSV 开发请求，未提角色名 | 选择实际调用同名 Planner；不要求用户补充 subagent 提醒 |
+| Planner 完整交接与角色回传 | 主会话继续调用指定 Reviewer；完整结果原样回传已有 Planner，不等待新用户消息 |
+| G3 尚缺用户产品批准 | 保留绑定 Spec 的必要用户决定，未推断已批准 |
+| 缺失角色、工具、来源或旧 Planner 身份 | 报告具体缺口；不回退主会话实现，不绕行客户端，不创建第二个状态写入者 |
+| Planner 子代理身份与非开发输入 | 子代理返回精确交接，不嵌套派发；HTTP 304 解释和文案润色不触发 DevFlow |
+| Codex 宿主 Planner | 按既有 underscore 角色映射直接委派，不套用 ZCode 平级转发模式 |
+
+两组观察结果均符合独立判定标准。这里验证的是决策及证据选择，不是“ZCode 已自动派发成功”；角色调用的实际原生目标、回传事件和连续执行轨迹仍须原生会话证明。
+
+### 本轮未运行与适用限制
+
+- 未运行 ZCode/Claude 原生自动调用、角色连续交接及真实客户端加载验证；未执行全局安装或改写用户/业务项目配置。README 只交付可合并的最小入口提示。
+- 未运行 `codex doctor`、真实业务仓库 G0–G10、v1 布局迁移、生产服务或性能基准；历史章节中的对应结果不计入本轮。
+- 本轮不改变原报告 Schema、Compact 四文件布局、角色名称和原生 Codex 调用策略；静态与隔离检查不等于宿主强制权限沙箱或真实发布验收。
+
+### 受检文件清单
+
+以下 JSON 是指南第一段的候选清单输出，按路径排序。符号链接摘要取链接文本；普通文件记录权限模式与字节摘要。报告自身不在此清单中。
+
+<details>
+<summary>97 个候选文件的路径、模式与 SHA256</summary>
+
+```json
+[
+  {
+    "path": ".agents/skills/_devflow_shared/contracts/artifact-lifecycle.md",
+    "mode": "0o664",
+    "sha256": "822fde59c33193f3bfec218c05611974dd090558f018c8308ae89ba2ece23ac4"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/contracts/brownfield-policy.md",
+    "mode": "0o664",
+    "sha256": "92675ac94db6c1093cb561f2adf7e4b807c19b1444122ded8d3e3c69b670de06"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/contracts/change-control.md",
+    "mode": "0o664",
+    "sha256": "4d3d2d55d84288810b6eeed6d4cc19d02a14fb701f3ed4a6a1b4a32da2a11e51"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/contracts/gate-policy.md",
+    "mode": "0o664",
+    "sha256": "2cc199d29f1ffb617990ab651af7003800c57c0fbdc8da2cc3be18929bdc4aad"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/contracts/git-policy.md",
+    "mode": "0o664",
+    "sha256": "4a24cdd3f91fbc005359f5fc7801aca6d48b6132a550870fef967223956b4996"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/contracts/review-severity.md",
+    "mode": "0o664",
+    "sha256": "078e41dddd6f444dab3f1df7226616629050ea4587b1e504d27530fcf582dc05"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/contracts/role-boundaries.md",
+    "mode": "0o664",
+    "sha256": "8a8dc0f8bd8eec9fb9124c7c59dea9a55ed81b17c43e9d4e16b47b5b07492048"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/contracts/workflow-state.md",
+    "mode": "0o664",
+    "sha256": "f3bf1af5e8883b8bdb7f8e6cf7f07d03945484d84ccca9fc0c5945bdd8400907"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/evals/brownfield-cases.md",
+    "mode": "0o664",
+    "sha256": "236f4f3e8a119ef468465edd612b6f33435e92d19db4b73d4c2310ade546c1a5"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/evals/trigger-cases.md",
+    "mode": "0o664",
+    "sha256": "896ba069c7775cf3119c64e32a3688917826f3e3731ef04dd798ac8e8013bcf4"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/evals/workflow-cases.md",
+    "mode": "0o664",
+    "sha256": "47b99baf36f948a56b465f11940c2906daa5dfba9c18343a77a6e1df4735b53f"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/ai-agent-review.md",
+    "mode": "0o664",
+    "sha256": "6f59514e32b0ac8a6b6a6a9254459323a33a8d1abd9eebd30dd8a9fa2c96e2f7"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/api-review.md",
+    "mode": "0o664",
+    "sha256": "3f270a5fceb5b1341deb4e492a0d0bf76b26bc9ccd90d375e8adf713ad312668"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/architecture-review.md",
+    "mode": "0o664",
+    "sha256": "6361f3cfa93b62d85a414f7d75de3959b3a2ed97049d2a038584451fadaab776"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/backend-review.md",
+    "mode": "0o664",
+    "sha256": "fb92a6a734f2f4533d0e6b6da643dfe55e610e45f9831e8c530b246be7ac212b"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/compact-layout.md",
+    "mode": "0o664",
+    "sha256": "40918340cc9aca441aed7b1bf12f0e83773003ace17937eed8c9e779d788e006"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/database-review.md",
+    "mode": "0o664",
+    "sha256": "644b984f49e19708b393ab5fa844cf93bceb4e5fe3c9c5f2178c00e86beffec9"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/devops-review.md",
+    "mode": "0o664",
+    "sha256": "cc1b20e38d6ea54191fd9d130ad7f0792bba1821b2f8afe7c3f0ab4d0ba4b429"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/distributed-systems-review.md",
+    "mode": "0o664",
+    "sha256": "213a260d8ca572c7bc2c80a192ae7ceefb0f63b07cdda71a6e6f80d2c9584974"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/frontend-review.md",
+    "mode": "0o664",
+    "sha256": "9db848a487e56ec9e05e9dc97e7b8c0d9cdfc0bc3ac5ec3f68962477ff37fe5f"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/languages/csharp.md",
+    "mode": "0o664",
+    "sha256": "e75eec074e06a53fa07bfe7bda62615f6aa8a671efa82adf6c1526d9472f965f"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/languages/go.md",
+    "mode": "0o664",
+    "sha256": "719566797a9fa8d0d357ad0a2df52f92e56b70fb96d33f84b0c6d4e1fe1c7980"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/languages/java-kotlin.md",
+    "mode": "0o664",
+    "sha256": "5dbe7c5d15786f643ffc91d7ba6e481f27d209bc267ec8b7f2616a3bc8406f29"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/languages/javascript-typescript.md",
+    "mode": "0o664",
+    "sha256": "4ee8d8ed044873753321d289554c823248ed1f2cf76d7dc66cdbea6c7fac46e6"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/languages/php-ruby.md",
+    "mode": "0o664",
+    "sha256": "13849b4f26db0dfccc8972dbf337d18b854029a7b9bc80145e4881de1e6c3208"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/languages/python.md",
+    "mode": "0o664",
+    "sha256": "50c866d36f021cd76eb9b94cb2508d300531b93dfd047f836d43ab9cbf935e63"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/languages/rust.md",
+    "mode": "0o664",
+    "sha256": "0d0282081dadbadc65193218417451fc5eb15d9387efe4749c836b072a733cb7"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/languages/shell.md",
+    "mode": "0o664",
+    "sha256": "800109410876379d333f9e8b86fa7621ca7c22e0de855b7a3f1eb530885497e1"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/languages/sql.md",
+    "mode": "0o664",
+    "sha256": "f082058d6ffd3c5aa089e71b56e211d4f7269c3dd366cde0c7366a4901a5c870"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/legacy-migration.md",
+    "mode": "0o664",
+    "sha256": "8e353e1429d18452d2615aafb58710835650605df0c6ee7f21c61d6800784d92"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/minimal-change.md",
+    "mode": "0o664",
+    "sha256": "42bed23b00fd0848bd63b1baa5988877df671baca07f135980e239e832d91fe6"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/repository-discovery.md",
+    "mode": "0o664",
+    "sha256": "ca8c8fe2612ec5d8f10892d66b482696993d647beb243e622ef44e75a76bd67c"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/references/security-review.md",
+    "mode": "0o664",
+    "sha256": "eb519d9670acd3326745cd96b3c3bda67d804fc8e5e116ded40be247902a5b76"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/templates/compact/current.md",
+    "mode": "0o664",
+    "sha256": "fbba2e6c3a911aa494e134c42d223d29fdbaf15cbf1f890628800a62db326296"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/templates/compact/evidence.md",
+    "mode": "0o664",
+    "sha256": "f5abef67535b05ebe47d0b4e1a54728742a76db783cb74b966941fdbd9d74487"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/templates/compact/state.yaml",
+    "mode": "0o664",
+    "sha256": "92f98bcd4bf25da860b8e3080d8ecdaff6dbad6d090061ffe0a38fd0c816a59e"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/templates/compact/test-plan.md",
+    "mode": "0o664",
+    "sha256": "aa32544496f5e533d31f61690abdf36533e7d67af9f589b7fd22573cfaeae54b"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/templates/decision.md",
+    "mode": "0o664",
+    "sha256": "6e8f942ce220a2433ddd1ea0f18cdf3cf702e5d52541d3ccba1dd7230f6e80a6"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/templates/defect.yaml",
+    "mode": "0o664",
+    "sha256": "6e6a6ceec80f781be9f2872b2a4d856da87030618bcef9121b518f2caec7b0e3"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/templates/implementation-report.yaml",
+    "mode": "0o664",
+    "sha256": "3a987f1c28b768afa66728594579cc324f7ab47efaf61c4e49ccb063d4c28c19"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/templates/intake.md",
+    "mode": "0o664",
+    "sha256": "fe866a9631e446b130ff86d99d1289dc53c23eff409f0a18e4c6219818d553f8"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/templates/repository-profile.md",
+    "mode": "0o664",
+    "sha256": "576a7b7112143dc36f895a73ae4a6644f3627508a6c296a4d5e812d2d122bf61"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/templates/review.yaml",
+    "mode": "0o664",
+    "sha256": "09f5b03879f5ca735b7282b61f4a1461489c1bcec5f8da74f7c660711388fa17"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/templates/risk-acceptance.md",
+    "mode": "0o664",
+    "sha256": "501f3ef12b80b3ae16114c4976d5110707a2cfe3913bb145ba742589ae4c2c15"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/templates/root-issue.md",
+    "mode": "0o664",
+    "sha256": "ab911e109c73325191a8df9ab30d20efca7a962e8f6712b60ccb6729a6349649"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/templates/spec.md",
+    "mode": "0o664",
+    "sha256": "c9b9a317f11bbc3742870dbec7b8fe8609edf6e9f022e7a18d269356086b6b78"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/templates/state.yaml",
+    "mode": "0o664",
+    "sha256": "ef11f88518c3cefb962d0194cd5741029751bc8f0f4a5bb479981d961c760b3c"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/templates/takeover-assessment.md",
+    "mode": "0o664",
+    "sha256": "9d1867920df2f1911d6171abc3bbfe91c6417247470538d89b5c7317bd1ba80e"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/templates/task.yaml",
+    "mode": "0o664",
+    "sha256": "c101d0fa1d9ebc7301272b65d80fe3a48edaa54270152251d60107221375c77a"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/templates/test-case.yaml",
+    "mode": "0o664",
+    "sha256": "0aa66a76f92f9d9ddb642c9fd5f7a987c01086511ff6cb0f1d8dd3a8686c25b1"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/templates/test-plan.md",
+    "mode": "0o664",
+    "sha256": "527257fd2b92b164d4ec16584108967eb47a71bfa0ff32d0f11bfc87ca7a5a96"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/templates/test-report.yaml",
+    "mode": "0o664",
+    "sha256": "828138d296acc062936515d69e9f655bc13489943a8e45329de609133493a305"
+  },
+  {
+    "path": ".agents/skills/_devflow_shared/templates/ui-spec.md",
+    "mode": "0o664",
+    "sha256": "79b42170ce2cc31fe8fdcb79f13e2dd1fa44831f4d124c274483542beb943ca7"
+  },
+  {
+    "path": ".agents/skills/devflow-implementer/SKILL.md",
+    "mode": "0o664",
+    "sha256": "caa2002e58dd22855a9dfee64370f4deebd06b6b4b1a2d58a1b02ed50bc96289"
+  },
+  {
+    "path": ".agents/skills/devflow-implementer/agents/openai.yaml",
+    "mode": "0o664",
+    "sha256": "19321a1355042d661f7c00cabce6d6e371f7986c4e56e80ee51a1d3ad738461d"
+  },
+  {
+    "path": ".agents/skills/devflow-implementer/references/brownfield-implementation.md",
+    "mode": "0o664",
+    "sha256": "28317604240647d29edf14d2f690135de64ddb2b8b2cddec5d06c0ea7cc17715"
+  },
+  {
+    "path": ".agents/skills/devflow-implementer/references/implementation-workflow.md",
+    "mode": "0o664",
+    "sha256": "c262a0e33d54d58cfda5fc36ccb8c7b82b81f6746a726884f707b5a8a7b782a1"
+  },
+  {
+    "path": ".agents/skills/devflow-implementer/references/self-review.md",
+    "mode": "0o664",
+    "sha256": "25b8538b57ec1b6cbc6e7fd04d54034f558274bfa5b8e4e2ba9fb05772825782"
+  },
+  {
+    "path": ".agents/skills/devflow-planner/SKILL.md",
+    "mode": "0o664",
+    "sha256": "ff91c9ed9dda25862e4f6fa336f51fc46ad94f84e8fd673e28348bef9436aa24"
+  },
+  {
+    "path": ".agents/skills/devflow-planner/agents/openai.yaml",
+    "mode": "0o664",
+    "sha256": "f27ee780e5794031fc06e943d1ab512371eb09e67d38ffd66d40085004de6c39"
+  },
+  {
+    "path": ".agents/skills/devflow-planner/references/orchestration.md",
+    "mode": "0o664",
+    "sha256": "18f4425adaab6c609d3725fd369f0c71d8f50edb2729ea92b9820ad46a39ce99"
+  },
+  {
+    "path": ".agents/skills/devflow-planner/references/requirement-analysis.md",
+    "mode": "0o664",
+    "sha256": "5584e15b586f3a0878152ac4234c81b0499ed93d41e8e1833f58033ece0399bc"
+  },
+  {
+    "path": ".agents/skills/devflow-planner/references/task-decomposition.md",
+    "mode": "0o664",
+    "sha256": "a379e4b2e13f9b046b768bec446d1a43f1d745f0e3fe2f83be1191f52cf7f1eb"
+  },
+  {
+    "path": ".agents/skills/devflow-reviewer/SKILL.md",
+    "mode": "0o664",
+    "sha256": "3e3062ce6d876863b24049b7af5025726f530d25ea2579044cc3e30a78c4f268"
+  },
+  {
+    "path": ".agents/skills/devflow-reviewer/agents/openai.yaml",
+    "mode": "0o664",
+    "sha256": "41f513c72e7c4f000162cc0f849d523890a29b7622eabfe9ffc99fdb14fad3a3"
+  },
+  {
+    "path": ".agents/skills/devflow-reviewer/references/baseline-review.md",
+    "mode": "0o664",
+    "sha256": "3fe209def6407d77a6b9be63a862b691e72c4113ef72cbca84c53c3ed4524ed0"
+  },
+  {
+    "path": ".agents/skills/devflow-reviewer/references/code-review.md",
+    "mode": "0o664",
+    "sha256": "7e735aa17eec1baf4b465a9a5047981c9d07229f5d3108aa09bf39ad36f6a090"
+  },
+  {
+    "path": ".agents/skills/devflow-reviewer/references/release-review.md",
+    "mode": "0o664",
+    "sha256": "b1fde3f4bb41acc313f3e406497b46a3f09417404a21c347548befe23f6bd589"
+  },
+  {
+    "path": ".agents/skills/devflow-reviewer/references/spec-review.md",
+    "mode": "0o664",
+    "sha256": "8e4c12a250e92fd85f64f2aae14103cc282ae2177325db3388537a84bbb366af"
+  },
+  {
+    "path": ".agents/skills/devflow-reviewer/references/test-review.md",
+    "mode": "0o664",
+    "sha256": "def7c6ee28ba4fad5777c634e10f5bece8b640c9461c019a6a4d700d86d4cd8e"
+  },
+  {
+    "path": ".agents/skills/devflow-tester/SKILL.md",
+    "mode": "0o664",
+    "sha256": "636b3d56018e0d6c2d25b0d7d4d1f031437d60e443992e338f8dfc73fad12f12"
+  },
+  {
+    "path": ".agents/skills/devflow-tester/agents/openai.yaml",
+    "mode": "0o664",
+    "sha256": "c45e8ae2b8248ca10a3a221fa86abebfb9a6befe1234bbf926c930204034a9a9"
+  },
+  {
+    "path": ".agents/skills/devflow-tester/references/characterization-testing.md",
+    "mode": "0o664",
+    "sha256": "b9015482fb7642db35a81d951090e34e71b7921f6e0f0c58d06fa386020bdb06"
+  },
+  {
+    "path": ".agents/skills/devflow-tester/references/defect-reporting.md",
+    "mode": "0o664",
+    "sha256": "06453801ec36fcb8e42a41be9360c3a74fd5d5bfef8ee51182ecb1545b75f941"
+  },
+  {
+    "path": ".agents/skills/devflow-tester/references/integration-testing.md",
+    "mode": "0o664",
+    "sha256": "4e94b590fc116082e00dc7279f9ae2661a4903da3da0189e00fd4d443c07bdeb"
+  },
+  {
+    "path": ".agents/skills/devflow-tester/references/test-code-delivery.md",
+    "mode": "0o664",
+    "sha256": "c5a0755d4e23411bcec49a2078e13fa02d2d9afc836c3ba226ae7e7fbe98581e"
+  },
+  {
+    "path": ".agents/skills/devflow-tester/references/test-strategy.md",
+    "mode": "0o664",
+    "sha256": "4ac59477bc456eac69c536348e5714deee3915d08263f1ec29672c09229c9027"
+  },
+  {
+    "path": ".claude/agents/devflow-implementer.md",
+    "mode": "0o664",
+    "sha256": "717f494c88e768afecd3b8847187da3b228c5808f45589cbd2927364f5729830"
+  },
+  {
+    "path": ".claude/agents/devflow-planner.md",
+    "mode": "0o664",
+    "sha256": "644b8342d1e8b5503f8c9c104257fcca22fd39f2f623e837f1d2d4b868592226"
+  },
+  {
+    "path": ".claude/agents/devflow-reviewer.md",
+    "mode": "0o664",
+    "sha256": "8d2be354ec3ff8bbd2e9fd518ac26dfa3edd45591b3ee5d01637fa8b580e9926"
+  },
+  {
+    "path": ".claude/agents/devflow-tester.md",
+    "mode": "0o664",
+    "sha256": "c9f926acd33a700a8a229a1acdbdc3e605e3091ecefe6b1fefbf959d1805f447"
+  },
+  {
+    "path": ".claude/skills",
+    "mode": "symlink",
+    "sha256": "3c74c93317f015d16370349a76529b6f8332c808bdd589e7640eeba6a1b1b874"
+  },
+  {
+    "path": ".codex/agents/devflow-implementer.toml",
+    "mode": "0o664",
+    "sha256": "ad35441288e8f9f1165fb180008254d27533d9962b76eabcab5c233b685404f0"
+  },
+  {
+    "path": ".codex/agents/devflow-planner.toml",
+    "mode": "0o664",
+    "sha256": "043817a3d28760c6c020380ab491b066547a0a0f4f269d9a1fa33561ebcb4c41"
+  },
+  {
+    "path": ".codex/agents/devflow-reviewer.toml",
+    "mode": "0o664",
+    "sha256": "5b47fee175e1a6e86180f770c0879f821e1d870c4e4551eef0bc2d5adf71e9bf"
+  },
+  {
+    "path": ".codex/agents/devflow-tester.toml",
+    "mode": "0o664",
+    "sha256": "82a463ac4f075ffc823675260108e78a9003cbf965880b6bf20ee7ead7388b5f"
+  },
+  {
+    "path": ".codex/config.toml",
+    "mode": "0o664",
+    "sha256": "fb26706a468cd952f3f64fc51f9fbadca8ea40b1a8c7072a2bdfb761edadb976"
+  },
+  {
+    "path": ".devflow/README.md",
+    "mode": "0o664",
+    "sha256": "fecaec502d60c172075b8d20bb7eedf3dc9f15166d6d3ebfebe838057b03c909"
+  },
+  {
+    "path": ".gitignore",
+    "mode": "0o664",
+    "sha256": "efd130085d0b6ab966e1fb9396c07b01ca0f41e9f15ebdf16271b571ce1f12dc"
+  },
+  {
+    "path": ".zcode/agents/devflow-implementer.md",
+    "mode": "0o664",
+    "sha256": "b38d56ebb715f104ad3c61d1d6d972a9ed42cdc6050ba60058ec3014b165954b"
+  },
+  {
+    "path": ".zcode/agents/devflow-planner.md",
+    "mode": "0o664",
+    "sha256": "e004d5f7bbe2bb2df4740201fc263b68c0b3293a20c11db64798c30f0a582a26"
+  },
+  {
+    "path": ".zcode/agents/devflow-reviewer.md",
+    "mode": "0o664",
+    "sha256": "fafac0c63641d36d4f3d92a385a5f1b57021c50e15bff5959f19dd050a91f061"
+  },
+  {
+    "path": ".zcode/agents/devflow-tester.md",
+    "mode": "0o664",
+    "sha256": "1d01fac5222a044b0ece5c30716c3bd8d8bdff522e4537d76dd4474b6454af2d"
+  },
+  {
+    "path": "AGENTS.md",
+    "mode": "0o664",
+    "sha256": "ac3c2dbe975000f2a31d80db7d12b3e0df344a53f3da8d4e601b0d24c6458f55"
+  },
+  {
+    "path": "README.md",
+    "mode": "0o664",
+    "sha256": "252baea44ae58b860018771c6ba5b1b132c7ed61f175d1f13ab4a309ebcb9f26"
+  },
+  {
+    "path": "docs/DEVFLOW_SKILLS_DESIGN.md",
+    "mode": "0o664",
+    "sha256": "fac64bc0f747e2b5f99402e5b30b9071ca5366bc2ba83385b53212c0dd830f50"
+  },
+  {
+    "path": "docs/DEVFLOW_SKILLS_VALIDATION_GUIDE.md",
+    "mode": "0o664",
+    "sha256": "003ee76c15a8d1a6985378f9cbc59c7fbc0f449d0627c7065738c9dc1dcd0d29"
+  }
+]
+```
+
+</details>
+
+### 最终收尾复检
+
+追加报告后的源树复检退出 0：4 个 Skill、12 YAML、5 TOML、15 frontmatter、79 个 Markdown 文档、151 个本地链接和 23 处锚点引用均通过，候选集合 SHA256 与干净副本一致。历史报告前 34935 字节保持不变；29 个受保护包文件和 1 个用户计划文件摘要一致。仅有本轮交付和原有用户计划处于未提交状态，暂存区为空。指南创建的 fixture 与本轮额外创建的隔离副本、失败注入文件和临时日志均已清理，源码分支和 HEAD 未变。

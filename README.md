@@ -105,7 +105,7 @@ flowchart TB
 
 | 角色 | 默认调用方式 | 核心职责 | 写入边界 |
 |---|---|---|---|
-| `devflow-planner` | 可隐式调用，也可显式调用 | 需求接收、仓库接管、Spec、Task DAG、状态、调度、归因、合并与关闭 | 规划/状态产物和已过门禁的 Git 协调；不写生产代码 |
+| `devflow-planner` | 范围内开发请求主动调用，也可显式调用 | 需求接收、仓库接管、Spec、Task DAG、状态、调度、归因、合并与关闭 | 规划/状态产物和已过门禁的 Git 协调；不写生产代码 |
 | `devflow-reviewer` | 仅显式调用或由 Planner 委派 | 独立审核基线、Spec、测试计划、代码和发布证据 | 只读；只返回 `APPROVE`、`REQUEST_CHANGES` 或 `BLOCKED` |
 | `devflow-tester` | 仅显式调用或由 Planner 委派 | 测试计划、特征测试、集成/E2E/回归验证、缺陷证据 | 只写测试及自身证据；不改生产代码 |
 | `devflow-implementer` | 仅显式调用或由 Planner 委派 | 在一个已批准 Task 和变更预算内完成最小完整实现 | 只处理获批范围；不改 Spec、不自审、不合并 |
@@ -290,6 +290,22 @@ ZCode 的 Skill 来源可以是已安装的用户共享五目录或当前项目�
 
 ZCode / Claude：主会话 → 四个平级子代理之一 → 主会话原样回传。Planner 决定下一角色并维护状态，主会话没有规划或正式证据写入权；四个子代理都不能再派生代理。主会话仅加载 Skill 不等于已经进入子代理，已启动的角色也不得再次调用自己。详见[原生平级调用](.agents/skills/devflow-planner/references/orchestration.md#原生平级调用)。
 
+符合 DevFlow 范围的开发请求应主动调用 Planner，收到它的精确交接后继续派发下一角色，不需要额外提醒“请使用 subagent”。入口描述和共享正文都规定这一行为；G3 产品批准及其他必需授权仍保留。角色未加载、工具不可用或来源/旧会话状态不明时报告缺口，不退回主会话自行实现。
+
+#### 可选的项目入口提示
+
+如果希望目标业务项目的主会话在 Skill 正文加载前就获得明确路由，可把下面几行合并到该项目已有 AGENTS.md（不要覆盖原文件）。这只是指向同一共享规则的入口，不复制流程；本包不会代写用户全局配置或业务文件。
+
+```markdown
+在已安装并启用 DevFlow 的宿主中，符合其范围的软件开发、修复、续作、重构、迁移或基础设施请求，主动使用已发现的 devflow-planner；解释、一般建议、单纯文档编辑与极小无风险编辑不启动完整流程。
+先确认实际宿主、主/子会话身份、角色可用性和同源 Skill 路径，再读取共享入口及其编排参考。
+Claude/ZCode 主会话实际调用同名 Planner 子代理，按它的精确交接继续调用平级角色并原样返回结果；不等待用户提醒 subagent，不自行承担角色正文。
+已启动的 DevFlow 子代理执行自身职责，不再派生代理；Codex 沿用 Planner 直接调度的原方式。
+用户已授权范围内持续推进，保留 G3 和其他仍适用的授权门禁；缺角色、工具或可信身份时报告缺口，不猜测、越权或绕行派发。
+```
+
+ZCode 根据子代理描述判断调用时机；定义更新后应使用新会话检查实际加载来源及 Agent 调用记录。描述与指令能表达期望，不能代替原生运行验证。[ZCode 子代理文档](https://zcode.z.ai/cn/docs/subagents)
+
 Planner/Tester/Implementer 默认继承模型、开放必要的读取/搜索/Bash/编辑；Reviewer 只开放 Read/Grep/Glob，无 Bash/MCP/编辑。工具白名单不是文件路径沙箱，不能等同 Codex Reviewer 的 read-only sandbox；写入角色仍须遵守 Task 允许/保护路径。Reviewer 通过[已核验的历史阅读缓存](.agents/skills/devflow-planner/references/orchestration.md#只读审核阅读缓存)读取 Git 原文，证据仍绑定原始 SHA；缺必要材料就 BLOCKED，不以工具受限省略审核。缺 MCP/环境须单独处理，不默认扩大权限。
 
 ## 怎么用
@@ -298,7 +314,7 @@ Planner/Tester/Implementer 默认继承模型、开放必要的读取/搜索/Bas
 
 ### 最常用：把开发请求交给 Planner
 
-Planner 允许隐式调用。正常描述目标、约束和完成条件即可：
+Planner 对范围内开发请求主动调用。正常描述目标、约束和完成条件即可，不需要额外点名子代理：
 
 ```text
 请在当前项目增加订单导出能力，保持现有权限和 API 兼容；完成实现、测试和审核后交付。
@@ -340,6 +356,12 @@ Spec 为 <文档完整 SHA> 中 .devflow/changes/REQ-20260905-001/current.md 的
 ```
 
 通常不需要手动逐个调用后三个角色；让 Planner 使用紧凑交接完成调度即可。显式调用更适合独立审计、测试补证或已经存在获批 Task 的场景。
+
+### Task 验证、测试代码与关闭
+
+Task 集成验证通过后保持 VERIFIED，以解锁后续依赖；当前交付的目标 SHA 冒烟与关闭证据齐备后才 DONE。旧 DONE 只有证据完整有效才可复用，恢复时状态与证据矛盾由 Planner 追加纠正事件，历史报告不改写。
+
+独立测试代码由 Tester 在原 Task 内署名交付，默认与 Implementer 串行完成完整候选，再由 Reviewer 审核、Planner 集成。各作者报告保持自己的 SHA 范围；G5 后改测试也重新绑定审核/验证，不能把未提交测试的结果记成旧 SHA 的正式 PASS。详细边界见[测试代码交付](.agents/skills/devflow-tester/references/test-code-delivery.md)。
 
 ## 四个文件，当前正文与完整历史分开
 
@@ -443,9 +465,13 @@ git rev-parse <actual-baseline-tag>^{commit}
 
 静态检查、隔离 Git 迁移/恢复和独立角色评测的本轮实际结果统一记录在[验证报告](docs/DEVFLOW_SKILLS_VALIDATION.md)。历史 Brownfield 结果单独列出，不能当作本版重新执行的证明。
 
+完整可复跑命令、隔离安装/Git fixture、失败注入和行为评测方法见[验证指南](docs/DEVFLOW_SKILLS_VALIDATION_GUIDE.md)。新结果绑定受检提交或文件集合摘要；文档中的自包含片段不依赖已删除的历史临时程序。
+
 你可以在 clone 后重新运行基础验证：
 
 ```bash
+(
+set -Eeuo pipefail
 VALIDATOR_PATH="${CODEX_HOME:-${HOME}/.codex}/skills/.system/skill-creator/scripts/quick_validate.py"
 
 for skill_name in \
@@ -454,10 +480,11 @@ for skill_name in \
   devflow-tester \
   devflow-implementer
 do
-  python3 "${VALIDATOR_PATH}" ".agents/skills/${skill_name}"
+  python3 -B "${VALIDATOR_PATH}" ".agents/skills/${skill_name}"
 done
 
 codex --strict-config doctor --summary --no-color --ascii
+)
 ```
 
 完整设计见 [DevFlow Skills 总体设计](docs/DEVFLOW_SKILLS_DESIGN.md)，实际命令、结果和演示边界见 [验证报告](docs/DEVFLOW_SKILLS_VALIDATION.md)。

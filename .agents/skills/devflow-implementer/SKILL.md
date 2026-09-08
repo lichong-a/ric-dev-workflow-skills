@@ -34,7 +34,7 @@ Codex 保持下述原流程。Claude Code / ZCode 主会话显式加载本 Skill
 - Root Issue ID，以及一个 Task ID 或一个已归因的 Defect ID；
 - 当前已批准的 Spec 路径、版本，以及映射到本任务的 AC；
 - 当前已批准的测试计划路径和版本；
-- 所有依赖 Task 均处于 `VERIFIED` 状态；
+- 所有依赖 Task 均满足[有效依赖](../_devflow_shared/contracts/workflow-state.md#有效依赖与恢复)：有有效证据的 `VERIFIED`，或具有完整关闭证据的 `DONE`；
 - 源分支/集成分支的 `base_ref` 与精确完整的 `base_sha`；
 - 当前 worktree、ref 与状态，以及允许路径和受保护路径；
 - 变更预算、仓库画像和相近参考实现；
@@ -73,6 +73,8 @@ Codex 保持下述原流程。Claude Code / ZCode 主会话显式加载本 Skill
 依据 `../_devflow_shared/templates/implementation-report.yaml` 发布一个新的不可变实现报告实例，至少包含：实现标识、Root Issue、Task/Defect、Spec 版本、精确 base/head SHA、预算合规性、实际变更文件、行为摘要、复用模式、关键决策、测试及退出码、文档/迁移/回滚、已知风险、未运行检查和观察到的既有失败。修正必须以新版本取代旧报告，不得修改审核者或测试者的历史证据。
 
 将报告及精确 SHA/diff 交给规划者，进入独立 `CODE_REVIEW`。不得自行声称 Task 已批准、执行合并、标记为已验证、关闭 Defect，或宣布 Root Issue 完成。
+
+Task 还需 Tester 编写独立测试时，由 Planner 按[测试代码交付](../devflow-tester/references/test-code-delivery.md)串行交接写入窗口后送完整候选。你的报告保持自己的真实 SHA 范围，不代写 Tester 报告、不把后续测试提交改绑为自己原交付的 head。
 
 ## 完成条件与禁令
 

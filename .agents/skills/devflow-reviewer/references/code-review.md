@@ -1,10 +1,12 @@
 # CODE_REVIEW（代码审核）
 
-针对 `base_sha..head_sha` 精确审核一个 Task 或实现类 Defect，并结合当前 Spec、测试计划、变更预算、仓库画像、实现报告和已知基线。不得用分支名代替 SHA 进行审核。
+针对 `base_sha..head_sha` 精确审核一个 Task 的完整候选，或其实现类/测试类 Defect 修正，并结合当前 Spec、测试计划、变更预算、仓库画像、各代码作者报告和已知基线。不得用分支名代替 SHA 进行审核。
 
 ## 确立 diff
 
 验证两个 Commit 都存在，祖先关系/范围符合意图，报告文件与实际 diff 一致，既有脏改动未被包含或覆盖。将每个变更文件映射到 AC、必需风险控制、测试、迁移、文档或可观测性需求。无法合理映射的内容可能属于范围漂移。
+
+Tester 可以按[测试代码交付](../../devflow-tester/references/test-code-delivery.md)提交原结构的 Implementation Report；核对真实作者、测试路径预算、预期与计划，不要求 Implementer 代写。多作者候选核对每份报告的原始范围、完整净差异和最终 head，不能修改旧报告绑定。G5 后测试代码变化同样需要新的代码审核；测试执行 PASS 或 G4 计划批准都不能替代它。
 
 ## 审核顺序
 
