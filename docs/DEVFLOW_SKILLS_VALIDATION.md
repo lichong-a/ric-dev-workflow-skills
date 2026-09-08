@@ -943,3 +943,36 @@ WF-16–22 覆盖由静态、真实本地 Git 操作、人工构造故障与独�
 ### 最终收尾复检
 
 追加报告后的源树复检退出 0：4 个 Skill、12 YAML、5 TOML、15 frontmatter、79 个 Markdown 文档、151 个本地链接和 23 处锚点引用均通过，候选集合 SHA256 与干净副本一致。历史报告前 34935 字节保持不变；29 个受保护包文件和 1 个用户计划文件摘要一致。仅有本轮交付和原有用户计划处于未提交状态，暂存区为空。指南创建的 fixture 与本轮额外创建的隔离副本、失败注入文件和临时日志均已清理，源码分支和 HEAD 未变。
+
+## Implementer 业务命名与既有代码保护补充（2026-09-08）
+
+本节追加于前次验证记录之后，历史原文保持不变。新增规则由 Codex、Claude Code、ZCode 共同读取的 Implementer Skill 承载；Claude/ZCode 原生入口显式引用，自审增加命名冲突、共享调用方及回归检查。命名应表达当前业务含义，避免作用域遮蔽和同名异义；实施优先局部、预算内的最小完整变更，保持范围外行为与契约，不批量重命名旧代码。规则没有把命名清晰等同于消除 Git 合并冲突。
+
+本次仅执行验证指南第一段完整静态检查，退出 0：四 Skill 验证器 4/4 通过，YAML 12、TOML 5、frontmatter 15、Markdown 79、本地链接 154、锚点引用 26，均无失败。源码 HEAD 仍为 `84954fbda3c1d8c47ef2a5ee9fb43e18ab4a3c4a`；相对前次候选，仅下列四份规则文件内容变化，原有其他候选文件、Codex 配置、模板和用户计划保持不变。另追加本报告，不暂存、提交或推送。
+
+当前候选集合 SHA256 为 `2cae75ba4d0f1745250e63bbb61b038dda0601e765537cc42c0cac453a26db10`。受检集合仍为前节的 97 个文件；用下列四条替换前节清单中的同路径条目即可重建本次完整清单，摘要算法不变，报告自身仍排除。未重跑隔离安装/Git fixture 或独立代理行为评测：本次为局部指令补充，安装代码、状态/测试交付规则未变。未运行原生客户端，不宣称此静态检查证明实机执行效果。
+
+```json
+[
+  {
+    "path": ".agents/skills/devflow-implementer/SKILL.md",
+    "mode": "0o664",
+    "sha256": "ea97e45afe9e0bdbfbe68b31fbd45981274ac1438d38e7eca4faef985ebcf2a7"
+  },
+  {
+    "path": ".agents/skills/devflow-implementer/references/self-review.md",
+    "mode": "0o664",
+    "sha256": "394d0dc5f8bf56b434f729c3b1f2feff517ac54317d7a2ae8c5dc3b5f06c52ac"
+  },
+  {
+    "path": ".claude/agents/devflow-implementer.md",
+    "mode": "0o664",
+    "sha256": "f04fd7401e001f968389f4b676e186f6ec07b162882a841dc5b7c1cfd0b0899a"
+  },
+  {
+    "path": ".zcode/agents/devflow-implementer.md",
+    "mode": "0o664",
+    "sha256": "a9be5b77dcabf44377dcaf3409b86ae94dc78e71b1bf018e8fb434c2b52478b4"
+  }
+]
+```

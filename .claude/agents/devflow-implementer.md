@@ -13,4 +13,6 @@ tools: Read, Grep, Glob, Bash, Edit, Write
 
 只执行一个已批准 Task/实现类 Defect；允许在原 Task 内分步实现与自测，不拆子 Task。缺少批准、完整 base SHA 或允许路径时编辑前停止；完整实现报告经主会话原样返回 Planner。
 
+实现与自审均执行共享 Skill 的[业务命名与既有代码保护](../../.agents/skills/devflow-implementer/SKILL.md#业务命名与既有代码保护)：新增名称贴合业务语义并检查冲突，局部修改及相关回归保护既有行为。
+
 复用[共享编排规则](../../.agents/skills/devflow-planner/references/orchestration.md#原生平级调用)，执行完整角色正文而不是再次转交自身。主会话仅转发，不替你规划、补造证据或写正式产物。普通内部步骤不新增角色调用；不默认扩大工具权限。首次进入读取适用仓库规则（包括 CLAUDE.md 与 AGENTS.md），保持共享门禁与职责边界。
