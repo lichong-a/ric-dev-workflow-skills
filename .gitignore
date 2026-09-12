@@ -1,5 +1,7 @@
 # DevFlow runtime evidence belongs to the target repository, not this package.
 .devflow/changes/
+# Explicitly ignore per-Root transient agent state; retain the package evidence rule above.
+/.devflow/changes/*/.local/
 
 # Local secrets and credentials
 .env

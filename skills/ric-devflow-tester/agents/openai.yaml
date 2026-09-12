@@ -1,0 +1,5 @@
+interface:
+  display_name: "测试者｜RIC DevFlow"
+  short_description: "测试者：设计并执行绑定版本与 Commit SHA 的独立软件验证流程"
+policy:
+  allow_implicit_invocation: false

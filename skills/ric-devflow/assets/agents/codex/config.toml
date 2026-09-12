@@ -1,0 +1,5 @@
+# 原基线配置示例，仅供阅读；准备流程不整段写入，也不覆盖既有值。
+# enabled 默认 true；显式 false 不反转，已有并发设置保留。
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 6

@@ -4,7 +4,7 @@
 
 **把一次编码请求，升级成可审计、可接管、可交付的软件工程闭环。**
 
-面向 Codex、Claude Code 和 ZCode 的共享四角色软件交付 Skill：规划、独立审核、独立测试和受控实现。
+面向 Codex、Claude Code 和 ZCode 的五 Skill 发布包：一个准备入口，加规划、独立审核、独立测试和受控实现四个业务角色。
 
 ![Codex Skills](https://img.shields.io/badge/Codex-Skills-111827?style=flat-square)
 ![Instruction Only](https://img.shields.io/badge/Architecture-Instruction--Only-2563EB?style=flat-square)
@@ -14,6 +14,24 @@
 </div>
 
 ---
+
+## 快速开始
+
+已安装 Node.js 后，在终端执行以下命令，将 Skill 安装到用户范围：
+
+```bash
+npx skills add lichong-a/ric-dev-workflow-skills -g
+```
+
+按安装器提示选择当前使用的 Agent，以及 `ric-devflow` 入口或全部五个 `ric-` Skill。此命令用于首次安装；已有同名 Skill 时先按[安装与恢复](#安装与恢复)检查，避免覆盖定制内容。
+
+安装后，在目标项目中调用入口并描述需求：
+
+```text
+使用 ric-devflow，帮我完成当前项目的开发任务。
+```
+
+Codex 可显式使用 `$ric-devflow`，Claude Code 可使用 `/ric-devflow`。入口会确认当前宿主，检查并补齐同源缺件，配置所需原生角色，再继续原任务；如宿主需要重新加载，按入口给出的恢复说明继续。安装文件齐备不等于原生角色已经加载。
 
 ## 为什么是 DevFlow
 
@@ -101,14 +119,15 @@ flowchart TB
     style RELEASE fill:#f8fafc,stroke:#cbd5e1,stroke-width:1px,rx:12,ry:12
 ```
 
-> **如何读回路：** 审核不通过或测试失败时，先回到 Planner 归因，再交给负责的角色修正；新代码必须重新审核、重新验证。图中展开了常见的实现/测试返修；Spec、范围或测试计划中的预期/环境变化须复核受影响的批准，环境或授权缺失则记录 `BLOCKED` 和恢复条件。最终验收失败同样走这个回路，不能直接进入「交付完成」。门禁的适用范围与证据复用规则见[门禁策略](.agents/skills/_devflow_shared/contracts/gate-policy.md)。
+> **如何读回路：** 审核不通过或测试失败时，先回到 Planner 归因，再交给负责的角色修正；新代码必须重新审核、重新验证。图中展开了常见的实现/测试返修；Spec、范围或测试计划中的预期/环境变化须复核受影响的批准，环境或授权缺失则记录 `BLOCKED` 和恢复条件。最终验收失败同样走这个回路，不能直接进入「交付完成」。门禁的适用范围与证据复用规则见[门禁策略](skills/ric-devflow/references/contracts/gate-policy.md)。
 
 | 角色 | 默认调用方式 | 核心职责 | 写入边界 |
 |---|---|---|---|
-| `devflow-planner` | 范围内开发请求主动调用，也可显式调用 | 需求接收、仓库接管、Spec、Task DAG、状态、调度、归因、合并与关闭 | 规划/状态产物和已过门禁的 Git 协调；不写生产代码 |
-| `devflow-reviewer` | 仅显式调用或由 Planner 委派 | 独立审核基线、Spec、测试计划、代码和发布证据 | 只读；只返回 `APPROVE`、`REQUEST_CHANGES` 或 `BLOCKED` |
-| `devflow-tester` | 仅显式调用或由 Planner 委派 | 测试计划、特征测试、集成/E2E/回归验证、缺陷证据 | 只写测试及自身证据；不改生产代码 |
-| `devflow-implementer` | 仅显式调用或由 Planner 委派 | 在一个已批准 Task 和变更预算内完成最小完整实现 | 只处理获批范围；不改 Spec、不自审、不合并 |
+| `ric-devflow` | 范围内完整开发隐式调用，也可显式调用 | 识别宿主和范围、按需补装与加载核验、角色路由 | 仅已授权准备，不承担第五业务角色 |
+| `ric-devflow-planner` | 仅显式调用或由入口精确路由 | 需求接收、仓库接管、Spec、Task DAG、状态、调度、归因、合并与关闭 | 规划/状态产物和已过门禁的 Git 协调；不写生产代码 |
+| `ric-devflow-reviewer` | 仅显式调用或由 Planner 委派 | 独立审核基线、Spec、测试计划、代码和发布证据 | 只读；只返回 `APPROVE`、`REQUEST_CHANGES` 或 `BLOCKED` |
+| `ric-devflow-tester` | 仅显式调用或由 Planner 委派 | 测试计划、特征测试、集成/E2E/回归验证、缺陷证据 | 只写测试及自身证据；不改生产代码 |
+| `ric-devflow-implementer` | 仅显式调用或由 Planner 委派 | 在一个已批准 Task 和变更预算内完成最小完整实现 | 只处理获批范围；不改 Spec、不自审、不合并 |
 
 ## 核心卖点
 
@@ -134,11 +153,15 @@ Planner 不写生产代码，Reviewer 不修改被审核对象，Tester 不替 I
 
 只有 Root Planner 调度角色；Implementer、Tester、Reviewer 不创建子任务或再次启动四角色流程。DAG 首次规划完成即作为送审基线，G2 通过后冻结；内部顺序、正常返修、上下文恢复和测试细化不改图。只有用户改变范围、已证实的依赖错误或无法在原 Task 内解决的安全/权限/环境/发布障碍，才记录依据并局部复审改图；不全图重建。
 
-G0–G4 为当前 Root/阶段共享，不为每个步骤重走。内部步骤、不适用的额外基线专项、已由有效独立证据覆盖的重复审核可以直接省略；完整代码候选的 G5/G6 和最终验收仍保留。所谓“跳过审核”是少一次不必要的调用，不是替未审核代码写 APPROVE。详细规则见[门禁策略](.agents/skills/_devflow_shared/contracts/gate-policy.md)。
+G0–G4 为当前 Root/阶段共享，不为每个步骤重走。内部步骤、不适用的额外基线专项、已由有效独立证据覆盖的重复审核可以直接省略；完整代码候选的 G5/G6 和最终验收仍保留。所谓“跳过审核”是少一次不必要的调用，不是替未审核代码写 APPROVE。详细规则见[门禁策略](skills/ric-devflow/references/contracts/gate-policy.md)。
 
 ### 5. 更小的上下文，更快的恢复
 
 角色交接只传 Root Issue、动作、精确产物路径/版本、适用 SHA、当前 Finding/Defect、允许与保护路径、输出和停止条件。完整材料从持久产物读取；平台支持时默认使用最小上下文继承，例如 `fork_turns: "none"`。
+
+完整开发通常由 Root Planner 加实现、测试、审核各一个可复用会话按阶段工作；优先复用同角色，不按文件、用例、维度、修复轮次或报告章节新增代理。复杂行为确需独立盲评时，先说明不能复用的具体原因及收益，再增加最少执行者；这不是硬性并发上限，独立测试和审核仍保留。窄幅维护、独立文档和收尾不重新启动整套流程，也不另派报告写作代理。完整规则见[按需派发与会话复用](skills/ric-devflow/references/shared/orchestration.md#按需派发与会话复用)。
+
+交接首行、首条进度和返回结果会注明“职责：实现者｜Skill布局”等中文职责与工作。原生角色 ID 保持稳定；工具支持时，调用任务名采用 `ric_implementer_skill_layout` 等可读名称。Skill UI 展示名与平台子代理昵称不同，修改展示名不会保证旧会话改名；当前没有重命名接口时用职责自述说明，不为换名新开代理。临时 ID 映射仅留 `.local`，正式证据仍使用业务 ID 与真实作者。见[职责命名与可读交接](skills/ric-devflow/references/shared/orchestration.md#职责命名与可读交接)。
 
 ### 6. Reviewer 循环可收敛
 
@@ -148,173 +171,101 @@ Reviewer 必须在一轮中完成全部适用维度，并一次性返回当时�
 
 测试计划明确区分合成/Mock、本地、集成、live 和生产验证。缺少凭据或环境时输出精确的 `BLOCKED` 证据；可以独立验收的切片单独阻塞，低权威结果不能冒充完整验收。
 
-## 快速开始
+## 安装与恢复
 
-### 前置条件
+发布源为 [lichong-a/ric-dev-workflow-skills](https://github.com/lichong-a/ric-dev-workflow-skills)，唯一可分发内容在根 `skills/`。普通复制即可使用，不要求符号链接、仓库外围配置或安装脚本。目标项目继续保留自己的 AGENTS.md、CLAUDE.md、构建/测试和权限规则。
 
-- 已安装支持 Skills 与原生子代理的 Codex、Claude Code 或 ZCode，按下面对应平台安装；配置可解析不等于已完成客户端运行验证；
-- 本机有 Git；如使用下方 `gh repo clone` 命令，还需要已登录的 GitHub CLI；
-- 如从私有仓库安装，当前 GitHub 身份必须拥有仓库读取权限；
-- 目标项目仍应保留自己的 `AGENTS.md`、构建、测试、CI 和发布规则，DevFlow 会读取并映射它们，不会取代它们。
+首页快速开始使用 GitHub 仓库作为安装来源；下面提供本地 checkout 的细分安装方式。用于自动恢复的来源必须固定到包含新 `skills/` 布局的完整 Commit SHA，并核对现存包文件；不能把旧布局的基线 Commit 用作新包来源。安装器 CLI 与原生宿主的实际验证情况见[验证报告](docs/DEVFLOW_SKILLS_VALIDATION.md)，普通复制检查不代表 CLI 或原生加载已通过。
 
-### 1. 获取仓库
+### 标准安装器：只装入口或装五个
+
+以下 CLI **只适用于首次安装，且每个所选 Skill 的实际宿主目标和 canonical 目标均不存在**；已有空目录、完整安装和不完整安装也不能用这些命令重装或补装。先核验包含新布局的本地 checkout 及完整 SHA，再完成下述只读预检；不能用一次 `skills add` 试运行来发现目标。[标准 Skills 安装器](https://github.com/vercel-labs/skills)支持根 `skills/` 发现、本地路径、`--skill`、`-a` 和 `-g`；本轮未运行 CLI。
+
+1. 确认实际将运行的安装器版本、当前工作目录、可信源码路径、所选宿主、项目/用户范围和安装模式。只读核对该版本的路径计算与宿主目录映射，列出每个 Skill 的**实际宿主路径及 canonical 路径**；即使只指定 Claude，也不能漏查安装器使用的共享 canonical 目录。本文引用的固定源码不是对 `npx` 此后下载版本的保证，不能猜测路径或等写入后看结果。
+2. 对清单中的全部目标及其父目录做只读类型与链接核验，例如使用 `lstat`、`readlink` 和父目录解析；区分最终目标确实不存在与无读取权限、断链、链接循环等检查失败。确认父目录解析后的实际写入位置也在已批准范围，所有 Skill 最终目标均不存在，没有来源重叠或其他写入者；有效链接、普通文件、空目录和任何已有内容都不满足首次安装条件。不要删除或清空目标来制造这一前提。
+3. 只有全部路径和范围已确认且目标仍缺失，才执行下方一条命令；交互选择必须保持预检过的宿主、范围和模式，任何变化都要先停止并重新预检。不能确定该版本所有实际/canonical 目标，或不能排除执行前路径变化时，放弃 CLI，改用下方先确认明确新目标、排他创建目录的普通复制方式。**已有或不完整安装只能由入口 bootstrap 核对同源字节后补缺**；冲突或来源缺失则保留现状并报告。
+
+这一限制来自安装器行为：固定 Commit `d667282815248da03a08a18272b5d2eef9caf77c` 的 copy 路径会清理宿主目标，symlink 路径会清理 canonical 目标，因此 CLI 不能代替本包的只补缺流程。[安装实现源码](https://github.com/vercel-labs/skills/blob/d667282815248da03a08a18272b5d2eef9caf77c/src/installer.ts) 同一版本还会在检测到 AI Agent 时自动进入非交互模式；移除 `-y` 并不能保证出现确认提示，安全边界必须是执行前的完整目标预检。[调用与确认源码](https://github.com/vercel-labs/skills/blob/d667282815248da03a08a18272b5d2eef9caf77c/src/add.ts)
 
 ```bash
-gh repo clone lichong-a/ric-dev-workflow-skills
-cd ric-dev-workflow-skills
+# 仅在上述全部首次安装预检通过后选择一条命令。
+# Codex，项目范围：只安装准备入口；如提示范围，选择已预检的 Project
+npx skills add . --skill ric-devflow -a codex
+
+# Codex，项目范围：明确安装五个 Skill
+npx skills add . --skill ric-devflow ric-devflow-planner ric-devflow-reviewer ric-devflow-tester ric-devflow-implementer -a codex
+
+# Claude Code，项目范围：只安装入口
+npx skills add . --skill ric-devflow -a claude-code
+
+# Claude Code，用户范围：安装五个 Skill
+npx skills add . --skill ric-devflow ric-devflow-planner ric-devflow-reviewer ric-devflow-tester ric-devflow-implementer -a claude-code -g
 ```
 
-也可以使用已配置凭据的 HTTPS 或 SSH：
+同一场景只选择一条命令。`-g` 明确用户范围；未指定时可能提示选择范围，必须保持已预检的项目范围，在其他项目使用时给可信 checkout 的实际路径。`--skill '*'` 选择全部五 Skill 时也必须预检这五项的全部目标；避免使用会选择所有 Agent 的 `--all`。ZCode CLI 支持未核验，采用下方普通复制及官方管理入口。后续 bootstrap 补缺仍按逻辑发现位置确定范围，不能由解析后的源路径推断用户级安装。
+
+只装入口后，主会话按[准备与恢复](skills/ric-devflow/references/bootstrap.md)核验同源固定候选，补齐当前任务必需角色和当前宿主配置；现存包字节不匹配、没有包含新布局的固定来源或尚未加载时准确报告缺口。仅安装入口不保证自动准备必然成功，也不代表任何业务 Gate 已过。
+
+### 普通复制：完整目录随身分发
+
+将所选目录从源码 `skills/` 普通复制到当前宿主的逻辑 Skill 根。独立角色还需要入口；首次仅装角色时，其自包含守卫可在同源固定候选可取得时恢复入口。共享 references、assets 与原生模板随入口一起复制，不能只复制 SKILL.md。
+
+| 宿主 | 项目 Skill 根 | 用户 Skill 根 | 原生角色目标 |
+|---|---|---|---|
+| Codex | 项目 `.agents/skills` | `~/.agents/skills` | 同范围 `.codex/agents` |
+| Claude Code | 项目 `.claude/skills` | `~/.claude/skills` | 同范围 `.claude/agents` |
+| ZCode | 跟随宿主实际发现的项目逻辑位置 | `~/.zcode/skills`，刷新核验 | 官方用户 `~/.zcode/agents` |
+
+旧 ZCode 官方随包文档记录过 `.agents/skills` 发现能力；对当前版本仍以宿主发现结果为准。项目入口的 ZCode 例外只允许必要原生角色定义写用户 agents，五 Skill 不因此迁至用户范围。
+
+以下 Bash 示例只面向**新空目标**，可以作为本候选的隔离复制检查；将 `DEVFLOW_COPY_ROOT` 改为当前已确认目标，不直接用未知用户目录。默认复制全部五目录；只装入口时把数组改为 `(ric-devflow)`。它不是恢复器，已有目标一律保留并退出；补缺和冲突恢复由 bootstrap 执行。
 
 ```bash
-git clone https://github.com/lichong-a/ric-dev-workflow-skills.git
-```
-
-### 2. 共享 Skill 用户级安装
-
-把五个目录链接到用户级 Skill 目录。四个角色会被发现，`_devflow_shared` 只作为共享资源库，不会成为第五个 Skill。
-
-```bash
-DEVFLOW_SOURCE_DIR="$(pwd)"
-mkdir -p "${HOME}/.agents/skills"
-
-for skill_name in \
-  devflow-planner \
-  devflow-reviewer \
-  devflow-tester \
-  devflow-implementer \
-  _devflow_shared
-do
-  source_path="${DEVFLOW_SOURCE_DIR}/.agents/skills/${skill_name}"
-  target_path="${HOME}/.agents/skills/${skill_name}"
-
-  if [ -e "${target_path}" ] || [ -L "${target_path}" ]; then
-    printf '保留已有路径，请先人工核对：%s\n' "${target_path}"
-  else
-    ln -s "${source_path}" "${target_path}"
+(
+set -Eeuo pipefail
+DEVFLOW_COPY_ROOT="/path/to/confirmed/skill-root"
+DEVFLOW_COPY_NAMES=(ric-devflow ric-devflow-planner ric-devflow-reviewer ric-devflow-tester ric-devflow-implementer)
+for skill_name in "${DEVFLOW_COPY_NAMES[@]}"; do
+  test -d "skills/${skill_name}"
+  if [ -e "${DEVFLOW_COPY_ROOT}/${skill_name}" ] || [ -L "${DEVFLOW_COPY_ROOT}/${skill_name}" ]; then
+    printf '目标已存在，保留并停止：%s\n' "${DEVFLOW_COPY_ROOT}/${skill_name}" >&2
+    exit 1
   fi
 done
-```
-
-已有路径提示不是安装成功：先核对 `readlink -f` 和内容，确认四角色与 shared 来自同一个源树；失效链接或不同版本必须先解决，不能混用。后续平台安装前必须确认这一点。
-
-### 3. Codex 原生配置（原方式不变）
-
-安装 Custom Agent 配置。下面的命令不会覆盖同名文件；若提示已存在，请先使用 `diff -u` 审阅，再决定是否更新。
-
-```bash
-mkdir -p "${HOME}/.codex/agents"
-cp --no-clobber .codex/agents/*.toml "${HOME}/.codex/agents/"
-```
-
-最后，把以下配置合并到 `${HOME}/.codex/config.toml`。如果已经存在 `[agents]` 段，请更新其中的键，不要重复追加同名 TOML 表。
-
-```toml
-[agents]
-enabled = true
-max_concurrent_threads_per_session = 6
-```
-
-仓库自带的推理强度配置偏向稳健交付：Planner 为 `max`、Reviewer 为 `high`、Tester 和 Implementer 为 `xhigh`；未硬编码具体模型，会沿用你的 Codex 模型配置。你可以按预算调整，但 Reviewer 建议至少保留 `high`，高风险变更不建议用低推理强度换速度。
-
-> 符号链接依赖当前 clone 路径。移动或删除仓库前，应先更新用户目录中的链接。安装或更新后，建议重新启动 Codex 或新建任务，确保 Skills 与 Custom Agents 被重新加载。
-
-#### Codex 仅在单个项目中使用
-
-如果不希望全局启用，可以只把本仓库 `.agents/skills/` 中的五个目录复制或链接到目标项目的 `.agents/skills/`，并把 `.codex/agents/*.toml` 合并到目标项目的 `.codex/agents/`。再将 `[agents]` 配置合并到目标项目的 `.codex/config.toml`。
-
-不要覆盖目标项目已有的 `.agents`、`.codex` 或 `AGENTS.md`；逐项合并并保留更具体的项目规则。DevFlow 的运行期证据会写入目标仓库的 `.devflow/changes/<REQ-ID>/`。
-
-### 4. Claude Code 与 ZCode 原生配置
-
-| 平台 | Skills | 四角色 agents | 注意事项 |
-|---|---|---|---|
-| Claude Code | 本仓库 .claude/skills → ../.agents/skills；用户级可逐目录链接 | 本仓库 .claude/agents；安装到目标 .claude/agents 或 ~/.claude/agents | skills 为复数；保留已有 CLAUDE.md/settings，不覆盖整个目录 |
-| ZCode | 直接发现项目 .agents/skills 或 ~/.agents/skills，无需复制到 .zcode/skills | 本仓库 .zcode/agents 是四份配置源码；按官方支持安装到 ~/.zcode/agents | 仓库内文件存在不证明客户端已加载；当前不承诺项目级 agents 自动发现 |
-
-以下是安装示例，不是工作流 CLI。先在本源码仓库根目录运行，选择一个平台及目标目录；ZCode 使用用户级目录。Claude 项目级安装可将目标改为目标仓库的 .claude，并先放齐该项目的共享五目录。每次安装预检全部目标，发现冲突即停止；只有同源且有效的符号链接可以重复执行。
-
-```bash
-DEVFLOW_SOURCE_DIR="$(pwd -P)"
-DEVFLOW_HOST=claude
-DEVFLOW_INSTALL_DIR="${HOME}/.claude"
-# ZCode 改为：DEVFLOW_HOST=zcode；DEVFLOW_INSTALL_DIR="${HOME}/.zcode"
-# Claude 项目级示例：DEVFLOW_INSTALL_DIR="/path/to/project/.claude"
-(
-  set -eu
-  case "${DEVFLOW_HOST}" in claude|zcode) ;; *) exit 1 ;; esac
-  devflow_sources=()
-  devflow_targets=()
-  for role in planner reviewer tester implementer; do
-    devflow_sources+=("${DEVFLOW_SOURCE_DIR}/.${DEVFLOW_HOST}/agents/devflow-${role}.md")
-    devflow_targets+=("${DEVFLOW_INSTALL_DIR}/agents/devflow-${role}.md")
-  done
-  if [ "${DEVFLOW_HOST}" = claude ]; then
-    for entry in devflow-planner devflow-reviewer devflow-tester devflow-implementer _devflow_shared; do
-      devflow_sources+=("${DEVFLOW_SOURCE_DIR}/.agents/skills/${entry}")
-      devflow_targets+=("${DEVFLOW_INSTALL_DIR}/skills/${entry}")
-    done
-  fi
-  for i in "${!devflow_sources[@]}"; do
-    source_path="${devflow_sources[i]}"
-    target_path="${devflow_targets[i]}"
-    test -e "${source_path}"
-    if [ -e "${target_path}" ] || [ -L "${target_path}" ]; then
-      if [ -L "${target_path}" ] && [ -e "${target_path}" ] &&
-         [ "$(readlink -f "${target_path}")" = "$(readlink -f "${source_path}")" ]; then
-        continue
-      fi
-      printf '安装停止，保留冲突路径：%s\n' "${target_path}" >&2
-      exit 1
-    fi
-  done
-  for i in "${!devflow_sources[@]}"; do
-    target_path="${devflow_targets[i]}"
-    if [ ! -L "${target_path}" ]; then
-      mkdir -p "$(dirname "${target_path}")"
-      ln -s "${devflow_sources[i]}" "${target_path}"
-    fi
-  done
+mkdir -p "${DEVFLOW_COPY_ROOT}"
+for skill_name in "${DEVFLOW_COPY_NAMES[@]}"; do
+  mkdir "${DEVFLOW_COPY_ROOT}/${skill_name}"
+  cp -R "skills/${skill_name}/." "${DEVFLOW_COPY_ROOT}/${skill_name}/"
+  diff -r "skills/${skill_name}" "${DEVFLOW_COPY_ROOT}/${skill_name}"
+done
 )
 ```
 
-ZCode 的 Skill 来源可以是已安装的用户共享五目录或当前项目五目录，不要只链接 agents 而遗漏它们。独立调用时先确认客户端实际发现的 Skill 位置；原生定义直接读取该源树，不依赖其他平台配置。若由主会话交接，直接传入已解析的角色入口绝对路径和共享根。
+Windows 可在确认全部目标缺失后，通过文件管理器普通复制这些完整目录，或在已确认 PowerShell 环境使用 `Copy-Item -LiteralPath <源码目录> -Destination <新目标目录> -Recurse`；逐项核对内容。不要覆盖已有同名文件、用户定制、异版本或不明断链，不修改全局 symlink 配置。重复或中断后先逐文件核验，只补同源缺项；不删除旧用户安装。
 
-更新源码后链接自动指向新内容；ZCode 代理定义修改后需新建会话，其他平台也建议新会话核对实际加载。移动源码前先记录并检查各链接目标，只修复明确属于本包的链接。卸载仅解除这次安装且已确认同源的逐个链接，不递归删除 .claude/.zcode/.agents，也不删除源树或其他平台仍使用的共享 Skills。
+### 准备当前平台原生角色
 
-同名 Skill/Agent 的优先级由宿主决定：ZCode Skills 用户级在项目级之前、同级 .zcode 在 .agents 之前；Claude Skills 用户级也可遮蔽项目级，而原生 agents 有不同优先级。不要用“项目一定优先”推断生效版本。检查技能/代理列表中的来源、启用状态与新会话；无法确定时停止调用。不能假定 Claude/ZCode 执行 Codex 的 openai.yaml 调用策略；后三角色的显式边界同时写在描述和正文中，这是指令约束，不宣称为两平台硬性开关。
+入口只读取当前平台一份参考：[Codex](skills/ric-devflow/references/platforms/codex.md)、[Claude Code](skills/ric-devflow/references/platforms/claude-code.md)、[ZCode](skills/ric-devflow/references/platforms/zcode.md)。原生源在入口 `assets/agents/<platform>/`；完整开发核验四角色，独立角色只核验所需定义和闭包。
 
-资料边界：ZCode 对 .agents/skills 的发现顺序来自随 3.11.2 安装包提供的 zcode-configuration-guide（静态文档事实）；在线 [ZCode Skill](https://zcode.z.ai/cn/docs/skill) 与 [子代理](https://zcode.z.ai/cn/docs/subagents)说明管理/加载方式。Claude 的目录、链接与代理字段见 [Skills](https://code.claude.com/docs/zh-CN/skills) 和 [sub-agents](https://code.claude.com/docs/zh-CN/sub-agents)。本包不采用 [动态 workflows](https://code.claude.com/docs/zh-CN/workflows)、Agent Teams 或脚本编排。当前实机验证范围以本包验证报告为准，未安装/未运行不能记为通过。
+Codex ID 为 `ric_devflow_<role>`；Claude/ZCode 为 `ric-devflow-<role>`。保持模型继承、Codex Planner `max` / Reviewer `high` / Tester与Implementer `xhigh`；Reviewer 只读意图与其他角色受限写入意图不变。Codex Agent 默认启用，无需为了准备写入整段 config；显式禁用不反转，既有并发数、模型、权限及其他 Agent 设置保留。
 
-### 新平台如何调度
+Claude/ZCode Reviewer 仅 Read/Grep/Glob，其他三角色加 Bash/Edit/Write；工具白名单不是文件路径沙箱。原生模板从交接中已确认绝对 Skill 路径读取规则，不绑定某项目路径。主会话依唯一 Planner 决定进行平级转发，四子角色不派生；Codex 保持 Root Planner 直接调度。具体流程只在[编排](skills/ric-devflow/references/shared/orchestration.md#原生平级调用)维护。
 
-ZCode / Claude：主会话 → 四个平级子代理之一 → 主会话原样回传。Planner 决定下一角色并维护状态，主会话没有规划或正式证据写入权；四个子代理都不能再派生代理。主会话仅加载 Skill 不等于已经进入子代理，已启动的角色也不得再次调用自己。详见[原生平级调用](.agents/skills/devflow-planner/references/orchestration.md#原生平级调用)。
+### 安装、加载与调用分开
 
-符合 DevFlow 范围的开发请求应主动调用 Planner，收到它的精确交接后继续派发下一角色，不需要额外提醒“请使用 subagent”。入口描述和共享正文都规定这一行为；G3 产品批准及其他必需授权仍保留。角色未加载、工具不可用或来源/旧会话状态不明时报告缺口，不退回主会话自行实现。
+文件复制完成后仍须确认实际发现路径、同源版本、启用状态与原生工具可调用目标。Claude 已有 agents 目录通常会监视变化，首次创建目录等情况需新会话；ZCode agents 在下一运行加载、Skill 需刷新；Codex Skill 自动检测未生效时按提示重载。不能凭等待几秒或目录存在断言加载成功。
 
-#### 可选的项目入口提示
+能继续就沿原任务前进；需重载时保留原任务、范围、固定源 SHA、已完成阶段、精确缺口和下一动作，恢复后先读回，不重复安装。身份未知、角色未加载、工具不可用或权限拒绝时说明具体缺口，不用通用 Agent 冒充、不反转禁用设置、不借脚本绕过。
 
-如果希望目标业务项目的主会话在 Skill 正文加载前就获得明确路由，可把下面几行合并到该项目已有 AGENTS.md（不要覆盖原文件）。这只是指向同一共享规则的入口，不复制流程；本包不会代写用户全局配置或业务文件。
-
-```markdown
-在已安装并启用 DevFlow 的宿主中，符合其范围的软件开发、修复、续作、重构、迁移或基础设施请求，主动使用已发现的 devflow-planner；解释、一般建议、单纯文档编辑与极小无风险编辑不启动完整流程。
-先确认实际宿主、主/子会话身份、角色可用性和同源 Skill 路径，再读取共享入口及其编排参考。
-Claude/ZCode 主会话实际调用同名 Planner 子代理，按它的精确交接继续调用平级角色并原样返回结果；不等待用户提醒 subagent，不自行承担角色正文。
-已启动的 DevFlow 子代理执行自身职责，不再派生代理；Codex 沿用 Planner 直接调度的原方式。
-用户已授权范围内持续推进，保留 G3 和其他仍适用的授权门禁；缺角色、工具或可信身份时报告缺口，不猜测、越权或绕行派发。
-```
-
-ZCode 根据子代理描述判断调用时机；定义更新后应使用新会话检查实际加载来源及 Agent 调用记录。描述与指令能表达期望，不能代替原生运行验证。[ZCode 子代理文档](https://zcode.z.ai/cn/docs/subagents)
-
-Planner/Tester/Implementer 默认继承模型、开放必要的读取/搜索/Bash/编辑；Reviewer 只开放 Read/Grep/Glob，无 Bash/MCP/编辑。工具白名单不是文件路径沙箱，不能等同 Codex Reviewer 的 read-only sandbox；写入角色仍须遵守 Task 允许/保护路径。Reviewer 通过[已核验的历史阅读缓存](.agents/skills/devflow-planner/references/orchestration.md#只读审核阅读缓存)读取 Git 原文，证据仍绑定原始 SHA；缺必要材料就 BLOCKED，不以工具受限省略审核。缺 MCP/环境须单独处理，不默认扩大权限。
+本轮官方资料核验日为 2026-09-12；配置与文档验证不等于原生实机运行。依据见入口平台参考；实际执行与未运行项见[验证报告](docs/DEVFLOW_SKILLS_VALIDATION.md)。
 
 ## 怎么用
 
-下方 $devflow-* 示例适用于 Codex/ZCode；Claude 使用 /devflow-*。原生角色也可通过宿主支持的显式入口选择；后三角色仍需精确对象，不因自动发现而允许普通请求隐式激活。
+下方 `$ric-devflow` 入口及 `$ric-devflow-*` 角色示例适用于 Codex/ZCode；Claude 对应使用 `/ric-devflow` 和 `/ric-devflow-*`。原生角色也可通过宿主支持的显式入口选择；后三角色仍需精确对象，不因自动发现而允许普通请求隐式激活。
 
-### 最常用：把开发请求交给 Planner
+### 最常用：描述开发目标，由入口路由
 
-Planner 对范围内开发请求主动调用。正常描述目标、约束和完成条件即可，不需要额外点名子代理：
+ric-devflow 对范围内完整开发主动准备并路由 Planner。正常描述目标、约束和完成条件即可，不需要额外点名子代理：
 
 ```text
 请在当前项目增加订单导出能力，保持现有权限和 API 兼容；完成实现、测试和审核后交付。
@@ -323,7 +274,7 @@ Planner 对范围内开发请求主动调用。正常描述目标、约束和完
 也可以显式指定：
 
 ```text
-使用 $devflow-planner 接管这个 Brownfield 需求。先核对仓库现状和既有流程，再完成分期、Spec、测试、实现与发布审核。
+使用 $ric-devflow 接管这个 Brownfield 需求。先核对仓库现状和既有流程，再完成分期、Spec、测试、实现与发布审核。
 ```
 
 Planner 会先建立事实和证据，必要时才向你请求产品行为、敏感权限、生产操作或不可逆决策的确认。
@@ -333,7 +284,7 @@ Planner 会先建立事实和证据，必要时才向你请求产品行为、敏
 Reviewer 必须指定单一审核模式和精确对象：
 
 ```text
-使用 $devflow-reviewer，以 CODE_REVIEW 模式审核 REQ-20260905-001 / TASK-003。
+使用 $ric-devflow-reviewer，以 CODE_REVIEW 模式审核 REQ-20260905-001 / TASK-003。
 Spec 为 <文档完整 SHA> 中 .devflow/changes/REQ-20260905-001/current.md 的 SPEC 对象修订 2，
 审核范围为 <base_sha>..<head_sha>，请一次性返回全部可发现的阻断 Finding。
 ```
@@ -343,14 +294,14 @@ Spec 为 <文档完整 SHA> 中 .devflow/changes/REQ-20260905-001/current.md 的
 ### 独立测试
 
 ```text
-使用 $devflow-tester，为已批准的 Spec v2 创建测试计划。
+使用 $ric-devflow-tester，为已批准的 Spec v2 创建测试计划。
 请区分本地、集成和 live 验证边界，并把每条验收标准映射到稳定 Test Case ID。
 ```
 
 ### 单 Task 实现
 
 ```text
-使用 $devflow-implementer，只实现 TASK-003。
+使用 $ric-devflow-implementer，只实现 TASK-003。
 严格遵守 Task 中的 base_sha、允许路径、保护路径、验收标准和变更预算；
 完成后输出 Implementation Report，不要合并。
 ```
@@ -361,7 +312,7 @@ Spec 为 <文档完整 SHA> 中 .devflow/changes/REQ-20260905-001/current.md 的
 
 Task 集成验证通过后保持 VERIFIED，以解锁后续依赖；当前交付的目标 SHA 冒烟与关闭证据齐备后才 DONE。旧 DONE 只有证据完整有效才可复用，恢复时状态与证据矛盾由 Planner 追加纠正事件，历史报告不改写。
 
-独立测试代码由 Tester 在原 Task 内署名交付，默认与 Implementer 串行完成完整候选，再由 Reviewer 审核、Planner 集成。各作者报告保持自己的 SHA 范围；G5 后改测试也重新绑定审核/验证，不能把未提交测试的结果记成旧 SHA 的正式 PASS。详细边界见[测试代码交付](.agents/skills/devflow-tester/references/test-code-delivery.md)。
+独立测试代码由 Tester 在原 Task 内署名交付，默认与 Implementer 串行完成完整候选，再由 Reviewer 审核、Planner 集成。各作者报告保持自己的 SHA 范围；G5 后改测试也重新绑定审核/验证，不能把未提交测试的结果记成旧 SHA 的正式 PASS。详细边界见[测试代码交付](skills/ric-devflow/references/shared/test-code-delivery.md)。
 
 ## 四个文件，当前正文与完整历史分开
 
@@ -400,7 +351,7 @@ current/test-plan 保持最新版，底部 Change Log 记录修订、时间、�
 Planner 发现 v1/spec-v*/tasks-v* 后，会给一次聚焦迁移建议；没有授权继续读旧布局，不自动删除。可以这样触发：
 
 ```text
-使用 $devflow-planner 评估 REQ-... 的 v1 迁移，先列出完整源范围、
+使用 $ric-devflow-planner 评估 REQ-... 的 v1 迁移，先列出完整源范围、
 当前有效版本、未知内容及冲突。暂不切换或清理。
 ```
 
@@ -416,7 +367,7 @@ git fetch <remote> refs/tags/<actual-baseline-tag>:refs/tags/<actual-baseline-ta
 git rev-parse <actual-baseline-tag>^{commit}
 ```
 
-基线标签通常为 `devflow-migration/<REQ-ID>/v1-baseline`，冲突时使用编号后缀、不覆盖旧标签。正常维护禁止删除/移动它。授权推送迁移时必须同时发布分支和实际基线标签，并从远端验证恢复；未推送记录“仅本地可用”。浅克隆需要补取标签；最新 ZIP 不保证包含旧原文。完整规则见[无损迁移参考](.agents/skills/_devflow_shared/references/legacy-migration.md)。
+基线标签通常为 `devflow-migration/<REQ-ID>/v1-baseline`，冲突时使用编号后缀、不覆盖旧标签。正常维护禁止删除/移动它。授权推送迁移时必须同时发布分支和实际基线标签，并从远端验证恢复；未推送记录“仅本地可用”。浅克隆需要补取标签；最新 ZIP 不保证包含旧原文。完整规则见[无损迁移参考](skills/ric-devflow/references/shared/legacy-migration.md)。
 
 ## 适用场景
 
@@ -433,61 +384,44 @@ git rev-parse <actual-baseline-tag>^{commit}
 ## 目录结构
 
 ```text
-.
-├── .agents/skills/
-│   ├── devflow-planner/
-│   ├── devflow-reviewer/
-│   ├── devflow-tester/
-│   ├── devflow-implementer/
-│   └── _devflow_shared/
-├── .codex/
-│   ├── agents/
-│   └── config.toml
-├── .claude/
-│   ├── skills -> ../.agents/skills
-│   └── agents/                    # 四份 Markdown
-├── .zcode/
-│   └── agents/                    # 四份 Markdown
-├── .devflow/README.md
-└── docs/
-    ├── DEVFLOW_SKILLS_DESIGN.md
-    └── DEVFLOW_SKILLS_VALIDATION.md
+skills/
+├── ric-devflow/
+│   ├── SKILL.md
+│   ├── agents/openai.yaml
+│   ├── references/
+│   │   ├── bootstrap.md
+│   │   ├── platforms/
+│   │   ├── contracts/
+│   │   ├── shared/
+│   │   └── evals/
+│   └── assets/
+│       ├── templates/             # v1 与 compact v2
+│       └── agents/                # codex / claude-code / zcode
+├── ric-devflow-planner/
+├── ric-devflow-reviewer/
+├── ric-devflow-tester/
+└── ric-devflow-implementer/
 ```
 
-- 四个 `SKILL.md` 是聚焦的角色入口；
-- `_devflow_shared` 保存共享契约、模板、参考和场景评测，但没有 `SKILL.md`；
-- `.codex/agents/` 定义 Custom Agent 的推理强度、Sandbox 和角色约束；
-- .claude/agents 与 .zcode/agents 是各平台薄配置，四角色均存在；共享流程不复制；
-- `.devflow/README.md` 说明目标项目中的运行期证据布局；
-- `docs/` 保存完整设计与真实验证报告。
+四个业务角色各保留自身 SKILL、UI 和私有模式参考；共用规则仅在入口保存一份。源码 `.devflow/README.md` 和 `docs/` 是维护资料，不是安装后的运行依赖。没有旧名别名、额外 Skill、产品脚本、CLI、包清单或符号链接要求。
 
 ## 验证
 
-静态检查、隔离 Git 迁移/恢复和独立角色评测的本轮实际结果统一记录在[验证报告](docs/DEVFLOW_SKILLS_VALIDATION.md)。历史 Brownfield 结果单独列出，不能当作本版重新执行的证明。
+包级复现、隔离复制、缺件/冲突/中断与验证器负控方法见[验证指南](docs/DEVFLOW_SKILLS_VALIDATION_GUIDE.md)。实际结果追加到[验证报告](docs/DEVFLOW_SKILLS_VALIDATION.md)，历史原文按报告原 SHA 或迁移基线恢复，不修写历史数字或链接；当前新增内容的坏链接必须失败。
 
-完整可复跑命令、隔离安装/Git fixture、失败注入和行为评测方法见[验证指南](docs/DEVFLOW_SKILLS_VALIDATION_GUIDE.md)。新结果绑定受检提交或文件集合摘要；文档中的自包含片段不依赖已删除的历史临时程序。
-
-你可以在 clone 后重新运行基础验证：
+基础 Skill 检查可在本源码根执行，按当前环境指定实际 bundled validator；所有失败须返回非零：
 
 ```bash
 (
 set -Eeuo pipefail
-VALIDATOR_PATH="${CODEX_HOME:-${HOME}/.codex}/skills/.system/skill-creator/scripts/quick_validate.py"
-
-for skill_name in \
-  devflow-planner \
-  devflow-reviewer \
-  devflow-tester \
-  devflow-implementer
-do
-  python3 -B "${VALIDATOR_PATH}" ".agents/skills/${skill_name}"
+DEVFLOW_VALIDATOR_PATH="${CODEX_HOME:-${HOME}/.codex}/skills/.system/skill-creator/scripts/quick_validate.py"
+for skill_name in ric-devflow ric-devflow-planner ric-devflow-reviewer ric-devflow-tester ric-devflow-implementer; do
+  PYTHONUTF8=1 PYTHONIOENCODING=utf-8 python3 -B "${DEVFLOW_VALIDATOR_PATH}" "skills/${skill_name}"
 done
-
-codex --strict-config doctor --summary --no-color --ascii
 )
 ```
 
-完整设计见 [DevFlow Skills 总体设计](docs/DEVFLOW_SKILLS_DESIGN.md)，实际命令、结果和演示边界见 [验证报告](docs/DEVFLOW_SKILLS_VALIDATION.md)。
+本轮无候选 Commit 时用完整基线加可重算文件集摘要记录诊断；不能把 HEAD 当作包含未提交文件的 tested_sha，也不能将源码检查记成 G5–G9 通过。设计和契约导航见[总体设计](docs/DEVFLOW_SKILLS_DESIGN.md)。
 
 ## 安全与兼容承诺
 
@@ -500,6 +434,4 @@ codex --strict-config doctor --summary --no-color --ascii
 
 ## 当前状态
 
-这是一个私有、纯指令式的三平台共享 Skill 包。本版保留 Codex 原配置，新增 Claude/ZCode 原生四角色定义，采用 Compact 四文件及按授权执行的无损迁移。它是指令规则，不是强制执行的状态机；配置适配与宿主实机验证分别记录，隔离演示不等于真实大项目的耗时基准。
-
-如果你希望 Agent 不只是“交出代码”，而是交出一条可接管、复核和回滚的软件交付链路，这套 Skills 就是为此准备的。
+本包是纯指令式三平台适配源码：五个发布 Skill、四个业务角色，保持 Compact v2/v1、原 Schema、Gate、职责分离和真实 SHA 证据要求。标准安装器、用户级真实安装和三平台原生加载/调用未由文件检查证明。完整交付状态以绑定当前受检对象的独立报告为准。

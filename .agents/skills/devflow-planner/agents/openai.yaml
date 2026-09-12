@@ -1,5 +1,0 @@
-interface:
-  display_name: "DevFlow 规划者"
-  short_description: "规划并协调绑定版本、证据与阶段门禁的完整软件交付流程"
-policy:
-  allow_implicit_invocation: true

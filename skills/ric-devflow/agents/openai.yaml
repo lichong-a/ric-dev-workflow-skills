@@ -1,0 +1,5 @@
+interface:
+  display_name: "入口｜RIC DevFlow"
+  short_description: "入口：按需准备同源 Skill 与当前平台角色，再路由完整软件交付"
+policy:
+  allow_implicit_invocation: true

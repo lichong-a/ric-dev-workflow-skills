@@ -976,3 +976,75 @@ WF-16–22 覆盖由静态、真实本地 Git 操作、人工构造故障与独�
   }
 ]
 ```
+
+
+## 2026-09-13 — 标准五 Skill 仓库：源码与隔离验收
+
+本轮用户授权的**源码改造与隔离验收结果为 PASS**。正式 Commit 测试报告的 Verdict 为 **BLOCKED**：当前没有包含候选与测试材料的真实产品 Commit，不能填写产品 `tested_sha` 或宣布 G5–G9 通过。此限制不改变本轮已完成的源码交付，也不要求为范围外的提交、全局安装或原生环境另行扩大任务。
+
+- Root：REQ-20260912-001；唯一 TASK-001；Spec revision 1、PLAN revision 1。Spec 快照 SHA256 为 `ec137e56df04ae11b70635e46d741e6744569ef3949e200085ed122756b81d5b`，独立审核通过的 PLAN 快照为 `2d74c82faf42a0290f6348cc30d1a806f027899074244bf2790653712978bdde`。
+- 产品完整基线：`a72592ec1cb7ac5c67ec5454233d673a30000be5`；候选文件集 SHA256：`0e9c93a7a0e2ff5d1dc732e31120a00ed27ccc1b578ff73cca45dd5d9c704078`。集合包含仍存在的跟踪文件与新增 skills/docs，报告自身仅参与历史/链接检查、不进入集合摘要。未提交源码不能只用旧 HEAD 标识。
+- 最终运行包：96 个普通文件、5 个实际 Skill 目录；runtime SHA256 `eeb6086f996d4a4e47acead3b20bc238038e9c5eead148b17697159cb103653f`。临时 Git fixture `355991cdbd58dd9cea58d214ca4d4c8be6def5c6` 仅为合成测试对象，不能当产品 Commit。
+- 实际环境：Linux/Bash、Python 3.14.4、PyYAML 6.0.3、Git 2.53.0；Python 每次显式设置 UTF-8。Bash 未发现 Node，没有全局安装依赖。
+- 本文件前 63575 字节与基线 Git 对象逐字相同；3 个历史链接按该对象核验。新增内容与全部当前包/文档继续执行当前链接检查，无整包或整报告豁免。
+
+### 实际执行与独立证据
+
+完整可复制命令在[验证指南](DEVFLOW_SKILLS_VALIDATION_GUIDE.md)。原始输入、独立执行者观察输出、命令/文件摘要和 Tester 判定保存在[本轮评测证据](DEVFLOW_SKILLS_EVAL_20260913.md)，可随源码保留；未把数千份 fixture、副本 Git 对象或临时安装脚本加入发布包。详细本地原始回执仍保留在本 Root attachments，公开复跑不以这些 ignored 路径为唯一方法来源。
+
+| 检查或执行 | 实际结果与证明范围 |
+|---|---|
+| 五个 bundled quick_validate | 五次均 exit 0；不是仅保留循环最后一个退出码 |
+| YAML/TOML/frontmatter | 13 YAML、5 TOML、16 frontmatter 可解析，重复 YAML key 会失败 |
+| 发布闭包与兼容 | 当前相对链接/锚点均有效；四角色闭包不依赖无关角色；20模板原字节一致；8共享契约只发生精确链接迁移；三平台 ID、模型/工具/推理/沙箱意图保持 |
+| README 普通复制 | 真实复制五目录96文件、仅入口76文件；重复请求按该“仅新空目标”示例退出1并保全；已有普通文件冲突在任何部分复制前停止。这不代表bootstrap幂等或CLI集成 |
+| 检查器负控 | 8例：重复YAML key、损坏TOML、额外Skill、当前坏链接、坏锚点、历史前缀改变、错frontmatter名称、缺description导致bundled验证器失败；各自真实子进程exit1，干净对照exit0 |
+| A批，runtime1 | 11例；328文件真实复制/读回；四个单角色分别恢复入口，最小闭包与子角色回交/来源缺口符合其声明范围 |
+| B批，runtime1 | 16例；141文件真实复制/读回；逻辑project/user范围、真实symlink、合成ZCode目录例外、定制/版本/类型冲突、显式禁用与配置保全符合要求；B07第二次读回100目标、零写入 |
+| C批，runtime1 | 7组原始决定输入逐项判定：触发排除、实际宿主证据、平级转发、安装/加载/调用分列、权限/批准、v1/v2与SHA、VERIFIED到DONE；没有真实业务调用或状态写入 |
+| D批，runtime2 | 15例；329文件真实复制/读回；10个停止场景零写入，原bytes/type/mtime及source/user保全；30个inspect/action命令exit0。入口缺bootstrap恢复、四单角色正向及原生定义冲突/明确禁用先于首次补装均实测 |
+| README 标准CLI说明负向跟随 | 2个真实隔离预检：已有canonical定制目录、已有宿主symlink；按修订说明首个CLI调用前停止，哨兵bytes/type/mtime未变。CLI调用数为0，只证明说明预检的本地决定 |
+
+A/B/C结果始终绑定runtime1 `58072f014063919e5cb62cf9c7a6213986488826ac6f1e73b41bb90e9f02e106` 及其合成fixture `9793122fc00822939cfd4565d904fe8d2f91da0e`；没有改绑旧报告。runtime2仅改变五入口守卫和一个eval链接，共6文件，其余90文件相同；受影响分支由D与新完整静态检查覆盖。引用未变输入下的既有结果，不重跑无关套件。
+
+### 验收标准追踪
+
+下列PASS均限定为当前源码、真实隔离文件与独立决定切片；原生/CLI等更高边界见后续未运行项。
+
+| AC | 用例 | 结果及主要证据 |
+|---|---|---|
+| AC-001 | TC-001/003 | PASS：根skills五实际目录、名称/UI、五验证器与类型清单 |
+| AC-002 | TC-002/014 | PASS：入口顺序与按需规则、C请求分类和路由决定 |
+| AC-003 | TC-003/004 | PASS：发布包普通复制闭包，唯一共享源、模板/配置迁移，旧坏链接已独立复测 |
+| AC-004 | TC-005–008 | PASS：A恢复/最小闭包与D最新守卫实际文件结果；子角色不安装 |
+| AC-005 | TC-009/018 | PASS：C明确/未知/冲突宿主及工具缺口决定 |
+| AC-006 | TC-010 | PASS：B真实逻辑路径/symlink范围，合成ZCode用户Agent例外 |
+| AC-007 | TC-011/012 | PASS：A/B可信本地固定源、现存全包匹配/冲突、离线；获取服务仅决定级 |
+| AC-008 | TC-013 | PASS：B/D全目标预检、配置与哨兵保全、重复/恢复；CLI说明两个负向预检 |
+| AC-009 | TC-015/016 | PASS：三平台配置基线比较、C单Planner与平级转发决定 |
+| AC-010 | TC-017/018；条件TC-024 | PASS于声明切片：C三阶段/重载/缺口；原生实机未运行 |
+| AC-011 | TC-019–021 | PASS：现用文档/链接、安装说明、原历史前缀和8负控 |
+| AC-012 | TC-004/022/023 | PASS：模板/契约保持、C原证据/状态/DAG/职责决定，安装不替代Gate |
+
+### 失败、修复与未运行项
+
+1. **runtime1真实产品失败**：eval仍链接包外维护指南；独立链接命令exit1（112相对链接中1失败）。Defect `DEFECT-REQ-20260912-001-RUNTIME-LINK-001` 交Planner归因实施，runtime2修正后完整当前包检查exit0。旧失败原件保留。独立Reviewer另发现缺bootstrap时入口无恢复分支、四单角色先写入口再查原生冲突/禁用；实现修正后D覆盖新分支，旧Review不改写。
+2. **A02测试收集器失败**：四个首次执行真实exit1，错误为 `KeyError: 'name'`，配置示例TOML本来没有原生角色name字段。只修收集字段，候选不变；重新核验已写7文件后各补69文件，恢复exit0。事件 `DEFECT-REQ-20260912-001-EVAL-COLLECTOR-001` 的原错误、命令和恢复证据均保留，不冒充产品历史失败，也未弱化Oracle。
+3. **真实权限拒绝未建立**：B10 chmod后仍观测mode0777，窄probe实际写入成功；因此真实权限失败切片BLOCKED，拒绝后的停止只是合成事件的决定级验证。不能称真实权限隔离通过。
+4. **标准CLI、PowerShell与三平台原生加载/调用未运行**：没有执行npx安装器、真实用户级安装、宿主重载或原生角色调用；静态配置、普通复制、合成Claude/ZCode身份均不能替代它们。README已明确CLI仅适用于全部实际/canonical目标不存在的新安装，既有安装走bootstrap；去除-y不被当成充分保护。
+5. **正式Commit门禁未执行**：没有新产品head/tested Commit，也没有合并、发布或目标冒烟；正式载荷Verdict BLOCKED。源码与隔离验收已完成，不把范围外条件写成产品实现失败，不请求新增提交或安装权限。
+
+本轮未新增产品CLI、包清单、常驻脚本或全局依赖；Tester仅修改验证指南、新的证据文档与本报告追加段，未修改生产包、Spec或全局状态。原业务Gate、Schema、职责与历史记录保持。
+
+
+## 2026-09-13 — 调度、职责名称与 .local 维护补充
+
+本次是用户明确要求的调度说明、名称可读性与忽略配置维护。沿用前轮未提交源码，未重新启动完整业务流程。本段由主会话记录实际维护检查，不是新的正式 Commit 测试报告，也不改绑上轮测试或审核。
+
+- `.gitignore` 保留整个 `.devflow/changes/` 的包级忽略，另加 `/.devflow/changes/*/.local/`。实际 `git check-ignore -v .devflow/changes/REQ-20260912-001/.local/probe.txt` exit 0；`git ls-files -- .devflow/changes/REQ-20260912-001/.local` 为空。父目录规则仍是实际命中来源。
+- 在本 Root 的 `.local` 内创建临时 Git 仓库，只放新增规则：指定及另一 Root 的 `.local` 两个正例命中；current/evidence/state/test-plan、attachments 和无关 `.local` 六个反例不命中。该规则自身不扩大证据忽略；临时仓库已精确清理，既有文件未删除。
+- 实际执行[验证指南](DEVFLOW_SKILLS_VALIDATION_GUIDE.md)第一个完整 Bash 块，exit 0：五次 bundled Skill validator、13 YAML、5 TOML、16 frontmatter、167 当前链接及锚点、3 历史链接检查通过；20 模板与基线原字节一致。四原生 ID、模型/推理/沙箱、Claude/ZCode 工具及 UI 调用策略保持。
+- 当前检查文件集 SHA256 为 `266c939d0e7b66cb90e1890b3e63a69dd843223a35d86831c3786cf5851cc0d1`，算法与指南一致，排除报告自身以避免自引用；它不是产品 Commit。未改动的安装场景与检查器负控未重复执行，也未把旧行为结果重新绑定为本次原生实机结果。
+- 本轮只复用既有实现者和审核者，没有新增子代理。新增规则要求按需派发、同职责优先复用、增加盲评执行者前说明必要性、在真实工具支持时使用 `ric_<role>_<work>` 任务名，以及中文职责自述。Skill UI 标题和原生描述已改善；未修改原生稳定 ID、权限、模型或并发配置。
+- **Node/CLI 实际限制**：当前执行环境为 Linux x86_64，PATH 中仍没有 node/npm；只读发现 Windows FNM 的 `v24.16.0/installation/node.exe`，直接启动实测为 `errno 8: Exec format error`。目录版本标记不是成功运行的版本回执；标准安装器 CLI 仍为 NOT_RUN，没有下载新运行时或修改全局环境。
+- **界面与性能限制**：未执行三平台原生加载、新任务标题展示或旧会话改名，也未测量修改后的长期代理数量/耗时；不承诺 Skill `display_name` 会改变子代理昵称。当前工具未提供旧子代理重命名接口。
