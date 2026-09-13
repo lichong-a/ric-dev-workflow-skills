@@ -36,11 +36,15 @@ branch_strategy_source: ""
 
 业务仓库默认提交 `.devflow/changes/<REQ-ID>/` 下的 `state.yaml`、`current.md`、`test-plan.md`、`evidence.md`，以及必要脱敏验收附件、正式快照与迁移索引；可引用满足身份和保留期限的现有仓库/CI 产物。不跟踪临时 Prompt、搜索输出、Diff 中间件、调试日志、临时报告、会话 ID/cursor/PID/机器缓存，它们放在 `.local/`。失败/BLOCKED/not_run 的正式结果仍须持久化，不能统统归为临时文件。
 
-业务仓库的忽略规则示例：
+Planner 在业务 Git 仓库中主动检查实际忽略规则，已有有效等价规则时复用，不重复追加。规则缺失且当前任务允许修改仓库时，主动向仓库根 `.gitignore` 追加以下规则；文件不存在则创建，保留已有内容和未提交修改，不等待用户再次提醒：
+
 ```gitignore
-.devflow/changes/*/.local/
+/.devflow/changes/*/.local/
 ```
-与宿主已有规则合并，不能覆盖整个 `.gitignore`。用 `git check-ignore -v --no-index <path>` 检查实际匹配；`git ls-files` 检查已跟踪文件，ignore 不会自动取消跟踪。已跟踪临时文件只在明确授权和确认不丢唯一证据后用精确路径处理，敏感历史另行求解，不能用 ignore 掩盖泄漏。
+
+用 `git check-ignore -v --no-index <path>` 核验当前 Root 的 `.local/` 内路径被忽略，四个核心文件与必要附件未被误忽略；用 `git ls-files` 检查已跟踪文件，ignore 不会自动取消跟踪。已跟踪临时文件只在明确授权和确认不丢唯一证据后用精确路径处理，敏感历史另行求解，不能用 ignore 掩盖泄漏。
+
+无 Git、只读、明确禁止修改或存在规则冲突时，保留原内容并说明具体缺口，仅停止该配置动作；不自动删除或放宽已有忽略规则。
 
 **Skill 源码仓库**的 `.devflow/changes/` 排除规则仅用于防止提交演示产物，不能照搬到业务仓库。凭据和未经脱敏数据不得进入受跟踪产物或外部上传。
 
