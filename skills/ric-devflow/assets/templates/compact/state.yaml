@@ -9,7 +9,7 @@ root_issue:
   risk_level: "medium"
   planner_owner: ""
 repository:
-  root: ""
+  root: "."
   current_branch: ""
   current_sha: ""
   target_branch: ""
@@ -20,7 +20,7 @@ repository:
   dirty_worktree_detected: false
   dirty_worktree_overlap: false
 artifacts:
-  current: "current.md"
+  current: ".devflow/changes/REQ-YYYYMMDD-001/current.md"
   test_plan: null
   evidence: null
 versions:
@@ -35,11 +35,12 @@ approvals:
   user: null
   test_plan: null
 # 每个 Task 索引：id, revision, status, ref, base_ref, base_sha, head_sha, evidence。
-# ref 示例 current.md#TASK-001；正文、依赖与预算不在此重复。
+# ref 示例 .devflow/changes/REQ-YYYYMMDD-001/current.md#TASK-001；正文、依赖与预算不在此重复。
 tasks: []
 open_findings: []
 open_defects: []
 open_blockers: []
 pre_existing_failures: []
+# 路径相对业务仓库根并使用 /；实例化时替换路径中的 REQ-ID。
 # 各 evidence/approval/open 引用须能定位已完整发布的记录。
 # 历史 transitions、Finding 处置与迁移事件只追加到 evidence.md。

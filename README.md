@@ -329,6 +329,8 @@ Task 集成验证通过后保持 VERIFIED，以解锁后续依赖；当前交付
 
 current/test-plan 保持最新版，底部 Change Log 记录修订、时间、作者、类型、受影响 ID、原因和证据。每个 Task 独立修订，局部预算调整不复制其他 Task。历史正文留在 Git 的精确提交中；被拒绝版本也可恢复，Review/Test/Implementation 原始记录不能改写。G0–G10、独立 Reviewer/Tester 和用户批准保持不变。
 
+新写入 `.devflow` 的仓库位置与结构化路径使用仓库相对值：`repository.root: "."`、`cwd: "."` 或实际子目录，产物引用如 `.devflow/changes/<REQ-ID>/current.md#SPEC`。Markdown 链接相对所在文档；本机绝对定位只留在会话/工具调用中，外部工具记录资源身份与版本。历史报告和快照保留原字节，详见[持久文件路径](skills/ric-devflow/references/contracts/artifact-lifecycle.md#持久文件路径)。
+
 调查默认一轮聚焦加一轮缺口补查，连续两次无新事实停止同类搜索。预算与依赖做局部技术复审，测试职责映射只查相应映射；行为、权限、契约、测试预期改变仍重开受影响门禁。对效率的实际验证与局限见[验证报告](docs/DEVFLOW_SKILLS_VALIDATION.md)，不承诺固定提速百分比。
 
 ### 哪些提交，什么时候提交？

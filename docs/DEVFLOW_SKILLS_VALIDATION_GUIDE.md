@@ -9,6 +9,8 @@
 - 五 Skill 唯一发布源为 `skills/`。检查包括仍存在的跟踪文件及 `skills/`、`docs/` 新文件；删除的跟踪路径另列而不当作待读取文件。用户 `.zcode/plans/` 等未知未跟踪内容不纳入。
 - 历史报告的前 63575 字节来自完整基线 `a72592ec1cb7ac5c67ec5454233d673a30000be5`，必须逐字保留。仅该原字节段内的链接按基线 Git 对象解析；报告新增段、当前文档及整个发布包的链接仍按当前文件检查。浅克隆缺该对象时应取得所需历史对象或报告 BLOCKED，不能豁免。
 - 输出完整 HEAD、文件路径/类型/模式/字节摘要与集合摘要、真实命令和退出码。报告自身参与链接/历史保全检查，但不进入集合摘要，避免自引用。工作区摘要和测试 fixture Commit 均不能当产品 `tested_sha`。
+- v1 模板保持历史基线字节；Compact 模板允许路径说明注释更新，state 仅调整仓库根与 current 的相对路径默认值，其余载荷保持兼容。模板兼容检查不证明宿主已按路径规则生成产物。
+- 检查片段的原始工具返回用于会话内诊断；写入 `.devflow` 前由记录作者按[持久文件路径](../skills/ric-devflow/references/contracts/artifact-lifecycle.md#持久文件路径)处理 cwd、参数与输出中的本机定位并注明规范化方式，不直接把机器路径诊断保存为正式证据。
 - 第二段只在源码根下创建并精确清理本段的临时目录；不会写用户 Skill/Agent 目录。真实 bootstrap 的冲突、缺件、恢复与路由由独立 Agent 场景另验，不另写一套安装算法来“证明”指令正确。
 
 ## 完整静态、安装闭包与保持行为
@@ -187,16 +189,34 @@ for role in roles:
 
 template_prefix = '.agents/skills/_devflow_shared/templates/'
 templates = run(['git', 'ls-tree', '-r', '--name-only', base, template_prefix]).splitlines()
+templates_byte_identical = 0
+compact_templates_compatible = 0
 for old in templates:
-    new = root / 'skills/ric-devflow/assets/templates' / old[len(template_prefix):]
-    assert new.read_bytes() == git_bytes(old), ('template bytes changed', old)
+    relative = old[len(template_prefix):]
+    new = root / 'skills/ric-devflow/assets/templates' / relative
+    original = git_bytes(old)
+    if not relative.startswith('compact/'):
+        assert new.read_bytes() == original, ('v1 template bytes changed', old)
+        templates_byte_identical += 1
+        continue
+    if relative == 'compact/state.yaml':
+        expected = load_yaml(original.decode())
+        expected['repository']['root'] = '.'
+        expected['artifacts']['current'] = '.devflow/changes/REQ-YYYYMMDD-001/current.md'
+        assert load_yaml(new.read_text()) == expected, ('compact state payload changed', relative)
+    else:
+        def without_comments(text):
+            return [line.rstrip() for line in re.sub(r'<!--.*?-->', '', text, flags=re.S).splitlines() if line.strip()]
+        assert without_comments(new.read_text()) == without_comments(original.decode()), ('compact document payload changed', relative)
+    compact_templates_compatible += 1
 if root == origin:
     run(['git', 'diff', '--check'])
     run(['git', 'diff', '--cached', '--check'])
 identity = hashlib.sha256(json.dumps(manifest, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
 print(json.dumps(dict(verdict='PASS', head=head, tested_sha=None, candidate_sha256=identity,
     python=sys.version.split()[0], pyyaml=yaml.__version__, baseline_sha=base,
-    counts=counts, templates_byte_identical=len(templates), role_closures=closures,
+    counts=counts, templates_byte_identical=templates_byte_identical,
+    compact_templates_compatible=compact_templates_compatible, role_closures=closures,
     deleted_tracked_paths=deleted, files=manifest, commands=commands,
     native_runtime=False, boundary='source/isolated file diagnostic; no product Commit Gates'), ensure_ascii=False, indent=2))
 PY
