@@ -149,6 +149,8 @@ current/test-plan 原地维护最新版，底部 Change Log 记录修订、时�
 
 现有语言参考覆盖 Python、JS/TS、Go、Java/Kotlin、Rust、C#、PHP/Ruby、Shell、SQL；领域涵盖架构、API、前后端、数据库、安全、DevOps、分布式系统、AI Agent。UI 复用现有组件/Token/交互，覆盖适用加载/错误/空/权限/离线、响应/焦点/i18n；不创建平行视觉体系。实现准则仍由这些参考及宿主规则维护，不因本文精简而取消。
 
+Planner 在规划前、Implementer 在设计与实现前按单份[设计模式参考与模块化设计](../skills/ric-devflow/references/shared/modular-design.md)检测本地 `ric-design-patterns-skill`；发现可用技能时分别实际读取，按语言和变化点参考。Planner 落实工程级职责与依赖方向，Implementer 落实代码级职责分离、边界封装与可测试性；记录复用现有 Spec／Decision 和实现报告字段。未发现技能不阻塞，也不自动补装；读取或来源缺口只暂停依赖该参考的工作。采用模式须有真实收益，不扩大预算、不自动拆分 Task；外部技能不是安装闭包或第六个发布 Skill，三平台原生角色继续消费共享入口。
+
 ## 10. 评测与完成定义
 
 [工作流评测](../skills/ric-devflow/references/evals/workflow-cases.md)保留 WF-01–15，并新增 WF-16–22：固定文件/独立修订、Git 分类、全源迁移、失败恢复、本地远端历史恢复、独立角色行为、无 Git/不跟踪/只读/v1 兼容。另保留[触发评测](../skills/ric-devflow/references/evals/trigger-cases.md)和[Brownfield 评测](../skills/ric-devflow/references/evals/brownfield-cases.md)。
@@ -156,6 +158,8 @@ current/test-plan 原地维护最新版，底部 Change Log 记录修订、时�
 WF-23–27 覆盖单交付多步骤、非递归执行、冻结图的普通变化与必要例外、按适用性省略额外审核。WF-06 三轮失败改为针对根因而非默认重规划；评测不要求对无关旧迁移场景整套重跑，但必须说明未运行边界。
 
 WF-28–33 覆盖三平台入口/平级转发、规则来源与安装冲突、原样回传和唯一 Planner、精确历史阅读缓存、工具缺口、局部复审与宿主恢复限制。新增配置须通过 frontmatter/工具/链接检查，并对照 Codex 模型/推理/权限意图及原 Schema；必要名称、路径和入口调用策略变化须逐项解释。静态/隔离角色情境不能代替 Claude/ZCode 的原生启动、权限执行或端到端验证；原生未运行须单列。
+
+WF-40–44 覆盖本地设计模式技能的独立读取与缓存、缺失时继续、来源/权限缺口、简单任务不强加模式，以及 Brownfield 预算和冻结 DAG 保护；判定实际读取、设计取舍与产物，不以技能名称或模式关键词命中代替行为证据。
 
 包完成条件：
 

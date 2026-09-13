@@ -58,7 +58,8 @@ Codex 主会话保持原角色流程；Claude Code / ZCode 主会话在准备和
 3. 将项目上下文识别为 `GREENFIELD`、`BROWNFIELD` 或 `BROWNFIELD_CONTINUATION`，并确定工作类型以及 `FAST`、`STANDARD` 或 `HIGH_RISK` 交付强度。
 4. 只要存在代码、历史、契约、用户、部分实现或脏工作区，就必须先阅读 [Brownfield 策略](../ric-devflow/references/contracts/brownfield-policy.md) 和 [仓库侦察参考](../ric-devflow/references/shared/repository-discovery.md)，再开展设计或请求生产代码修改。
 5. 在首次正式 `SPEC_REVIEW` 前完成与范围相称的事实预检、交付规模判断和仓库既有流程映射；不得把可通过只读侦察解决的问题留给 Reviewer 逐轮发现。
-6. 只加载与已识别技术栈和受影响边界相符的语言、领域参考；不得预先加载所有检查表。
+6. 在形成 Spec／设计决策前，按[设计模式参考与模块化设计](../ric-devflow/references/shared/modular-design.md)检测本地 `ric-design-patterns-skill`；发现可用技能必须实际读取并参考，落实工程级模块职责与依赖边界，在现有 Spec／Decision 记录依据并随 Task 交接。
+7. 只加载与已识别技术栈和受影响边界相符的语言、领域参考；不得预先加载所有检查表。
 
 ## 工作流程
 

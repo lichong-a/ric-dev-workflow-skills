@@ -1048,3 +1048,44 @@ A/B/C结果始终绑定runtime1 `58072f014063919e5cb62cf9c7a6213986488826ac6f1e7
 - 本轮只复用既有实现者和审核者，没有新增子代理。新增规则要求按需派发、同职责优先复用、增加盲评执行者前说明必要性、在真实工具支持时使用 `ric_<role>_<work>` 任务名，以及中文职责自述。Skill UI 标题和原生描述已改善；未修改原生稳定 ID、权限、模型或并发配置。
 - **Node/CLI 实际限制**：当前执行环境为 Linux x86_64，PATH 中仍没有 node/npm；只读发现 Windows FNM 的 `v24.16.0/installation/node.exe`，直接启动实测为 `errno 8: Exec format error`。目录版本标记不是成功运行的版本回执；标准安装器 CLI 仍为 NOT_RUN，没有下载新运行时或修改全局环境。
 - **界面与性能限制**：未执行三平台原生加载、新任务标题展示或旧会话改名，也未测量修改后的长期代理数量/耗时；不承诺 Skill `display_name` 会改变子代理昵称。当前工具未提供旧子代理重命名接口。
+
+## 2026-09-13 — 设计模式参考与模块化设计补充
+
+本轮按用户确认的计划修改纯指令包：Planner 在设计决策前、Implementer 在设计与实现前检测本地 `ric-design-patterns-skill`，发现可用技能时各自实际读取；共享参考分别定义工程级和代码级解耦、证据记录及边界。未自动安装外部技能，未新增业务角色、Schema、Gate 或模板字段。本段是源码维护验证，不是业务审核或正式 Commit 门禁报告。
+
+### 受检对象与保全
+
+- 采集时间：`2026-09-13T12:59:32+08:00`；环境 Linux/Bash，Python `3.14.4`、PyYAML `6.0.3`。
+- 源码分支 `main`，HEAD `d5e42a11017bdde09fcc525b97be1f5fcfa3c660`；本轮为未提交工作区变更，不将旧 HEAD 当作候选实现的 tested SHA。
+- 按现有验证指南的文件集算法，受检清单含 104 项，候选集合 SHA256 为 `f4899f16c42a1ede842ffa0e4402f407870fb408716ff1392091e350779447cb`。报告自身参与链接及历史保全检查，但排除于集合摘要。
+- 本轮开始前的报告前 74351 字节保持不变，SHA256 为 `619c34594ef8212859ebf94c75a239042223e75a4e7696b07ad67a7c9ecfc84f`；既有未跟踪 `.codex/` 的 1 个文件按路径、类型和内容摘要比对未变。
+
+### 实际执行与结果
+
+- 修改前和最终指令候选均执行 `docs/DEVFLOW_SKILLS_VALIDATION_GUIDE.md` 第一个完整 Bash 块，退出码均为 0；以 Python 读取文档块并交给 `bash -c`，没有另写产品检查器。当前命令设置 `PYTHONUTF8=1`、`PYTHONIOENCODING=utf-8`，并以 `DEVFLOW_VALIDATOR_PATH=/mnt/c/Users/Administrator/.codex/skills/.system/skill-creator/scripts/quick_validate.py` 定位实际 bundled 验证器，未修改用户配置。
+- 五个 Skill 各自执行 `python3 -B <bundled quick_validate.py> <Skill 绝对路径>`，五次退出码均为 0。最终候选解析 13 YAML、5 TOML、16 frontmatter、86 Markdown；177 当前链接及锚点、3 历史链接检查通过。
+- 仍只有五个实际 Skill 目录；Planner 和 Implementer 的传递引用闭包都包含新共享参考，且不依赖无关角色或外部设计模式 Skill 文件。安装前守卫保留，三平台原生模板和五份 UI 调用策略未修改。
+- 20 个旧模板与验证指南指定历史基线逐字一致。共享契约、v1/v2 布局、角色权限与 Gate 未修改。
+- `git diff --check`、`git diff --cached --check` 退出码均为 0；已检查差异和工作区状态，没有提交、推送、安装或业务仓库写入。
+- 维护者对照新增 WF-40–44 复核读取时机、缺失/不可读/歧义分支、直接方案和预算边界，并把 Implementer 的读取要求放在补全既有实现之前；这是文本语义自查，不计为独立代理行为评测通过。
+
+### 本轮文件摘要
+
+以下七项是相对开始时 HEAD 的非报告变更，均为普通文件；模式为当前文件系统观测值，未执行权限修改。验证报告只追加本节。
+
+| 路径 | 模式 | SHA256 |
+|---|---|---|
+| `docs/DEVFLOW_SKILLS_DESIGN.md` | `0o777` | `9bdaad03244ea4b219040f78887184bda3c1bdc69d5b9e3703552be4981914a5` |
+| `skills/ric-devflow-implementer/SKILL.md` | `0o777` | `d150c79457ce88855b2e64bed485defe9a8f7e9d5d91d400c1f3d61b3a99fe65` |
+| `skills/ric-devflow-implementer/references/implementation-workflow.md` | `0o777` | `a06aed483471cba3defc0e22593bd78a1e2210ea67f537f23d8da65dd2ba64a4` |
+| `skills/ric-devflow-implementer/references/self-review.md` | `0o777` | `153408aad5fc7d0ab647f87ff3521af3eb171a347d56d8e363b3f44e7426f2a2` |
+| `skills/ric-devflow-planner/SKILL.md` | `0o777` | `77020455a0b9228cd537352619ae922931d22fdb2b0c2b8df5dda80f0f0477d3` |
+| `skills/ric-devflow/references/evals/workflow-cases.md` | `0o777` | `75b44cfc3d81bcec10631080ee97f7245d2a4d97348de7c128358947ecf25301` |
+| `skills/ric-devflow/references/shared/modular-design.md` | `0o777` | `1fb7b207d6d752e128ebb172f94981576eb8ad67eb38d371eb88db47a3de963c` |
+
+### 未运行项与限制
+
+- WF-40–44 已新增原始输入与可观察判定，但未执行独立子代理前向评测；真实读取调用、产物决策和缓存复用行为仍需运行期验证。
+- 未运行 Codex、Claude Code、ZCode 原生角色加载与端到端任务；静态引用可达不能证明宿主已加载或实际调用。
+- 未重跑未修改的普通复制安装、检查器负控和历史 Git demo；没有自动安装设计模式技能，也没有改变本机已安装的 DevFlow 副本。
+- 本轮只把规则接入源码发布包；实际宿主中的遵循情况不由本次静态通过保证。
