@@ -338,3 +338,179 @@ PY
 候选变化后先核对精确Delta；未变契约/输入可引用原Tester结果，受影响缺件守卫重新执行对应真实fixture。原失败/阻塞记录保持原身份并保留，新证据单独发布。正式报告沿用原Schema和PASS/FAIL/BLOCKED；源码隔离结论与因无产品Commit/原生环境而未执行的门禁切片分开说明。
 
 标准CLI说明另做负向跟随检查：在合成canonical目标放置用户定制目录，在另一例宿主目标放置已有真实symlink，记录全部目标的lstat/readlink与哨兵摘要；按README的首次安装前提在首个CLI调用前停止，并核对字节/类型/mtime未变。该检查不启动CLI，不能证明安装器实现安全或它已运行。实际原始输入、输出及本轮机械核验见[独立评测证据](DEVFLOW_SKILLS_EVAL_20260913.md)。
+
+## 单功能分支与 detached worktree 的 Git 机制复验
+
+以下独立片段仅依赖 Python 标准库和 Git。在系统临时目录创建合成仓库，使用命令环境中的合成作者，不修改源码仓库、用户 Git 配置或已安装 Skill；所有 fixture 自动清理。原始命令、退出码和候选 bundle 保留在打印出的专用临时证据目录。它验证 Git 机制与不变量，**不证明原生角色已经派发、审核已批准、实际渐进加载或 G0–G10 已通过**。角色串行交接、冲突作者处理是合成动作；真实角色是否遵循规则仍需独立原始场景及读取轨迹。
+
+片段中的所有 merge（包括在 Task 工作区内启动合并）模拟 Planner 协调，冲突文件内容写入模拟原作者；fixture helper 组合这些动作不授予作者合并权。
+
+```bash
+(
+set -Eeuo pipefail
+PYTHONUTF8=1 PYTHONIOENCODING=utf-8 python3 -B - <<'PY'
+import hashlib, json, os, subprocess, sys, tempfile
+from pathlib import Path
+
+assert not sys.flags.optimize, 'disable PYTHONOPTIMIZE: checks require assertions'
+source = Path.cwd()
+source_head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+guide = source / 'docs/DEVFLOW_SKILLS_VALIDATION_GUIDE.md'
+evidence = Path(tempfile.mkdtemp(prefix='devflow-worktree-evidence-'))
+print('Evidence directory:', evidence, flush=True)
+env = {k: v for k, v in os.environ.items() if not k.startswith('GIT_')}
+env.update(GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL=os.devnull,
+           GIT_AUTHOR_NAME='DevFlow Fixture', GIT_AUTHOR_EMAIL='fixture@example.invalid',
+           GIT_COMMITTER_NAME='DevFlow Fixture', GIT_COMMITTER_EMAIL='fixture@example.invalid',
+           GIT_TERMINAL_PROMPT='0')
+commands, cases = [], []
+result = dict(source_head=source_head, guide_sha256=hashlib.sha256(guide.read_bytes()).hexdigest(),
+              cases=cases, commands=commands, verdict='FAIL', native_roles=False)
+
+def git(cwd, *args, success=True):
+    argv = ['git', '-c', 'core.hooksPath=' + os.devnull, '-c', 'commit.gpgSign=false',
+            '-c', 'rerere.enabled=false', *args]
+    p = subprocess.run(argv, cwd=cwd, env=env, text=True, capture_output=True)
+    commands.append(dict(cwd=str(cwd), argv=argv, exit_code=p.returncode,
+                         stdout=p.stdout, stderr=p.stderr))
+    assert (p.returncode == 0) == success, (argv, p.returncode, p.stdout, p.stderr)
+    return p.stdout.strip()
+
+def commit(cwd, name, content, message):
+    (cwd / name).write_text(content, encoding='utf-8')
+    git(cwd, 'add', '--', name)
+    git(cwd, 'commit', '-m', message)
+    return git(cwd, 'rev-parse', 'HEAD')
+
+def passed(name, **observations):
+    cases.append(dict(case=name, verdict='PASS', **observations))
+
+try:
+    with tempfile.TemporaryDirectory(prefix='devflow-worktree-fixture-') as location:
+        temp = Path(location)
+        repo, integration = temp / 'repo', temp / 'integration'
+        repo.mkdir()
+        git(repo, 'init', '-b', 'main')
+        base = commit(repo, 'app.txt', 'base\n', 'fixture baseline')
+        (repo / 'app.txt').write_text('USER DIRTY\n')
+        (repo / 'user-untracked.txt').write_text('KEEP\n')
+        protected = {p.name: p.read_bytes() for p in (repo / 'app.txt', repo / 'user-untracked.txt')}
+        feature = 'feature/REQ-WORKTREE-CHECK'
+        git(repo, 'branch', feature, base)
+        git(repo, 'worktree', 'add', str(integration), feature)
+        branches = lambda: git(repo, 'for-each-ref', '--format=%(refname:short)', 'refs/heads').splitlines()
+        expected = sorted(['main', feature])
+        assert branches() == expected
+        passed('one-feature-branch', branches=branches())
+
+        # Three independent tasks start at one exact SHA; no task refs are created.
+        tasks = [temp / ('task-' + name) for name in ('a', 'b', 'c')]
+        for task in tasks:
+            git(repo, 'worktree', 'add', '--detach', str(task), base)
+            assert git(task, 'rev-parse', 'HEAD') == base
+            git(task, 'symbolic-ref', '-q', 'HEAD', success=False)
+        assert branches() == expected
+        passed('parallel-detached-tasks', task_count=len(tasks), base_sha=base)
+
+        a, b, c = tasks
+        task_directory = git(a, 'rev-parse', '--absolute-git-dir')
+        first = commit(a, 'app.txt', 'implementation\n', 'fixture implementation')
+        tests = commit(a, 'test.txt', 'independent tests\n', 'fixture tester handoff')
+        repaired = commit(a, 'app.txt', 'implementation repaired\n', 'fixture author repair')
+        assert task_directory == git(a, 'rev-parse', '--absolute-git-dir')
+        git(a, 'symbolic-ref', '-q', 'HEAD', success=False)
+        assert branches() == expected
+        passed('same-task-serial-handoff', candidate_shas=[first, tests, repaired])
+
+        git(integration, 'merge', '--ff-only', repaired)
+        assert git(integration, 'rev-parse', 'HEAD') == repaired
+        passed('fast-forward-integration', head_sha=repaired)
+        parallel = commit(b, 'parallel.txt', 'parallel work\n', 'fixture parallel task')
+        git(integration, 'merge', '--no-edit', parallel)
+        merged = git(integration, 'rev-parse', 'HEAD')
+        assert len(git(integration, 'show', '-s', '--format=%P', 'HEAD').split()) == 2
+        git(integration, 'merge-base', '--is-ancestor', repaired, merged)
+        git(integration, 'merge-base', '--is-ancestor', parallel, merged)
+        passed('parallel-merge-integration', head_sha=merged)
+
+        conflict = commit(c, 'app.txt', 'conflicting task\n', 'fixture conflicting candidate')
+        git(integration, 'merge', '--no-edit', conflict, success=False)
+        assert git(integration, 'diff', '--name-only', '--diff-filter=U') == 'app.txt'
+        git(integration, 'merge', '--abort')
+        assert git(integration, 'rev-parse', 'HEAD') == merged
+        git(c, 'merge', '--no-edit', merged, success=False)
+        assert git(c, 'diff', '--name-only', '--diff-filter=U') == 'app.txt'
+        resolved = commit(c, 'app.txt', 'author reconciled both tasks\n', 'fixture author resolution')
+        assert resolved != conflict
+        git(c, 'merge-base', '--is-ancestor', conflict, resolved)
+        git(c, 'merge-base', '--is-ancestor', merged, resolved)
+        git(integration, 'merge', '--ff-only', resolved)
+        passed('conflict-returned-to-author', old_sha=conflict, replacement_sha=resolved)
+
+        # Resume the registered path without creating a new branch or worktree.
+        assert git(integration, 'branch', '--show-current') == feature
+        assert git(integration, 'rev-parse', 'HEAD') == resolved
+        assert branches() == expected
+        passed('existing-feature-reuse', integration_branch=feature)
+        assert all((repo / name).read_bytes() == raw for name, raw in protected.items())
+        assert git(repo, 'rev-parse', 'HEAD') == base
+        passed('dirty-original-checkout-preserved')
+
+        scratch = a / 'unfinished.txt'
+        scratch.write_text('unfinished task evidence\n')
+        git(repo, 'worktree', 'remove', str(a), success=False)
+        assert scratch.read_text() == 'unfinished task evidence\n'
+        assert git(a, 'rev-parse', 'HEAD') == repaired
+        scratch.unlink()  # Only this known synthetic file is removed after the rejection.
+        git(repo, 'worktree', 'lock', '--reason', 'fixture active writer', str(a))
+        git(repo, 'worktree', 'remove', str(a), success=False)
+        assert a.exists()
+        git(repo, 'worktree', 'unlock', str(a))
+        passed('resume-and-reject-dirty-or-locked-cleanup', resumed_sha=repaired)
+
+        published = [first, tests, repaired, parallel, conflict, resolved]
+        for sha in published:
+            git(integration, 'merge-base', '--is-ancestor', sha, resolved)
+        for task in tasks:
+            assert not git(task, 'status', '--porcelain')
+            git(repo, 'worktree', 'remove', str(task))
+        for sha in published:
+            git(repo, 'cat-file', '-e', sha + '^{commit}')
+        passed('published-candidates-survive-cleanup', published_shas=published)
+
+        squash_task = temp / 'task-squash'
+        git(repo, 'worktree', 'add', '--detach', str(squash_task), resolved)
+        candidate = commit(squash_task, 'squash.txt', 'squash candidate\n', 'fixture squash candidate')
+        candidate_object = git(squash_task, 'cat-file', 'commit', candidate)
+        candidate_tree = git(squash_task, 'rev-parse', candidate + '^{tree}')
+        git(integration, 'merge', '--squash', candidate)
+        git(integration, 'commit', '-m', 'fixture repository squash policy')
+        git(integration, 'merge-base', '--is-ancestor', candidate, 'HEAD', success=False)
+        bundle = evidence / 'published-candidate.bundle'
+        git(squash_task, 'bundle', 'create', str(bundle), 'HEAD')
+        git(repo, 'bundle', 'verify', str(bundle))
+        restored = temp / 'restored'
+        restored.mkdir()
+        git(restored, 'init', '-b', 'restore')
+        git(restored, 'fetch', str(bundle), 'HEAD')
+        assert git(restored, 'rev-parse', 'FETCH_HEAD') == candidate
+        assert git(restored, 'cat-file', 'commit', candidate) == candidate_object
+        assert git(restored, 'rev-parse', candidate + '^{tree}') == candidate_tree
+        # Recovery is proved in an empty object database before the original is removed.
+        assert not git(squash_task, 'status', '--porcelain')
+        git(repo, 'worktree', 'remove', str(squash_task))
+        assert branches() == expected
+        assert all((repo / name).read_bytes() == raw for name, raw in protected.items())
+        passed('squash-bundle-recovery', candidate_sha=candidate,
+               bundle_sha256=hashlib.sha256(bundle.read_bytes()).hexdigest(), branches=branches())
+    assert not temp.exists()
+    result.update(verdict='PASS', fixture_cleanup=True, case_count=len(cases))
+finally:
+    (evidence / 'result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n')
+print(json.dumps(dict(verdict=result['verdict'], case_count=len(cases),
+                     evidence=str(evidence), native_roles=False), ensure_ascii=False, indent=2))
+PY
+)
+```
+
+渐进加载另按正常安装、单角色直接调用、代码审核、测试计划和缺件恢复采集实际读取记录：标记每次读取的触发动作及材料身份，确认未触发的其他平台、迁移和发布材料未被加载。安装闭包的存在性/摘要检查不计为正文读取；文档中的路由词检查只能补充静态证据。

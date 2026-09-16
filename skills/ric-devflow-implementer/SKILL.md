@@ -7,17 +7,15 @@ description: 仅在用户显式调用或 Planner 精确委派时，实现已经�
 
 ## 安装前守卫（先于任何外部引用）
 
-先确认实际宿主为 Codex、Claude Code 或 ZCode，以及当前是主会话还是已由原生定义启动的 `implementer` 子角色。仅有配置目录或读到本文件不构成身份。身份未知/冲突则保留原任务，返回精确缺口，不猜宿主或调用其他代理。
+先确认实际宿主（Codex、Claude Code 或 ZCode）、主/子会话身份及逻辑发现位置；配置目录存在或读到本文件不算角色已启动。身份未知/冲突时保留原任务并返回精确缺口。
 
-只装本角色时，先检查逻辑发现位置旁的 `ric-devflow/SKILL.md` 与入口内 `references/bootstrap.md` 是否可读；此检查前不追踪下文外部链接。**已启动子角色缺件时只回交宿主**，给出原任务、角色、缺件路径和已知来源身份，不安装、不派生、不自行启动 Planner。
+先检查同级 `ric-devflow/SKILL.md`、入口内 `references/bootstrap.md` 及当前动作必要文件可读，再追踪外部链接。已确认同源、安装完整且角色可用时直接进入正文，不重读安装流程。已启动的 `implementer` 子角色遇缺件只回交宿主，不安装、不派生。
 
-主会话缺入口时按以下自包含步骤恢复：保留原任务和约束；分开记录宿主逻辑 `discovered_path`、候选 `source_root` 与用户/项目 `install_scope`，安装跟随逻辑发现位置，不能由 symlink realpath 推断。仅源码路径且范围未知时，写入前明确范围。确认发布源为 `https://github.com/lichong-a/ric-dev-workflow-skills`；优先完整可信本地 checkout 或安装记录的完整 SHA，无记录时仅向已确认源取一次候选并固定 SHA，不追踪移动分支、不猜历史、不执行下载代码。
+**仅主会话缺件时恢复**：分开确认逻辑 `discovered_path`、可信 `source_root` 和 `install_scope`；不能用 symlink realpath 推断写入范围。确认发布源 `https://github.com/lichong-a/ric-dev-workflow-skills`，优先可信完整本地 checkout 或安装记录的完整 SHA；无记录只从已确认源取一次候选并固定 SHA，不猜历史、不执行下载代码。按候选完整清单逐字核对本角色及已有入口的全部包文件与类型；源/范围不明、候选不完整、定制/异版本、未知文件或断链时保持目标零写入。离线仅在可信本地源完整匹配时可继续。
 
-用候选完整文件清单逐项核对本角色及已存在入口的全部包文件和类型，不能只比 SKILL.md；现存文件必须与同一固定 SHA 候选逐字匹配。异版本/定制、未知额外文件、普通文件挡住目录或不明断链时停止并要求原 SHA/可信 checkout，保持安装目标零写入，不覆盖、不默默升级、不删除旧安装。离线且可信本地源完整匹配可继续，否则报告缺口。匹配后**先从可信候选源只读** `skills/ric-devflow/references/bootstrap.md` 及当前平台一份参考，列出所选角色的必要 Skill/共享闭包、所有必需原生定义/配置、父目录与权限。必须完成全部目标的冲突、明确禁用和权限预检，不能先复制入口再发现原生配置冲突或 enabled=false；独立角色不扩到无关角色。全部通过后才排他创建并普通复制入口及本次其他缺项到已确认逻辑目标，写前再确认缺失、写后读回；相同内容复用，中断后重新比对再补缺，不换工具绕过拒绝或无限重试。
+匹配后先从可信候选源只读 `skills/ric-devflow/references/bootstrap.md` 和当前平台一份参考；在复制任何缺件之前预检全部所需 Skill、原生定义/配置、父目录的冲突、禁用和权限。通过后只排他创建缺项，写前复核、写后逐字读回；保留定制、禁用与无关配置，中断后重新核对，不绕过拒绝。详细恢复只在此路径读取[准备与恢复](../ric-devflow/references/bootstrap.md)。独立角色不要求无关角色，完整开发仍检查五 Skill 与当前宿主四原生角色；安装完整性核验不等于加载全部正文。
 
-入口恢复后才读取[准备与恢复](../ric-devflow/references/bootstrap.md)，并按需读取当前平台参考及本角色必要传递闭包；独立角色不要求无关角色安装或配置。完整开发准备五 Skill 与当前宿主四原生角色。明确禁用不反转，其他配置与项目/用户指引保留；文件安装、宿主加载、实际调用分别报告。需要重载时保留原任务、范围、固定候选、已完成阶段与下一动作，恢复后不重复安装。
-
-Codex 主会话保持原角色流程；Claude Code / ZCode 主会话在准备和加载核验后按[原生平级调用](../ric-devflow/references/shared/orchestration.md#原生平级调用)转交同名原生角色，不自行执行正文。已启动子角色直接执行下文，不再次委派。缺必需业务输入仍按角色契约停止，不从安装成功推断批准或 SHA。
+文件安装、宿主加载、实际调用分别核验；需重载时保留原任务、范围、固定来源及下一动作。Codex 主会话执行本角色；Claude/ZCode 主会话仅在需要转交时读取[原生平级调用](../ric-devflow/references/shared/orchestration.md#原生平级调用)，交给同名原生角色。已启动子角色直接执行正文，不再次委派自身。准备成功不代表业务批准或 SHA 有效。
 
 只实现一个已批准的 Task，或一个由规划者归因为 `IMPLEMENTATION` 的 Defect。在已批准预算内交付最小、完整且经过测试的变更。不得定义或修改需求、批准自己的工作、执行合并、更新全局状态，也不得顺手修复无关技术债。
 
@@ -32,13 +30,12 @@ Codex 主会话保持原角色流程；Claude Code / ZCode 主会话在准备和
 
 仅在用户明确调用 `$ric-devflow-implementer`（或宿主等价的 Skill/原生角色入口），或规划者精确委派时使用。普通的“写一下/修一下”请求不得隐式激活本 Skill。
 
-首次进入本角色或契约已变化时读取以下共享契约；同一会话仍有效的已读内容无需反复加载：
+按当前动作读取下列契约的相关章节；这些链接是路由，不是首次进入的必读清单。已读且未变的内容复用，不递归展开未触发的引用；模板仅在生成或核验对应产物时读取。
 
-- [角色边界](../ric-devflow/references/contracts/role-boundaries.md)
-- [产物生命周期](../ric-devflow/references/contracts/artifact-lifecycle.md)（首次处理布局时继续读取其中路由的 Compact v2 或 v1 规则）
-- [门禁策略](../ric-devflow/references/contracts/gate-policy.md)
-- [Git 策略](../ric-devflow/references/contracts/git-policy.md)
-- [变更控制](../ric-devflow/references/contracts/change-control.md)
+- 职责归属有疑问时查[角色边界](../ric-devflow/references/contracts/role-boundaries.md)。
+- 创建、恢复或发布正式产物时查[产物生命周期](../ric-devflow/references/contracts/artifact-lifecycle.md)，只选实际使用的 v1/v2 布局。
+- 核对当前动作的批准或门禁时查[门禁策略](../ric-devflow/references/contracts/gate-policy.md)对应项；批准、范围或证据发生变化时查[变更控制](../ric-devflow/references/contracts/change-control.md)。
+- 编辑前核对隔离工作区和提交边界时查[Git 策略](../ric-devflow/references/contracts/git-policy.md)，使用 Planner 分配的 detached worktree，不自行建 Task 分支。
 
 若为 Brownfield，还必须阅读 [Brownfield 策略](../ric-devflow/references/contracts/brownfield-policy.md)和[最小变更原则](../ric-devflow/references/shared/minimal-change.md)。语言和领域参考只读取与实际变更路径匹配的部分。
 
@@ -50,14 +47,14 @@ Codex 主会话保持原角色流程；Claude Code / ZCode 主会话在准备和
 - 当前已批准的 Spec 路径、版本，以及映射到本任务的 AC；
 - 当前已批准的测试计划路径和版本；
 - 所有依赖 Task 均满足[有效依赖](../ric-devflow/references/contracts/workflow-state.md#有效依赖与恢复)：有有效证据的 `VERIFIED`，或具有完整关闭证据的 `DONE`；
-- 源分支/集成分支的 `base_ref` 与精确完整的 `base_sha`；
+- 来源功能分支的 `base_ref` 与精确完整的 `base_sha`（ref 是来源提示，不要求 Task checkout 该分支）；
 - 当前 worktree、ref 与状态，以及允许路径和受保护路径；
 - 变更预算、仓库画像和相近参考实现；
 - 生效的局部指令，构建、格式化、Lint、类型检查和测试命令，以及已知 Brownfield 基线失败。
 
 交接应通过精确路径、版本和不可变身份引用上述产物，并注明当前目标、预期输出和停止条件。实现者只读取本 Task 及其真实执行路径需要的材料；不得要求完整对话历史，也不得从聊天摘要推断缺失的 Spec、批准、权限或 SHA。
 
-必须验证当前 checkout 或所分配 worktree 确实基于指定 SHA，且所有版本和批准仍为最新。任何编辑之前都要检查已有脏文件；不得 reset、clean、checkout、自动 stash、覆盖或悄悄混入先前工作。
+必须验证所分配 worktree 确实基于指定 SHA；detached HEAD 是正常隔离状态，不要求创建或切换 Task 分支。同 Task 串行交接从精确候选 head 继续，各作者报告保留自己的真实 base/head；换基线由 Planner 协调，不改写历史报告。确认当前 Task 的基线、版本和批准仍有效。任何编辑之前都要检查已有脏文件；不得 reset、clean、checkout、自动 stash、覆盖或悄悄混入先前工作。
 
 出现以下任一情况时，不得修改生产代码，直接返回 `BLOCKED`：关键身份或批准信息缺失/过期、依赖尚未验证、源 SHA 不匹配、允许路径不足、必须手改受保护或生成文件，或脏改动重叠且无法安全隔离。若本 Task 的必需验收只能在当前无权访问的 live/生产环境完成且无法独立拆分，也必须阻塞。必须明确说明规划者需要采取的具体动作；不得用 Mock 或本地成功冒充缺失的权威验收。
 

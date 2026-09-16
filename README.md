@@ -141,6 +141,8 @@ DevFlow 不假设项目从零开始。进入既有仓库时，它会先识别生
 
 Spec、用户批准、Review、Implementation Report 和 Test Report 都有明确身份。代码审核绑定精确的 `base_sha..head_sha`，测试绑定 `tested_sha`，发布审核绑定集成 SHA。分支名移动、行为变化或证据过期时，对应门禁会失效，而不是继续沿用一份“看起来通过”的旧结论。
 
+每个 Root 默认只使用一个功能分支兼作集成分支，优先复用已确认分支；新建名称遵循仓库约定，无规范时用 `feature/<REQ-ID>`。就绪 Task 通过 `git worktree add --detach <path> <base_sha>` 按需隔离，不按 Task、角色或返修轮次创建临时分支。同一 Task 的实现和测试串行复用工作区，互不冲突的 Task 仍可并行；Planner 按精确候选 SHA 集成。换基线或回收前保全全部已发布候选，squash 时先保存并验证可恢复的持久 bundle。详见[Git 与 worktree 策略](skills/ric-devflow/references/contracts/git-policy.md)。
+
 ### 3. 真正的职责隔离
 
 Planner 不写生产代码，Reviewer 不修改被审核对象，Tester 不替 Implementer 修代码，Implementer 不改变需求也不合并。角色分离不是形式：它直接限制文件写入、批准权限和状态所有权。
@@ -156,6 +158,8 @@ Planner 不写生产代码，Reviewer 不修改被审核对象，Tester 不替 I
 G0–G4 为当前 Root/阶段共享，不为每个步骤重走。内部步骤、不适用的额外基线专项、已由有效独立证据覆盖的重复审核可以直接省略；完整代码候选的 G5/G6 和最终验收仍保留。所谓“跳过审核”是少一次不必要的调用，不是替未审核代码写 APPROVE。详细规则见[门禁策略](skills/ric-devflow/references/contracts/gate-policy.md)。
 
 ### 5. 更小的上下文，更快的恢复
+
+Skill 按“入口分类 → 选中角色 → 当前动作参考 → 必要模板/领域”渐进加载，不在首次进入时读取整组契约，也不递归展开导航链接。安装完整性核验与正文阅读分开：同源完整且角色可用时直接继续，缺件/配置缺口才读取 bootstrap 和当前宿主材料；审核只读当前模式，发布和迁移规则到对应阶段再加载，已读未变内容复用。
 
 角色交接只传 Root Issue、动作、精确产物路径/版本、适用 SHA、当前 Finding/Defect、允许与保护路径、输出和停止条件。完整材料从持久产物读取；平台支持时默认使用最小上下文继承，例如 `fork_turns: "none"`。
 

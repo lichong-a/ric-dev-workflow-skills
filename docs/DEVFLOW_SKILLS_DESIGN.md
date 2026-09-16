@@ -85,6 +85,10 @@ Custom Agents 使用入口 `assets/agents/codex/*.toml` 模板，准备后位于
 
 业务仓库仅忽略临时目录，例如 `.devflow/changes/*/.local/`；本 Skill **源码**忽略演示 `.devflow/changes/`，不能照搬。ignore 不会取消已跟踪文件。精确暂存并遵守提交/推送的分别授权，详见[Git 策略](../skills/ric-devflow/references/contracts/git-policy.md)。
 
+每 Root 的 `integration_branch` 默认就是唯一功能分支，优先复用用户指定或已确认的分支；新建遵循仓库规范，无规范用 `feature/<REQ-ID>`，目标分支仍独立识别。就绪 Task 从精确基线用 `git worktree add --detach <path> <base_sha>` 按需隔离，不创建 Task/测试/返修分支。独立 Task 在既有并发约束下并行，同 Task 实现/测试/返修串行复用；审核不新建写工作区。`base_ref` 是来源提示，detached 不改变 `base_sha/head_sha/tested_sha` 的权威性。
+
+Planner 集成精确获批候选，遵从仓库策略，无约定时可快进则快进，否则普通 merge 保留祖先；冲突代码仍交原作者。换基线/回收前保护所有已发布候选（含被拒/取代版本），不能仅靠 detached reflog 或 .local。squash 等不保留血缘时先持久 bundle 并实际验证恢复，再清理空闲且干净的 worktree。不批量清理历史业务分支、不自动迁移 Root，不增加机器路径状态字段。完整规则只在 Git 契约维护。
+
 ## 5. 修订、身份与不可变性
 
 current/test-plan 原地维护最新版，底部 Change Log 记录修订、时间、作者、类型、受影响 ID、原因与证据。Task 保持稳定 ID 和独立修订，不随父文件一起换号；未变对象只引用，不生成 tasks-v*、目标包装或冗余哈希矩阵。
@@ -141,7 +145,9 @@ current/test-plan 原地维护最新版，底部 Change Log 记录修订、时�
 
 根 `skills/` 仅含 ric-devflow 与 ric-devflow-planner/reviewer/tester/implementer 五个实际目录。入口独立携带 `references/bootstrap.md`、`references/platforms/`、单份 `references/contracts/`、`references/shared/`、`references/evals/`，以及 `assets/templates/` 和 `assets/agents/{codex,claude-code,zcode}/`。原 templates 根保持 v1，compact 保持 v2 四文件。四角色自身模式/实现参考留在自身目录，共用编排、Task 冻结、测试交付和特征测试集中入口，避免单角色的传递引用要求无关角色。
 
-入口按需读取 bootstrap 和当前平台参考，再检查实际角色路径，不预读所有平台/角色。四角色 SKILL 的自包含守卫在任何外部引用前：主会话缺入口可在逻辑安装范围内从已确认同源固定 SHA 补缺；已启动子角色缺件只回交宿主，不安装、不派生。完整开发检查五 Skill 与当前宿主四原生角色；独立角色只核验必要闭包。
+入口先分类和核验真实角色可用性，再加载选中的角色；仅缺件、来源或配置待核验时读取 bootstrap 与当前平台参考。文件闭包完整性检查可由工具核验并返回差异，不把全包正文注入上下文。五入口保留职责、最小输入、边界和动作路由，不要求首次进入读取整组共享契约；正文链接是条件导航，不递归展开。
+
+按动作加载：仓库接管/工作区操作读取 Brownfield 与 Git；正式产物创建/恢复读取生命周期及实际布局；派发、状态迁移、门禁分别读取对应章节；审核只选一个模式，测试只选当前动作；发布/关闭和迁移到达阶段后读取。Planner、Tester 的阶段细节与 Reviewer 的正式审核方法移入各自参考；三平台原生模板遵循相同路由，已读未变复用。四角色 SKILL 的自包含守卫在任何外部引用前：主会话缺入口可在逻辑安装范围内从已确认同源固定 SHA 补缺；已启动子角色缺件只回交宿主，不安装、不派生。完整开发检查五 Skill 与当前宿主四原生角色；独立角色只核验必要闭包。
 
 准备区分 discovered_path、source_root、install_scope；逻辑发现位置决定范围，symlink realpath 只用于核验源。完整可信本地 checkout / 安装记录固定 SHA 优先，无记录时仅从已确认发布源取得一次固定候选；所有现存包文件逐字匹配才补缺，旧版不匹配需原 SHA，不静默升级。先预检全部目标，保留定制、异版本、普通同名冲突、不明断链、禁用和已有指引/配置，仅普通复制缺文件或必要缺失配置项，写后读回，中断后逐文件恢复。规则唯一来源见[准备与恢复](../skills/ric-devflow/references/bootstrap.md)。
 
@@ -160,6 +166,8 @@ WF-23–27 覆盖单交付多步骤、非递归执行、冻结图的普通变化
 WF-28–33 覆盖三平台入口/平级转发、规则来源与安装冲突、原样回传和唯一 Planner、精确历史阅读缓存、工具缺口、局部复审与宿主恢复限制。新增配置须通过 frontmatter/工具/链接检查，并对照 Codex 模型/推理/权限意图及原 Schema；必要名称、路径和入口调用策略变化须逐项解释。静态/隔离角色情境不能代替 Claude/ZCode 的原生启动、权限执行或端到端验证；原生未运行须单列。
 
 WF-40–44 覆盖本地设计模式技能的独立读取与缓存、缺失时继续、来源/权限缺口、简单任务不强加模式，以及 Brownfield 预算和冻结 DAG 保护；判定实际读取、设计取舍与产物，不以技能名称或模式关键词命中代替行为证据。
+
+WF-45–50 覆盖单功能分支、多 detached worktree、同 Task 复用、并行与冲突、候选历史保全/回收、渐进读取和缺件恢复；TRIGGER-19–23 覆盖动作触发与不必要加载的对照。实际读取轨迹与 Git 机制分别验证，不能由文件尺寸或关键字推断原生宿主行为。
 
 包完成条件：
 

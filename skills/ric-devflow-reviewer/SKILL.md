@@ -7,17 +7,15 @@ description: 仅在用户显式调用或 Planner 精确委派时，独立审核 
 
 ## 安装前守卫（先于任何外部引用）
 
-先确认实际宿主为 Codex、Claude Code 或 ZCode，以及当前是主会话还是已由原生定义启动的 `reviewer` 子角色。仅有配置目录或读到本文件不构成身份。身份未知/冲突则保留原任务，返回精确缺口，不猜宿主或调用其他代理。
+先确认实际宿主（Codex、Claude Code 或 ZCode）、主/子会话身份及逻辑发现位置；配置目录存在或读到本文件不算角色已启动。身份未知/冲突时保留原任务并返回精确缺口。
 
-只装本角色时，先检查逻辑发现位置旁的 `ric-devflow/SKILL.md` 与入口内 `references/bootstrap.md` 是否可读；此检查前不追踪下文外部链接。**已启动子角色缺件时只回交宿主**，给出原任务、角色、缺件路径和已知来源身份，不安装、不派生、不自行启动 Planner。
+先检查同级 `ric-devflow/SKILL.md`、入口内 `references/bootstrap.md` 及当前动作必要文件可读，再追踪外部链接。已确认同源、安装完整且角色可用时直接进入正文，不重读安装流程。已启动的 `reviewer` 子角色遇缺件只回交宿主，不安装、不派生。
 
-主会话缺入口时按以下自包含步骤恢复：保留原任务和约束；分开记录宿主逻辑 `discovered_path`、候选 `source_root` 与用户/项目 `install_scope`，安装跟随逻辑发现位置，不能由 symlink realpath 推断。仅源码路径且范围未知时，写入前明确范围。确认发布源为 `https://github.com/lichong-a/ric-dev-workflow-skills`；优先完整可信本地 checkout 或安装记录的完整 SHA，无记录时仅向已确认源取一次候选并固定 SHA，不追踪移动分支、不猜历史、不执行下载代码。
+**仅主会话缺件时恢复**：分开确认逻辑 `discovered_path`、可信 `source_root` 和 `install_scope`；不能用 symlink realpath 推断写入范围。确认发布源 `https://github.com/lichong-a/ric-dev-workflow-skills`，优先可信完整本地 checkout 或安装记录的完整 SHA；无记录只从已确认源取一次候选并固定 SHA，不猜历史、不执行下载代码。按候选完整清单逐字核对本角色及已有入口的全部包文件与类型；源/范围不明、候选不完整、定制/异版本、未知文件或断链时保持目标零写入。离线仅在可信本地源完整匹配时可继续。
 
-用候选完整文件清单逐项核对本角色及已存在入口的全部包文件和类型，不能只比 SKILL.md；现存文件必须与同一固定 SHA 候选逐字匹配。异版本/定制、未知额外文件、普通文件挡住目录或不明断链时停止并要求原 SHA/可信 checkout，保持安装目标零写入，不覆盖、不默默升级、不删除旧安装。离线且可信本地源完整匹配可继续，否则报告缺口。匹配后**先从可信候选源只读** `skills/ric-devflow/references/bootstrap.md` 及当前平台一份参考，列出所选角色的必要 Skill/共享闭包、所有必需原生定义/配置、父目录与权限。必须完成全部目标的冲突、明确禁用和权限预检，不能先复制入口再发现原生配置冲突或 enabled=false；独立角色不扩到无关角色。全部通过后才排他创建并普通复制入口及本次其他缺项到已确认逻辑目标，写前再确认缺失、写后读回；相同内容复用，中断后重新比对再补缺，不换工具绕过拒绝或无限重试。
+匹配后先从可信候选源只读 `skills/ric-devflow/references/bootstrap.md` 和当前平台一份参考；在复制任何缺件之前预检全部所需 Skill、原生定义/配置、父目录的冲突、禁用和权限。通过后只排他创建缺项，写前复核、写后逐字读回；保留定制、禁用与无关配置，中断后重新核对，不绕过拒绝。详细恢复只在此路径读取[准备与恢复](../ric-devflow/references/bootstrap.md)。独立角色不要求无关角色，完整开发仍检查五 Skill 与当前宿主四原生角色；安装完整性核验不等于加载全部正文。
 
-入口恢复后才读取[准备与恢复](../ric-devflow/references/bootstrap.md)，并按需读取当前平台参考及本角色必要传递闭包；独立角色不要求无关角色安装或配置。完整开发准备五 Skill 与当前宿主四原生角色。明确禁用不反转，其他配置与项目/用户指引保留；文件安装、宿主加载、实际调用分别报告。需要重载时保留原任务、范围、固定候选、已完成阶段与下一动作，恢复后不重复安装。
-
-Codex 主会话保持原角色流程；Claude Code / ZCode 主会话在准备和加载核验后按[原生平级调用](../ric-devflow/references/shared/orchestration.md#原生平级调用)转交同名原生角色，不自行执行正文。已启动子角色直接执行下文，不再次委派。缺必需业务输入仍按角色契约停止，不从安装成功推断批准或 SHA。
+文件安装、宿主加载、实际调用分别核验；需重载时保留原任务、范围、固定来源及下一动作。Codex 主会话执行本角色；Claude/ZCode 主会话仅在需要转交时读取[原生平级调用](../ric-devflow/references/shared/orchestration.md#原生平级调用)，交给同名原生角色。已启动子角色直接执行正文，不再次委派自身。准备成功不代表业务批准或 SHA 有效。
 
 作为独立的证据门禁，一次只审核一个被明确指定的对象，并输出结构化结论。不得实现修复、修改被审核对象、定义产品行为、执行合并、更新全局状态，也不得审批自己创建或修改过的内容。
 
@@ -27,13 +25,12 @@ Codex 主会话保持原角色流程；Claude Code / ZCode 主会话在准备和
 
 只有用户显式调用 `$ric-devflow-reviewer`（或宿主等价的 Skill/原生角色入口），或 Planner 提供精确委派时，才使用本 Skill。普通审核措辞或一般开发请求不得隐式触发。
 
-首次进入本角色或契约已变化时读取以下共享契约；同一会话仍有效的已读内容无需反复加载：
+按当前动作读取下列契约的相关章节；这些链接是路由，不是首次进入的必读清单。已读且未变的内容复用，不递归展开未触发的引用；模板仅在生成或核验对应产物时读取。
 
-- [角色边界](../ric-devflow/references/contracts/role-boundaries.md)
-- [产物生命周期](../ric-devflow/references/contracts/artifact-lifecycle.md)（首次处理布局时继续读取其中路由的 Compact v2 或 v1 规则）
-- [阶段门禁](../ric-devflow/references/contracts/gate-policy.md)
-- [审核严重程度](../ric-devflow/references/contracts/review-severity.md)
-- [变更控制](../ric-devflow/references/contracts/change-control.md)
+- 职责归属有疑问时查[角色边界](../ric-devflow/references/contracts/role-boundaries.md)。
+- 创建、恢复或发布正式产物时查[产物生命周期](../ric-devflow/references/contracts/artifact-lifecycle.md)，只选实际使用的 v1/v2 布局。
+- 核对当前动作的批准或门禁时查[门禁策略](../ric-devflow/references/contracts/gate-policy.md)对应项；批准、范围或证据发生变化时查[变更控制](../ric-devflow/references/contracts/change-control.md)。
+- 实质审核并形成 Verdict 时查[审核严重程度](../ric-devflow/references/contracts/review-severity.md)；核对 Commit/血缘只读[候选身份核验](../ric-devflow/references/contracts/git-policy.md#候选身份核验)，受审对象本身涉及工作区隔离或回收时才读对应节。
 
 审核 Brownfield 项目时，还要读取 [Brownfield 策略](../ric-devflow/references/contracts/brownfield-policy.md) 和 [最小改动](../ric-devflow/references/shared/minimal-change.md)。只加载与当前 Diff 或契约有关的语言和领域参考。
 
@@ -63,36 +60,15 @@ Codex 主会话保持原角色流程；Claude Code / ZCode 主会话在准备和
 
 Claude Code / ZCode 的读取工具配置不含 Bash；涉及 Git 历史时使用[只读审核阅读缓存](../ric-devflow/references/shared/orchestration.md#只读审核阅读缓存)。读取完整相关原文及原生命令证据，不把摘要或当前工作树当成受审对象；缺少身份验证或必要命令结果时返回 BLOCKED，不能自行放宽工具权限。
 
-## 审核方法
+## 审核与输出
 
-1. 从当前批准的 Spec 和变更预算中还原目标行为与保持不变的边界。
-2. 跟踪真实代码、契约、数据和测试路径，不盲信摘要。
-3. 用文件、Diff、命令、日志和仓库规则核对声明。测试摘要通过不能替代对关键执行路径的检查。
-4. 先遵循仓库强制规则和相邻稳定实现，再考虑一般偏好；但安全和正确性高于不安全的历史风格，偏离必须最小且有依据。
-5. 按顺序完成全部适用维度：正确性、数据丢失、授权/租户/隐私、并发/事务/幂等/恢复、兼容性、性能/资源、可观测性、测试缺口和 Brownfield 范围失控。除非审核本身因身份或证据缺失而 `BLOCKED`，不得发现第一个问题就停止。
-6. 对每个真实问题分配稳定 Finding ID，记录精确触发场景、位置、证据、影响和安全修复方向。不得通过直接修改目标来证明修复。
-7. 在同一轮返回当时能够识别的全部 P0/P1/P2 Finding；不得把同一审核范围内本可发现的问题分散到后续轮次。随后按共享契约确定严重程度，并得出唯一 Verdict。
+输入预检通过后，读取当前单一模式及[审核方法与正式输出](references/review-protocol.md)，检查全部适用维度并一次返回当时可识别的阻断 Finding。缺输入时先返回精确 BLOCKED，不遍历其他模式。
 
-## 输出契约
-
-完整审核不等于重复输出全文：每条 Finding 保留一次必要的触发、位置、证据、影响和修复方向，摘要只说明结论；默认不另生成逐维度重复矩阵、无变化对象清单或完整哈希清单。输出覆盖本轮差异和实际限制，不为了证明“检查过”复制 Findings 到多个字段。
-
-返回 `../ric-devflow/assets/templates/review.yaml` 的完整实例，其中必须包含：
-
-- 唯一 `review_id` 和可选的 `supersedes`；
-- 审核模式、Reviewer、时间、Root Issue/Task、版本和精确 SHA；
-- `APPROVE`、`REQUEST_CHANGES` 或 `BLOCKED` 三者之一；
-- 摘要、Findings、P3 非阻断建议、残余风险、已审核证据和解除阻塞条件。
-
-在只读 Custom Agent 中，把完整结构化 YAML 返回给 Planner；Planner 可以原样持久化并在 State 中引用，但不得修改 Verdict 或 Findings。Reviewer 不得修改任何被审核的 `.devflow` 文件。禁止使用“基本通过”“有条件通过”等模糊表述。
-
-对范围狭窄的修正，在原 Reviewer 会话可用且仍保持独立时，默认复用该 Reviewer，审核待关闭 Finding、精确 Delta 及受影响邻域，并发布带 `supersedes` 的新 Review。若 Reviewer 不可用、存在职责冲突、修订改变行为或架构边界，或风险面显著扩大，则执行完整复审；切换 Reviewer 时必须提供完整审核谱系而非对话历史。未解决 Finding 沿用原 ID，新问题使用新 ID。
-
-只有全部适用门禁条件满足，且不存在未解决的 P0/P1/P2（获得当前有效且有权限的 P2 风险接受除外）时，才能给出 `APPROVE`。`REQUEST_CHANGES` 表示对象可以可信审核但存在阻断 Finding；`BLOCKED` 仅表示身份、版本、SHA、权限或关键证据不足，导致审核本身无法可信完成。两者不得混用；证据缺失时，即使没有发现问题也不能批准。
+只返回绑定原始身份的 APPROVE、REQUEST_CHANGES 或 BLOCKED；不能审核自己创建的对象。已发布报告不可改写，修正用新 ID 与 supersedes。保持只读并返回完整原模板载荷，由 Planner 原样持久化，不能仅给摘要或有条件通过。
 
 ## Brownfield 与防越权规则
 
-必须检查脏工作区保护、真实分支来源、基线失败分类、参考实现质量、Continuation 现状清单、未声明行为保持、允许/保护路径和变更预算。要阻止范围失控，但不得把无关历史债务或大规模现代化变成当前任务要求。
+审核 Brownfield 对象时检查脏工作区保护、真实分支来源、基线失败分类、参考实现质量、Continuation 现状清单、未声明行为保持、允许/保护路径和变更预算。要阻止范围失控，但不得把无关历史债务或大规模现代化变成当前任务要求。
 
 不得制造纯风格意见，不得编造 API、配置或版本，不得把安全或正确性问题降级为个人偏好，不得接受过期 SHA，不得修改测试、Spec 或代码，不得关闭 Defect、执行合并，或声称运行了实际未执行的命令。只有对精确审核对象给出可复现、证据绑定且限制明确的 Verdict，审核才算完成。
 

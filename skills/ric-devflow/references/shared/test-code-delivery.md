@@ -5,11 +5,11 @@
 ## G5 前形成完整候选
 
 1. Planner 确认原 Task 的 AC、测试计划、测试允许路径和预算；生产路径对 Tester 始终受保护。涉及构建配置或生产 Hook 的缺口先交回 Planner，不能以“让测试跑起来”扩大权限。
-2. Planner 串行分配 Implementer 与 Tester 的写入窗口，切换前确认上一作者已停止写入、其改动归属清楚且身份固定。默认在同一 Task 的隔离工作区先完成生产候选，再由 Tester 基于该精确 head 添加独立测试；Tester 不修改或提交上一作者遗留的脏文件。无法安全交接时先阻塞相关写入。
+2. Planner 串行分配 Implementer 与 Tester 的写入窗口，切换前确认上一作者已停止写入、其改动归属清楚且身份固定。Git 仓库默认复用原 Task 的 detached worktree，先完成生产候选，再由 Tester 基于该精确 head 添加独立测试；不为 Tester 另建分支或工作区。交接在会话/工具参数传入工作区、原 `base_ref/base_sha` 和候选 head，Tester 核对实际 HEAD，不修改或提交上一作者遗留的脏文件。无法安全交接时先阻塞相关写入。
 3. 各作者只在已有提交授权内固定自己的候选和报告。例：Implementer 报告 `A..B`，Tester 基于 B 提交测试并报告 `B..C`。两个报告保持原绑定；Planner 将它们与完整 `A..C` 候选送 G5，不把 Implementer 的 B 改写成 C，也不代其补报告。Reviewer 检查真实净差异、血缘及各报告实际覆盖，不能仅拼接报告摘要判定完整。
 4. Reviewer 对包含必要生产代码和测试的完整候选独立给出 `CODE_REVIEW`；Planner 按授权与仓库策略集成，Tester 在新集成 SHA 上执行 G6。生产候选到测试候选的串行提交是原 Task 内步骤，不是逐步骤 Gate 或私自合并。
 
-没有提交授权时，交回当前不可变 diff/快照和明确缺口；缺少真实候选 SHA 时不得发布可用于 G5 的正式代码报告。不同工作区间需要合并或冲突处理时由 Planner 协调，冲突代码仍由对应作者修正，Tester/Implementer 不自行合并。
+没有提交授权时，交回当前不可变 diff/快照和明确缺口；缺少真实候选 SHA 时不得发布可用于 G5 的正式代码报告。工作区准备和必要集成按 [Git 策略](../contracts/git-policy.md)由 Planner 协调，冲突代码仍由对应作者修正，Tester/Implementer 不自行合并。detached HEAD 是正常 Task 状态；绝对工作区位置不进入持久报告，也不新增字段。
 
 ## 代码交付报告与作者
 
@@ -23,7 +23,7 @@
 
 Planner 先确认这是原 Task 内必要测试工作；超预算走局部预算复核，Oracle/环境/权限变化走变更控制。仅测试实现修正不重新规划或重开 G4。
 
-受影响 Task 经 `REWORK -> CODE_REVIEW` 返回候选审核，撤销当前无效的已验证索引，保留历史报告。尚未集成时在原候选上串行固定新 head；已经集成且相关验证有效时从最新已验证集成 SHA 准备隔离修正候选。若首次 G6 失败或原验证已失效，Planner 核对失败报告与血缘，以包含待修测试的当前失败集成 SHA 为隔离修复基线，明确其未验证、不得解锁依赖；不能退到不含该 Task 的旧 PASS 提交，也不要求失败候选先通过才准修复。由 Tester 仅修改测试并报告真实差异，Reviewer 按现有 Delta/完整复审条件审核，Planner 集成，Tester 对新集成 SHA 验证后恢复 `VERIFIED`。这是原 Task 的修复路径，不是新 Task 的 READY 基线例外。
+受影响 Task 经 `REWORK -> CODE_REVIEW` 返回候选审核，撤销当前无效的已验证索引，保留历史报告。尚未集成时在原候选上串行固定新 head；已经集成且相关验证有效时从最新已验证集成 SHA 准备隔离修正候选。若首次 G6 失败或原验证已失效，Planner 核对失败报告与血缘，以包含待修测试的当前失败集成 SHA 为隔离修复基线，明确其未验证、不得解锁依赖；不能退到不含该 Task 的旧 PASS 提交，也不要求失败候选先通过才准修复。换基线前按 Git 保全规则确保全部发布候选（包括已拒绝旧版）可恢复，确认无活动作者或脏文件，再由 Planner 在原 worktree 显式切换 detached 基线；不为修正轮次创建分支。由 Tester 仅修改测试并报告真实差异，Reviewer 按现有 Delta/完整复审条件审核，Planner 集成，Tester 对新集成 SHA 验证后恢复 `VERIFIED`。这是原 Task 的修复路径，不是新 Task 的 READY 基线例外。
 
 测试类 Defect 由 Planner 归因为 `TEST` 并交给 Tester，不能为了满足旧代码审核入口而伪装成 `IMPLEMENTATION`。审阅接受同一 Task 的测试代码报告。主会话、Planner 和 Tester 都不能替代 Reviewer 批准测试代码；无关 Task 不重置，受影响下游不能使用失效证据继续派发。发布审核后再改测试还须更新受影响的 G7/G8 证据。
 

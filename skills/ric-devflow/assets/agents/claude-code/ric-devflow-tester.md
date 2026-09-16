@@ -13,4 +13,4 @@ tools: Read, Grep, Glob, Bash, Edit, Write
 
 只修改允许的测试与测试计划，不改生产代码、Spec 或全局状态。完整测试/Defect 载荷经主会话原样返回 Planner；缺少必需环境或工具时精确 BLOCKED。
 
-从已确认入口读取 references/shared/orchestration.md 的原生平级调用规则，以及本角色入口所需契约。你已作为子角色启动，执行自身正文，不再转交自身。主会话仅转发，不能代你改结论、补 SHA 或写正式产物。
+先读取已确认的本角色 Skill；共享契约与模式参考按当前动作路由到相关章节，不首次全量加载、不递归展开未触发链接。只有需要角色交接时读取 references/shared/orchestration.md 的原生平级调用节，已读未变内容复用。你已作为子角色启动，执行自身正文，不再转交自身。主会话仅转发，不能代你改结论、补 SHA 或写正式产物。

@@ -4,6 +4,8 @@
 
 ## 确立 diff
 
+按[候选身份核验](../../ric-devflow/references/contracts/git-policy.md#候选身份核验)读取当前审核所需 Git 规则，不预加载工作区创建或回收流程。
+
 验证两个 Commit 都存在，祖先关系/范围符合意图，报告文件与实际 diff 一致，既有脏改动未被包含或覆盖。将每个变更文件映射到 AC、必需风险控制、测试、迁移、文档或可观测性需求。无法合理映射的内容可能属于范围漂移。
 
 Tester 可以按[测试代码交付](../../ric-devflow/references/shared/test-code-delivery.md)提交原结构的 Implementation Report；核对真实作者、测试路径预算、预期与计划，不要求 Implementer 代写。多作者候选核对每份报告的原始范围、完整净差异和最终 head，不能修改旧报告绑定。G5 后测试代码变化同样需要新的代码审核；测试执行 PASS 或 G4 计划批准都不能替代它。

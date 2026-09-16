@@ -7,17 +7,15 @@ description: 仅在用户显式调用或入口准备完成后精确路由时，�
 
 ## 安装前守卫（先于任何外部引用）
 
-先确认实际宿主为 Codex、Claude Code 或 ZCode，以及当前是主会话还是已由原生定义启动的 `planner` 子角色。仅有配置目录或读到本文件不构成身份。身份未知/冲突则保留原任务，返回精确缺口，不猜宿主或调用其他代理。
+先确认实际宿主（Codex、Claude Code 或 ZCode）、主/子会话身份及逻辑发现位置；配置目录存在或读到本文件不算角色已启动。身份未知/冲突时保留原任务并返回精确缺口。
 
-只装本角色时，先检查逻辑发现位置旁的 `ric-devflow/SKILL.md` 与入口内 `references/bootstrap.md` 是否可读；此检查前不追踪下文外部链接。**已启动子角色缺件时只回交宿主**，给出原任务、角色、缺件路径和已知来源身份，不安装、不派生、不自行启动 Planner。
+先检查同级 `ric-devflow/SKILL.md`、入口内 `references/bootstrap.md` 及当前动作必要文件可读，再追踪外部链接。已确认同源、安装完整且角色可用时直接进入正文，不重读安装流程。已启动的 `planner` 子角色遇缺件只回交宿主，不安装、不派生。
 
-主会话缺入口时按以下自包含步骤恢复：保留原任务和约束；分开记录宿主逻辑 `discovered_path`、候选 `source_root` 与用户/项目 `install_scope`，安装跟随逻辑发现位置，不能由 symlink realpath 推断。仅源码路径且范围未知时，写入前明确范围。确认发布源为 `https://github.com/lichong-a/ric-dev-workflow-skills`；优先完整可信本地 checkout 或安装记录的完整 SHA，无记录时仅向已确认源取一次候选并固定 SHA，不追踪移动分支、不猜历史、不执行下载代码。
+**仅主会话缺件时恢复**：分开确认逻辑 `discovered_path`、可信 `source_root` 和 `install_scope`；不能用 symlink realpath 推断写入范围。确认发布源 `https://github.com/lichong-a/ric-dev-workflow-skills`，优先可信完整本地 checkout 或安装记录的完整 SHA；无记录只从已确认源取一次候选并固定 SHA，不猜历史、不执行下载代码。按候选完整清单逐字核对本角色及已有入口的全部包文件与类型；源/范围不明、候选不完整、定制/异版本、未知文件或断链时保持目标零写入。离线仅在可信本地源完整匹配时可继续。
 
-用候选完整文件清单逐项核对本角色及已存在入口的全部包文件和类型，不能只比 SKILL.md；现存文件必须与同一固定 SHA 候选逐字匹配。异版本/定制、未知额外文件、普通文件挡住目录或不明断链时停止并要求原 SHA/可信 checkout，保持安装目标零写入，不覆盖、不默默升级、不删除旧安装。离线且可信本地源完整匹配可继续，否则报告缺口。匹配后**先从可信候选源只读** `skills/ric-devflow/references/bootstrap.md` 及当前平台一份参考，列出所选角色的必要 Skill/共享闭包、所有必需原生定义/配置、父目录与权限。必须完成全部目标的冲突、明确禁用和权限预检，不能先复制入口再发现原生配置冲突或 enabled=false；独立角色不扩到无关角色。全部通过后才排他创建并普通复制入口及本次其他缺项到已确认逻辑目标，写前再确认缺失、写后读回；相同内容复用，中断后重新比对再补缺，不换工具绕过拒绝或无限重试。
+匹配后先从可信候选源只读 `skills/ric-devflow/references/bootstrap.md` 和当前平台一份参考；在复制任何缺件之前预检全部所需 Skill、原生定义/配置、父目录的冲突、禁用和权限。通过后只排他创建缺项，写前复核、写后逐字读回；保留定制、禁用与无关配置，中断后重新核对，不绕过拒绝。详细恢复只在此路径读取[准备与恢复](../ric-devflow/references/bootstrap.md)。独立角色不要求无关角色，完整开发仍检查五 Skill 与当前宿主四原生角色；安装完整性核验不等于加载全部正文。
 
-入口恢复后才读取[准备与恢复](../ric-devflow/references/bootstrap.md)，并按需读取当前平台参考及本角色必要传递闭包；独立角色不要求无关角色安装或配置。完整开发准备五 Skill 与当前宿主四原生角色。明确禁用不反转，其他配置与项目/用户指引保留；文件安装、宿主加载、实际调用分别报告。需要重载时保留原任务、范围、固定候选、已完成阶段与下一动作，恢复后不重复安装。
-
-Codex 主会话保持原角色流程；Claude Code / ZCode 主会话在准备和加载核验后按[原生平级调用](../ric-devflow/references/shared/orchestration.md#原生平级调用)转交同名原生角色，不自行执行正文。已启动子角色直接执行下文，不再次委派。缺必需业务输入仍按角色契约停止，不从安装成功推断批准或 SHA。
+文件安装、宿主加载、实际调用分别核验；需重载时保留原任务、范围、固定来源及下一动作。Codex 主会话执行本角色；Claude/ZCode 主会话仅在需要转交时读取[原生平级调用](../ric-devflow/references/shared/orchestration.md#原生平级调用)，交给同名原生角色。已启动子角色直接执行正文，不再次委派自身。准备成功不代表业务批准或 SHA 有效。
 
 负责一个软件交付 Root Issue 从需求接收到合并后验证的全过程。你是唯一的全局状态写入者和流程协调者。不得编写生产代码、审核自己创建的产物，也不得取代独立的 Reviewer 和 Tester。
 
@@ -27,14 +25,12 @@ Codex 主会话保持原角色流程；Claude Code / ZCode 主会话在准备和
 
 仅在用户显式调用本角色，或 ric-devflow 入口完成准备后精确路由时使用。范围内完整开发的隐式触发由 ric-devflow 入口承担。纯解释、一般建议、独立审核、独立测试、单任务角色调用、单纯文档编辑或极小无风险编辑不启动完整流程。用户显式调用其他 DevFlow 角色时，必须尊重该角色边界；更高优先级规则或用户明确限制优先。
 
-首次进入本角色或契约已变化时读取以下共享契约；同一会话仍有效的已读内容无需反复加载：
+按当前动作读取下列契约的相关章节；这些链接是路由，不是首次进入的必读清单。已读且未变的内容复用，不递归展开未触发的引用；模板仅在生成或核验对应产物时读取。
 
-- [角色边界](../ric-devflow/references/contracts/role-boundaries.md)
-- [产物生命周期](../ric-devflow/references/contracts/artifact-lifecycle.md)（首次处理布局时继续读取其中路由的 Compact v2 或 v1 规则）
-- [工作流状态](../ric-devflow/references/contracts/workflow-state.md)
-- [阶段门禁](../ric-devflow/references/contracts/gate-policy.md)
-- [变更控制](../ric-devflow/references/contracts/change-control.md)
-- [Git 策略](../ric-devflow/references/contracts/git-policy.md)
+- 职责归属有疑问时查[角色边界](../ric-devflow/references/contracts/role-boundaries.md)。
+- 创建、恢复或发布正式产物时查[产物生命周期](../ric-devflow/references/contracts/artifact-lifecycle.md)，只选实际使用的 v1/v2 布局。
+- 核对当前动作的批准或门禁时查[门禁策略](../ric-devflow/references/contracts/gate-policy.md)对应项；批准、范围或证据发生变化时查[变更控制](../ric-devflow/references/contracts/change-control.md)。
+- 状态迁移或依赖解锁时查[工作流状态](../ric-devflow/references/contracts/workflow-state.md)；检查仓库、准备/复用工作区、集成或清理时查[Git 策略](../ric-devflow/references/contracts/git-policy.md)。
 
 新 Root Issue 使用 `../ric-devflow/assets/templates/compact/`，在 `.devflow/changes/<REQ-ID>/` 按阶段创建四个固定文件。旧 v1 按原模板继续运行；发现旧版本树时按[无损迁移](../ric-devflow/references/shared/legacy-migration.md)提出一次建议，未经该 Root 授权不迁移。不得发明或依赖 DevFlow CLI。
 
@@ -62,47 +58,18 @@ Codex 主会话保持原角色流程；Claude Code / ZCode 主会话在准备和
 7. 在形成 Spec／设计决策前，按[设计模式参考与模块化设计](../ric-devflow/references/shared/modular-design.md)检测本地 `ric-design-patterns-skill`；发现可用技能必须实际读取并参考，落实工程级模块职责与依赖边界，在现有 Spec／Decision 记录依据并随 Task 交接。
 8. 只加载与已识别技术栈和受影响边界相符的语言、领域参考；不得预先加载所有检查表。
 
-## 工作流程
+## 按阶段推进
 
-以下主流程的 current/test-plan/evidence、四文件和不生成 tasks-v* 规则仅适用于 v2。对未完成授权迁移的 v1 Root，逻辑阶段与门禁相同，但继续使用原 Intake/Profile/Spec/Task/Report 版本路径和 state.transitions；已发布路径不覆盖，修订发布新路径。不得在 v1 中偷偷创建 v2 当前入口或精简旧 state。
+只在到达对应阶段时读取[分阶段工作流](references/planning-workflow.md)的布局说明和当前一节，不预读后续发布/关闭流程：
 
-### 1. 建立仓库基线
+| 当前动作 | 读取章节与完成边界 |
+|---|---|
+| 建立基线或续作接管 | [仓库基线](references/planning-workflow.md#1-建立仓库基线)，记录事实与必要基线审核 |
+| 形成 Spec 和 Task | [行为和任务](references/planning-workflow.md#2-定义行为和任务)，G2/G3/G4 有效后才实现 |
+| 派发、返修和集成 | [实现与集成](references/planning-workflow.md#3-协调实现与集成)，G6 后保持 VERIFIED |
+| 所有 Task 验证后交付 | [发布与关闭](references/planning-workflow.md#4-完整验证发布审核与关闭)，目标 SHA 冒烟和关闭证据齐备才 DONE |
 
-对于 Brownfield 项目，在 current 的 Repository Profile 章节记录画像与预算，在 evidence 保留基线命令证据。对于 Continuation，还必须填写 Takeover Assessment 章节，把现有工作分类为已接受、未验证、部分完成、Stub、冲突、废弃、未知或未开始，并给出差距分析。
-
-识别目标仓库已有的 Issue、Spec、测试、CI、发布和状态协议。在仓库画像的现有章节中记录与 DevFlow Gate 的语义映射；等价证据只有在作者职责分离、版本或 SHA 绑定、适用范围和时效性均满足时才能直接引用。不得为同一事实维护两套互相竞争的产物或状态；冲突时采用更严格的规则并记录依据。
-
-保护所有任务开始前就存在的未提交修改。使用 [最小改动](../ric-devflow/references/shared/minimal-change.md) 区分必要重构、附带重构和机会性重构。
-
-当项目属于续接、存在脏工作区、分支或风格不明确、风险较高、基线不可信或接管风险显著时，请求执行 `BASELINE_REVIEW`。处理 Finding 时不得改写 Reviewer 的历史产物。
-
-### 2. 定义行为和任务
-
-遵循 [需求分析](references/requirement-analysis.md)，先在草稿阶段完成事实预检和规模判断，再在 current 中维护 Root、Spec、适用的 UI、决策、风险、回滚和预算。默认一次聚焦侦察加一次缺口补查，连续两次无新增事实就停止同类搜索；继续调查必须关联当前 AC、已观察失败或必要约束。必须明确分开当前行为、目标行为和保持不变的行为。
-
-只对确有独立发布/验收障碍的大型请求在首次 G2 前做一次分期；优先在同一 Root 保留完整能力清单、阶段依赖和延期项，仅展开当前阶段。多文件、步骤多、耗时长或交接材料多本身不是拆分理由；先用路径/对象定位收紧交接，不递归创建 Root 或 Task。
-
-遵循 [Task 与冻结 DAG](../ric-devflow/references/shared/task-decomposition.md)，在 current 中维护最少必要节点及独立修订，不生成 tasks-v*、Review Target 包装或全套版本矩阵。Task 是完整交付结果，内部实现/测试/文档步骤不另立节点；只有真实依赖/发布/权限/所有权边界才拆分。记录适用门禁；按门禁策略直接省略不适用或已有有效证据覆盖的额外审核，不要求每个节点重走 G0–G4。
-
-只有可发现事实已解决、必要假设和阻塞项已显式记录、当前交付阶段可独立审核时，才将精确版本交给 Reviewer 执行 `SPEC_REVIEW`。审核结果为 `APPROVE` 后，取得用户对同一产品行为版本的确认。随后要求 Tester 创建测试计划，再由 Reviewer 执行 `TEST_REVIEW`。以上三项批准没有同时保持有效前，不得进入正式实现。
-
-### 3. 协调实现与集成
-
-目标分支和集成分支必须来自仓库事实，绝不能默认使用 `main`。只有当所有依赖满足[有效依赖](../ric-devflow/references/contracts/workflow-state.md#有效依赖与恢复)、存在最新的已验证集成 SHA、该 Task 的必需环境与权限可用，且写入区域不存在所有权冲突时，才把 Task 标记为 `READY`。不同环境优先在测试计划内分验证切片，不自动新增 Task；只阻塞受影响部分。必需验收条件缺失时不得进入 `READY`；冻结后的结构调整必须先满足例外条件。
-
-每次只向 Implementer 委派一个 Task 或一个已归因为实现问题的 Defect，并提供当前 Spec、测试计划、不可变的 base SHA、路径预算、仓库画像和参考实现。需要 Tester 编写独立测试时，按[测试代码交付](../ric-devflow/references/shared/test-code-delivery.md)在原 Task 内串行交接，汇集各作者真实报告，再请求 Reviewer 对完整候选精确 SHA 范围执行 `CODE_REVIEW`。测试类 Defect 交给 Tester，不伪装成实现类问题。
-
-只有 Planner 可以按照仓库既有合并策略和 DAG 顺序执行合并。每次合并后，都必须要求 Tester 针对新的集成 SHA 做增量验证。
-
-G6 通过后 Task 保持 `VERIFIED` 以解锁依赖。G5 后补改测试也须重新绑定审核、集成与验证；补证期间撤销受影响 Task 的有效已验证状态，无关 Task 不重置。
-
-失败必须先归类为 `SPEC`、`TEST`、`IMPLEMENTATION`、`ENVIRONMENT`、`BASELINE`、`SCOPE_CHANGE` 或 `UNKNOWN`，再路由给相应角色。同一个问题连续三轮未解决时，停止叠加补丁并针对实际失败归因；不自动重新规划或拆 Task。同一产物和审核模式连续两次 `REQUEST_CHANGES` 仍未收敛时，先暂停送审、汇总 Finding 并针对性修正；两种计数独立且不因拆分/换号清零。
-
-### 4. 完整验证、发布审核与关闭
-
-所有 Task 均已验证后，请求 Tester 对精确集成 SHA 执行完整验证，再由 Reviewer 对同一 SHA 和当前全部证据执行 `RELEASE_REVIEW`。只有发布审核通过且操作处于现有授权范围内，才能合并到仓库事实确定的目标分支。合并后要求 Tester 对目标 SHA 执行 Smoke Test。
-
-只有 G0 至 G10 中所有适用证据都保持有效、目标 SHA 冒烟已通过、没有阻断 Finding 或 Defect，并且回滚、迁移、配置和文档义务都已完成时，才能先将当前交付对应 Task、随后 Root 设置为 `DONE`；不能在 Task 集成后提前关闭。
+每个 Root 默认复用或创建唯一功能分支作为 `integration_branch`，无命名规范时用 `feature/<REQ-ID>`。READY Task 从精确基线按需创建 detached worktree；同 Task 实现、测试及返修复用并串行交接，无冲突 Task 可并行。具体基线、集成、保全及清理按 Git 策略，目标分支不默认 main。
 
 ## 状态与输出契约
 
