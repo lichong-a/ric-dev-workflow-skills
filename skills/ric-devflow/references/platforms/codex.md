@@ -29,4 +29,6 @@ Skill 变更通常自动检测；若未出现则按宿主提示重载。原生�
 
 准备完成后，完整开发进入 Root Planner 并保持它直接调度角色；主会话显式角色按原角色流程执行。已启动子角色不安装、不派生。目标缺失时不能以 `default`/通用代理冒充 `ric_devflow_<role>`。
 
+同会话能力提示遵循入口守卫和[提示核验](../bootstrap.md#同会话能力提示)，不为 warm 动作重读整个恢复流程，也不把旧调用当新调用。Root Planner 按共享契约执行有界 READY 波次与末 Task G6/G7 条件交接；既有宿主并发、模型和权限配置不改动。Codex Reviewer 继续直接只读 Git，不引入为缺 Git/Bash 宿主准备的导出缓存。
+
 文档核验日期为 2026-09-12；配置解析/说明核验不代表原生实机已运行：[Codex subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents)、[Codex Skills](https://learn.chatgpt.com/docs/build-skills)。

@@ -1170,3 +1170,161 @@ A/B/C结果始终绑定runtime1 `58072f014063919e5cb62cf9c7a6213986488826ac6f1e7
 - 未运行 Codex、Claude Code、ZCode 三平台原生角色加载、权限执行或真实端到端开发。配置解析、普通代理读取和合成已加载前提均不冒充原生加载/调用。
 - 未执行业务 Root 迁移、现存分支清理、已安装 Skill 同步、外网获取或发布；未测量真实长期运行中的分支数、token 或耗时。
 - 并非所有历史评测均重跑；本轮覆盖变更相关行为，v1/v2 模板与历史通过上述静态兼容检查保全。新增测试代码动作的路由由独立 Delta 审核和链接验证覆盖，未另执行完整代码交付链。
+
+
+## 2026-09-28：P0/P1 性能指令候选的有限本地验证（本地诊断）
+
+本轮验证基线为 `9ce34a0e9e6e06cbda2f6c4d76951248c7d27fcb`，候选文件集合 SHA-256 为 `4393d0a5e29cfd48798d2c53fe6fd7327b2012d7dbbe6e23c0d025319f24cb38`（排除本历史报告追加）。候选尚未提交，正式 tested_sha=null；以下是批准的 Spec v1 / test-plan v1 的本地诊断，不能视为实际产品 G5—G9 通过。原历史报告完整 89556 字节及 SHA-256 `373a5dc5328611e7d35800fb01587afad5afa17a04ae83906a7c8d9c390a81d1` 保留为前缀。
+
+本轮有限 A/B 未证实总体性能提升。六个 GATES 样本均一次实际 unittest 执行产生两份原 Schema 报告，A 臂已经可复用，因此该场景没有测得执行或派发减少。WARM 的 A1 也已经复用已读正文。命令耗时、局部读取量与原生动作区间分开列示；不从文件大小、helper 数量或回叙估算 token、模型耗时或总工具调用。
+
+结构与保持行为：基线及候选 GUIDE-1/2/3 均实际执行通过；五 Skill validator、13 YAML、5 TOML、16 frontmatter、完整链接/安装闭包、16 v1 模板与四 Compact 兼容性，以及 GUIDE-2 的 12 类复制/负控、GUIDE-3 的 11 类 Git 用例/103 命令均保留原断言。初版新增 eval 的越界文档链接曾使候选 GUIDE-1/2 失败，归因 TEST 后只修正该链接并重跑两块通过；GUIDE-3 成功未无故重跑。基线收集器解析前缀失败 exit1 已保留，底层成功结果从原回执恢复。保护检查验证模板、五 openai.yaml、原生身份/模型/工具元数据及历史报告字节保持，git diff --check 通过。
+
+本地行为控制覆盖：G6 故意失败停止 G7；计划/目标/数据身份漂移拒绝旧证据；实际 G6→VERIFIED→G7 持久顺序及独立新目标 smoke；缓存缺失/损坏、源内容/闭包/模式/角色/禁用配置变化；PROFILE 动态核验；未知/空 selector 使用真实完整三用例集合；setup 成功0/失败7、健康响应/关闭与进程回收；报告载荷/索引恢复；两个实际进程 exit7/0 均采集；精确 Git 对象绑定与损坏/移走缓存恢复；v1/v2 原载荷保留。本地九组负控诊断 PASS 已独立记录，预期失败和正确 BLOCKED 不算产品缺陷。真实传输中断重传、真实数据库租约及其他宿主执行没有被合成切片替代。
+
+条件限制与原记录保留：
+
+- 首对角色创建没有显式 fork_turns:none，可能继承父上下文；第二、三对新会话显式隔离，不能称三对同等盲测。
+- GATES A1 按错误 identity.json 路径实际失败后恢复，B1 已获父目录提示；后续两臂统一提示。首对次数和时间不完全对称。
+- PREP 首两对原生定义置于错误目录。A2 正确 BLOCKED；其他首两对字节匹配不能证明准备闭包完整。第三对双臂仅增量补正确 agents/ 路径，并保留原文件和新旧清单。
+- WAVE 首对缺完整交接前置；第二、三对补对称合成输入。B2 alpha/beta 的初次 BLOCKED 与各一次恢复保留，WAVE2B 为五次原生调用，不得缩成三次。
+- WAVE2A beta 完整原始时钟 13:05:43→13:09:12 为209秒，超180秒预算29秒；验证完成13:07:35，验证后打包区间97秒，仍不能用较早终点隐藏超限。
+- WAVE 跨场景流水和 Root 人工交接空档存在，完整区间不能解释为纯模型或并行效率。角色动作重叠、helper 窗口和外层派发重叠分别报告；缺外层原始时钟时为 null。
+- TP-009 执行者额外读了 fixture 空计划模板，保留协议偏差，不能宣称完全盲；smoke 命令真实来自 Planner 交接及批准计划 F-GATES，而非 fixture-input。
+- 当前原生宿主按指定 A/B 指令源执行；临时角色定义未被真实宿主重新发现/加载。Claude/ZCode 实机、生产服务、发布、正式产品 Gate 未运行；模型/推理精确运行时值及全部宿主回执不可导出，不估算。
+
+统计约定：按 pair1/2/3 顺序列三值，缺失为 null。只有三值全部存在才给 median/min/max；配对差值为 B−A，保留初始失败、恢复与超预算样本。helper 事件包含 read 和 exec，命令数单列 exec，嵌套进程不擅自扩计。读取字节只代表实际被 helper 返回的 UTF-8 字节，不等于模型总上下文。完整原生派发数以 Root 最终调用库存为准。
+
+24/24 场景样本和18个 WAVE Task 产物已齐。真实原生派发38次：36次基础动作与 WAVE2B 两次定向恢复；库存冻结时 WAVE3B gamma 的 pending 描述保留，最终原始 summary 已补齐。18个最终 actual.txt 均与对应 expected.txt 字节一致，Git状态仅新增授权文件。
+
+第二次超预算为 WAVE3B beta：13:21:51→13:25:24 共213秒，超预算33秒；核心 fixture 动作至13:23:34为103秒，随后证据保存遇参数长度失败并分批恢复，结束前110秒归入该记录的证据阶段。此边界与其他角色“动作结束”记录未完全一致，不能冒称统一端到端测量；时钟之后的元数据刷新也不包含在该213秒内。WAVE2A beta 与 WAVE3B beta 都保留为协议偏差样本，不从统计剔除，不重跑覆盖。WAVE2B beta 跨初次 BLOCKED、恢复和交接的可见跨度为346秒，不是一次连续执行，也不当作第三次180秒预算违反。
+
+以下表中时间单位为秒，字节为 UTF-8 实际采集字节；小数显示至九位只是保留本地计时值，不提高秒级动作时钟精度。A/B 的三值均按 pair1/2/3 排列。`null` 是不可测或缺原始回执，绝不是零。各指标的局部中位数差异不能解释为整体提速。
+
+| 场景 | 指标 | A 三值 | A median/min/max | B 三值 | B median/min/max | 配对 B−A 三值 |
+|---|---|---|---|---|---|---|
+| COLD | helper_event_count | 5 / 6 / 6 | 6 / 5 / 6 | 6 / 6 / 6 | 6 / 6 / 6 | 1 / 0 / 0 |
+| COLD | helper_exec_count | 4 / 3 / 3 | 3 / 3 / 4 | 3 / 2 / 3 | 3 / 2 / 3 | -1 / -1 / 0 |
+| COLD | helper_read_count | 1 / 3 / 3 | 3 / 1 / 3 | 3 / 4 / 3 | 3 / 3 / 4 | 2 / 1 / 0 |
+| COLD | helper_command_elapsed_seconds | 0.214631769 / 0.19253222 / 0.195865692 | 0.195865692 / 0.19253222 / 0.214631769 | 0.047721084 / 0.048547559 / 0.066840342 | 0.048547559 / 0.047721084 / 0.066840342 | -0.166910685 / -0.143984661 / -0.12902535 |
+| COLD | helper_stdout_bytes | 13103 / 55312 / 24724 | 24724 / 13103 / 55312 | 45808 / 17979 / 19572 | 19572 / 17979 / 45808 | 32705 / -37333 / -5152 |
+| COLD | helper_stderr_bytes | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 |
+| COLD | direct_read_return_bytes | 8987 / 19508 / 22336 | 19508 / 8987 / 22336 | 17618 / 14626 / 17618 | 17618 / 14626 / 17618 | 8631 / -4882 / -4718 |
+| COLD | captured_tool_receipt_count | 0 / 6 / 5 | 5 / 0 / 6 | 0 / 6 / 1 | 1 / 0 / 6 | 0 / 0 / -4 |
+| COLD | direct_unittest_execution_count | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 |
+| COLD | action_wall_seconds | null / 109.0 / 83.0 | null / null / null | null / null / 101.0 | null / null / null | null / null / 18.0 |
+| COLD | dispatch_count | 1 / 1 / 1 | 1 / 1 / 1 | 1 / 1 / 1 | 1 / 1 / 1 | 0 / 0 / 0 |
+| COLD | dispatch_wall_seconds | null / null / null | null / null / null | null / null / null | null / null / null | null / null / null |
+| COLD | dispatch_overlap_seconds | null / null / null | null / null / null | null / null / null | null / null / null | null / null / null |
+| WARM | helper_event_count | 1 / 2 / 2 | 2 / 1 / 2 | 4 / 2 / 2 | 2 / 2 / 4 | 3 / 0 / 0 |
+| WARM | helper_exec_count | 0 / 1 / 1 | 1 / 0 / 1 | 3 / 1 / 1 | 1 / 1 / 3 | 3 / 0 / 0 |
+| WARM | helper_read_count | 1 / 1 / 1 | 1 / 1 / 1 | 1 / 1 / 1 | 1 / 1 / 1 | 0 / 0 / 0 |
+| WARM | helper_command_elapsed_seconds | 5.7966e-05 / 0.168385036 / 0.153665299 | 0.153665299 / 5.7966e-05 / 0.168385036 | 0.047739046 / 0.029607873 / 0.030207022 | 0.030207022 / 0.029607873 / 0.047739046 | 0.04768108 / -0.138777163 / -0.123458277 |
+| WARM | helper_stdout_bytes | 911 / 1350 / 1719 | 1350 / 911 / 1719 | 2047 / 2051 / 1932 | 2047 / 1932 / 2051 | 1136 / 701 / 213 |
+| WARM | helper_stderr_bytes | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 |
+| WARM | direct_read_return_bytes | 911 / 911 / 911 | 911 / 911 / 911 | 911 / 911 / 911 | 911 / 911 / 911 | 0 / 0 / 0 |
+| WARM | captured_tool_receipt_count | 1 / 2 / 2 | 2 / 1 / 2 | 0 / 3 / 0 | 0 / 0 / 3 | -1 / 1 / -2 |
+| WARM | direct_unittest_execution_count | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 |
+| WARM | action_wall_seconds | null / 58.0 / 30.0 | null / null / null | null / 87.0 / 50.0 | null / null / null | null / 29.0 / 20.0 |
+| WARM | dispatch_count | 1 / 1 / 1 | 1 / 1 / 1 | 1 / 1 / 1 | 1 / 1 / 1 | 0 / 0 / 0 |
+| WARM | dispatch_wall_seconds | null / null / null | null / null / null | null / null / null | null / null / null | null / null / null |
+| WARM | dispatch_overlap_seconds | null / null / null | null / null / null | null / null / null | null / null / null | null / null / null |
+| GATES | helper_event_count | 9 / 11 / 11 | 11 / 9 / 11 | 17 / 15 / 14 | 15 / 14 / 17 | 8 / 4 / 3 |
+| GATES | helper_exec_count | 7 / 4 / 3 | 4 / 3 / 7 | 7 / 5 / 4 | 5 / 4 / 7 | 0 / 1 / 1 |
+| GATES | helper_read_count | 2 / 7 / 8 | 7 / 2 / 8 | 10 / 10 / 10 | 10 / 10 / 10 | 8 / 3 / 2 |
+| GATES | helper_command_elapsed_seconds | 0.21686403 / 0.109030186 / 0.099888399 | 0.109030186 / 0.099888399 / 0.21686403 | 0.148480267 / 0.13792385 / 0.120911086 | 0.13792385 / 0.120911086 / 0.148480267 | -0.068383763 / 0.028893664 / 0.021022687 |
+| GATES | helper_stdout_bytes | 25557 / 25502 / 25985 | 25557 / 25502 / 25985 | 28379 / 25059 / 24809 | 25059 / 24809 / 28379 | 2822 / -443 / -1176 |
+| GATES | helper_stderr_bytes | 875 / 98 / 98 | 98 / 98 / 875 | 98 / 98 / 98 | 98 / 98 / 98 | -777 / 0 / 0 |
+| GATES | direct_read_return_bytes | 5032 / 14403 / 24618 | 14403 / 5032 / 24618 | 24632 / 19833 / 23209 | 23209 / 19833 / 24632 | 19600 / 5430 / -1409 |
+| GATES | captured_tool_receipt_count | 9 / 11 / 11 | 11 / 9 / 11 | 0 / 16 / 0 | 0 / 0 / 16 | -9 / 5 / -11 |
+| GATES | direct_unittest_execution_count | 1 / 1 / 1 | 1 / 1 / 1 | 1 / 1 / 1 | 1 / 1 / 1 | 0 / 0 / 0 |
+| GATES | action_wall_seconds | null / 114.0 / 57.0 | null / null / null | null / 167.0 / 110.0 | null / null / null | null / 53.0 / 53.0 |
+| GATES | dispatch_count | 1 / 1 / 1 | 1 / 1 / 1 | 1 / 1 / 1 | 1 / 1 / 1 | 0 / 0 / 0 |
+| GATES | dispatch_wall_seconds | null / null / null | null / null / null | null / null / null | null / null / null | null / null / null |
+| GATES | dispatch_overlap_seconds | null / null / null | null / null / null | null / null / null | null / null / null | null / null / null |
+| WAVE | helper_event_count | 24 / 44 / 31 | 31 / 24 / 44 | 35 / 80 / 62 | 62 / 35 / 80 | 11 / 36 / 31 |
+| WAVE | helper_exec_count | 19 / 32 / 17 | 19 / 17 / 32 | 22 / 50 / 31 | 31 / 22 / 50 | 3 / 18 / 14 |
+| WAVE | helper_read_count | 5 / 12 / 14 | 12 / 5 / 14 | 13 / 30 / 31 | 30 / 13 / 31 | 8 / 18 / 17 |
+| WAVE | helper_command_elapsed_seconds | 0.385613652 / 0.667450832 / 0.83887454 | 0.667450832 / 0.385613652 / 0.83887454 | 0.62061584 / 0.649565413 / 0.777710115 | 0.649565413 / 0.62061584 / 0.777710115 | 0.235002188 / -0.017885419 / -0.061164425 |
+| WAVE | helper_stdout_bytes | 61693 / 128736 / 98435 | 98435 / 61693 / 128736 | 85469 / 112381 / 117332 | 112381 / 85469 / 117332 | 23776 / -16355 / 18897 |
+| WAVE | helper_stderr_bytes | 722 / 2163 / 2163 | 2163 / 722 / 2163 | 2163 / 2163 / 2340 | 2163 / 2163 / 2340 | 1441 / 0 / 177 |
+| WAVE | direct_read_return_bytes | 7254 / 46150 / 58239 | 46150 / 7254 / 58239 | 52128 / 89554 / 105956 | 89554 / 52128 / 105956 | 44874 / 43404 / 47717 |
+| WAVE | captured_tool_receipt_count | 28 / 34 / 42 | 34 / 28 / 42 | 26 / 82 / 55 | 55 / 26 / 82 | -2 / 48 / 13 |
+| WAVE | direct_unittest_execution_count | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 / 0 |
+| WAVE | action_wall_seconds | null / 362.0 / 318.0 | null / null / null | null / null / 403.0 | null / null / null | null / null / 85.0 |
+| WAVE | dispatch_count | 3 / 3 / 3 | 3 / 3 / 3 | 3 / 5 / 3 | 3 / 3 / 5 | 0 / 2 / 0 |
+| WAVE | dispatch_wall_seconds | null / null / null | null / null / null | null / null / null | null / null / null | null / null / null |
+| WAVE | dispatch_overlap_seconds | null / null / null | null / null / null | null / null / null | null / null / null | null / null / null |
+
+角色动作原始时钟区间（UTC），恢复单独列示；外层派发时钟缺失，派发重叠仍为 null。
+
+| 场景 | 角色/尝试 | 原始开始 | 原始结束 | 完整秒数 | 验证后至记录结束秒数 |
+|---|---|---|---|---:|---:|
+| COLD-1-A | tester | null | null | null | null |
+| COLD-1-B | tester | null | null | null | null |
+| COLD-2-A | tester | 12:59:11 | 13:01:00 | 109.0 | null |
+| COLD-2-B | tester | 12:52:40 | null | null | null |
+| COLD-3-A | tester | 13:05:14 | 13:06:37 | 83.0 | null |
+| COLD-3-B | tester | 13:08:24 | 13:10:05 | 101.0 | null |
+| WARM-1-A | tester | 12:41:26 | null | null | null |
+| WARM-1-B | tester | 12:49:58 | null | null | null |
+| WARM-2-A | tester | 13:02:38 | 13:03:36 | 58.0 | null |
+| WARM-2-B | tester | 12:56:45 | 12:58:12 | 87.0 | null |
+| WARM-3-A | tester | 13:08:09 | 13:08:39 | 30.0 | null |
+| WARM-3-B | tester | 13:10:49 | 13:11:39 | 50.0 | null |
+| GATES-1-A | tester | 12:42:48 | null | null | null |
+| GATES-1-B | tester | 12:51:47 | null | null | null |
+| GATES-2-A | tester | 13:04:54 | 13:06:48 | 114.0 | null |
+| GATES-2-B | tester | 12:58:56 | 13:01:43 | 167.0 | null |
+| GATES-3-A | tester | 13:09:47 | 13:10:44 | 57.0 | null |
+| GATES-3-B | tester | 13:12:42 | 13:14:32 | 110.0 | null |
+| WAVE-1-A | alpha | null | null | null | null |
+| WAVE-1-A | beta | 12:39:31 | 12:41:19 | 108.0 | null |
+| WAVE-1-A | gamma | 12:43:25 | 12:44:20 | 55.0 | null |
+| WAVE-1-B | alpha | null | null | null | null |
+| WAVE-1-B | beta | null | null | null | null |
+| WAVE-1-B | gamma | null | null | null | null |
+| WAVE-2-A | alpha | 13:05:26 | 13:07:21 | 115.0 | null |
+| WAVE-2-A | beta | 13:05:43 | 13:09:12 | 209.0 | 97.0 |
+| WAVE-2-A | gamma | 13:09:29 | 13:11:28 | 119.0 | null |
+| WAVE-2-B | alpha/attempt-1 | null | null | null | null |
+| WAVE-2-B | alpha/attempt-2 | 12:58:47 | 13:01:08 | 141.0 | null |
+| WAVE-2-B | beta/attempt-1 | 12:54:14 | null | null | null |
+| WAVE-2-B | beta/attempt-2 | 12:58:39 | 13:00:00 | 81.0 | null |
+| WAVE-2-B | gamma | 13:02:06 | 13:03:16 | 70.0 | null |
+| WAVE-3-A | alpha | 13:14:02 | 13:15:52 | 110.0 | null |
+| WAVE-3-A | beta | 13:14:16 | 13:16:32 | 136.0 | null |
+| WAVE-3-A | gamma | 13:18:57 | 13:19:20 | 23.0 | null |
+| WAVE-3-B | alpha | 13:21:30 | 13:24:02 | 152.0 | null |
+| WAVE-3-B | beta | 13:21:51 | 13:25:24 | 213.0 | 110.0 |
+| WAVE-3-B | gamma | 13:26:44 | 13:28:13 | 89.0 | null |
+
+可核实角色动作重叠：WAVE2A alpha/beta 为98秒，WAVE3A alpha/beta 为96秒，WAVE3B alpha/beta 为131秒（由双方原始时钟交集计算）。其余缺端点则 null；角色时间交叠不能替代外层派发重叠或 CPU 并行测量。
+
+采集总计：401 个 helper 事件，其中 226 个 exec 命令与 175 个直接 read；不是全部宿主工具调用。全部宿主调用/返回字节、token、模型内部时间仍不可测。原始命令、退出码、stdout/stderr、时钟及报告已按原字节持久归档，聚合无完整性错误。
+
+正式证据位于运行期 Root `REQ-20260928-001` 的附件：`tester-ab-final-v3`（24样本与所有逐指标值）、`root-native-dispatch-inventory-v1.json`（38实际派发）、`tester-final-validation-v1`（原字节归档/清单、18产物核验与最终原 Schema 报告）、`tester-negative-controls-final-v1` 及其引用附件（九组独立负控）、`tester-candidate-checks-v1/v2`（初始失败及有效复验）。这些运行期附件不提交进 Skill 包。初步 final-v1/v2 汇总保留；final-v3 补识别原始 clock receipt 的不同包装，未重跑任何样本。
+
+本轮声明范围为候选本地控制、完整有限采样记录与保持行为诊断 PASS；不宣称性能优于基线，不宣称正式代码 Gate 或真实宿主安装加载通过。最后追加只涉及历史报告，因此复验范围限 GUIDE-1 与 git diff --check；GUIDE-2/3 和原生样本引用冻结对象有效结果，未重复执行。最终命令回执与报告摘要记录在同一运行期附件。
+
+
+## 2026-09-28：采集缺陷的一次定向复验与结论纠正
+
+前一节的本地诊断 PASS 不表示六项 TEST 缺陷已完成全局关闭。001—004 的既有修复/恢复证据、005 的 Planner 关闭事件及本次006定向复验在此明确补齐；前文105962字节原样保留，原24样本、38次派发及52行统计不修改。
+
+按冻结计划允许的一次有明确假设定向重跑，Root 复用原 A2/B3 beta 作者各一次 followup，共额外两次调用。新 detached fixture 均为 `cfad031a6f8077a1cee05a6c188fa4601cf8daaa`，原请求/补充计划逐字相同，只改变隔离工作区/输出路径和采集说明；业务命令、报告 Schema 与180秒预算未改变。采集方式引用已有helper原始文件，避免重复复制大载荷。没有第三次尝试，也没有重跑其他场景。
+
+| 单次恢复 | 原始开始 UTC | 完整结束 UTC | 完整秒数 | 180秒预算 | 真实断言 |
+|---|---|---|---:|---|---|
+| RETEST-WAVE-2-A-beta-1 | 13:44:47 | 13:47:45 | 178 | PASS | 创建前exit1；创建后exit0 |
+| RETEST-WAVE-3-B-beta-1 | 13:45:08 | 13:48:01 | 173 | PASS | 创建前exit1；创建后exit0 |
+
+两份 actual.txt 均与 expected.txt 字节一致，工作区只新增授权文件，报告精确符合原21个顶层字段。报告和必要证据先保存，之后记录完整结束；最终结束回执及短索引落盘本身不含在区间内，不能冒称包括最后返回的统一端到端时间。时钟粒度为1秒；B3的精确Schema复核完成于13:48:01.100，而结束时钟仅显示13:48:01，该秒内先后不能由秒级回执独立还原；原报告保存于13:47:35，Root/作者记录流程为复核完成后取结束时钟。此限制保留，不伪造毫秒顺序。
+
+恢复中仍发生采集错误：A2首次报告组装因不存在的前轮store而TypeError，B3收集器错误假设24字段导致exit1。分别仅修正组装与按原模板精确21字段核验，未重跑业务；真实失败已归档。B3派发BASE_REF出现笔误并由Root即时更正，也作为交接混杂保留。
+
+006本次独立复验 PASS，具备交由 Planner 关闭 TEST 采集缺陷的证据；Tester 发布带 supersedes 的006-R2，保持原记录，不自行关闭全局Defect。原209/213秒超预算观测仍成立，178/173秒不替换、不混入原A/B统计，也不支持总体性能提升结论。
+
+001前缀解析修复已有原GUIDE3成功回执和修正报告；002链接修复已有原断言GUIDE1/2复验exit0；003缺失交接已补齐且原作者两次恢复和最终产物核验成功；004第三对正确原生目录/清单与实际观察补齐，具备关闭“fixture路径错误”的条件，真实宿主加载仍未测试。上述001—004由Root归因TEST，Tester依据现有证据建议关闭，等待Planner记录全局事件。005已由 `DEFECT-CLOSURE-005` 记录关闭，Tester原R2载荷不回写。
+
+新增原Schema测试报告 `TEST-PERFORMANCE-CANDIDATE-002` 取代001的当前结论，附件位于运行期Root的 `tester-budget-retest-result-v1`；两位作者原报告、命令/失败/时钟以原字节归档，必要证据不只留在.local。tested_sha/head_sha仍无新候选代码提交身份，不宣称正式代码Gate。候选集合摘要继续排除本历史报告追加，受测指令包未变；其他宿主、实际加载和不可测工具/token字段的限制维持。

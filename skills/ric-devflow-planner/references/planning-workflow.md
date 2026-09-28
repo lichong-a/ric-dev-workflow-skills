@@ -6,6 +6,8 @@
 
 对于 Brownfield 项目，在 current 的 Repository Profile 章节记录画像与预算，在 evidence 保留基线命令证据。对于 Continuation，还必须填写 Takeover Assessment 章节，把现有工作分类为已接受、未验证、部分完成、Stub、冲突、废弃、未知或未开始，并给出差距分析。
 
+已有画像按[画像复用与刷新](../../ric-devflow/references/shared/repository-discovery.md#画像复用与刷新)核对来源和依赖身份；每次仍刷新 HEAD、dirty/worktree、环境及权限，只更新受影响事实，不重读未变历史。
+
 识别目标仓库已有的 Issue、Spec、测试、CI、发布和状态协议。在仓库画像的现有章节中记录与 DevFlow Gate 的语义映射；等价证据只有在作者职责分离、版本或 SHA 绑定、适用范围和时效性均满足时才能直接引用。不得为同一事实维护两套互相竞争的产物或状态；冲突时采用更严格的规则并记录依据。
 
 保护所有任务开始前就存在的未提交修改。使用 [最小改动](../../ric-devflow/references/shared/minimal-change.md) 区分必要重构、附带重构和机会性重构。
@@ -26,9 +28,11 @@
 
 按[Git 策略](../../ric-devflow/references/contracts/git-policy.md)确认唯一功能/集成分支和真实目标分支，无命名规范时用 `feature/<REQ-ID>`，绝不能默认目标为 `main`。只有当所有依赖满足[有效依赖](../../ric-devflow/references/contracts/workflow-state.md#有效依赖与恢复)、存在最新的已验证集成 SHA、该 Task 的必需环境与权限可用，且写入区域不存在所有权冲突时，才把 Task 标记为 `READY`。不同环境优先在测试计划内分验证切片，不自动新增 Task；只阻塞受影响部分。必需验收条件缺失时不得进入 `READY`；冻结后的结构调整必须先满足例外条件。
 
-每次只向 Implementer 委派一个 Task 或一个已归因为实现问题的 Defect，并提供当前 Spec、测试计划、所分配 detached worktree、来源 base_ref、不可变的 base SHA、续作候选 head、路径预算、仓库画像和参考实现。工作区绝对位置仅在会话/工具参数解析，持久记录沿用相对路径与 SHA。需要 Tester 编写独立测试时，按[测试代码交付](../../ric-devflow/references/shared/test-code-delivery.md)在原 Task 内串行交接，汇集各作者真实报告，再请求 Reviewer 对完整候选精确 SHA 范围执行 `CODE_REVIEW`。测试类 Defect 交给 Tester，不伪装成实现类问题。
+按首次 G2 前识别的独立波次和[并发条件](../../ric-devflow/references/contracts/git-policy.md#并发)主动派发，默认最多两个 READY Task，服从更严格资源限制；不能为并行改写冻结 DAG。每次只向 Implementer 委派一个 Task 或一个已归因为实现问题的 Defect，优先复用空闲匹配会话，并提供当前 Spec、测试计划、所分配 detached worktree、来源 base_ref、不可变的 base SHA、续作候选 head、路径预算、仓库画像和参考实现。工作区绝对位置仅在会话/工具参数解析，持久记录沿用相对路径与 SHA。需要 Tester 编写独立测试时，按[测试代码交付](../../ric-devflow/references/shared/test-code-delivery.md)在原 Task 内串行交接，汇集各作者真实报告，再请求 Reviewer 对完整候选精确 SHA 范围执行 `CODE_REVIEW`。测试类 Defect 交给 Tester，不伪装成实现类问题。
 
 只有 Planner 可以按照仓库既有合并策略和 DAG 顺序执行合并。每次合并后，都必须要求 Tester 针对新的集成 SHA 做增量验证。
+
+派发最后 Task 的 G6 前，检查[最后 Task 的 G6 与 G7 条件批量执行](../../ric-devflow/references/contracts/gate-policy.md#最后-task-的-g6-与-g7-条件批量执行)。满足条件时，交给同一 Tester 一次明确的条件批次：固定全部输入和两阶段命令范围，先 G6，仅 PASS 且身份未变再 G7，分别返回两份原报告。Planner 收到后按 G6 原报告、末 Task VERIFIED、G7 原报告的顺序持久化和采纳；失败或漂移按证据处理，不重复派发已经有效覆盖的阶段。
 
 G6 通过后 Task 保持 `VERIFIED` 以解锁依赖。G5 后补改测试也须重新绑定审核、集成与验证；补证期间撤销受影响 Task 的有效已验证状态，无关 Task 不重置。
 
@@ -36,6 +40,6 @@ G6 通过后 Task 保持 `VERIFIED` 以解锁依赖。G5 后补改测试也须�
 
 ## 4. 完整验证、发布审核与关闭
 
-所有 Task 均已验证后，请求 Tester 对精确集成 SHA 执行完整验证，再由 Reviewer 对同一 SHA 和当前全部证据执行 `RELEASE_REVIEW`。只有发布审核通过且操作处于现有授权范围内，才能合并到仓库事实确定的目标分支。合并后要求 Tester 对目标 SHA 执行 Smoke Test。
+所有 Task 均已验证后，先核对末 Task 条件批次是否已交付当前有效的独立 G7；有则引用，无则请求 Tester 对精确集成 SHA 执行尚缺的完整验证。随后由 Reviewer 对同一 SHA 和当前全部证据执行 `RELEASE_REVIEW`。只有发布审核通过且操作处于现有授权范围内，才能合并到仓库事实确定的目标分支。合并后仍单独要求 Tester 对目标 SHA 执行 Smoke Test。
 
 只有 G0 至 G10 中所有适用证据都保持有效、目标 SHA 冒烟已通过、没有阻断 Finding 或 Defect，并且回滚、迁移、配置和文档义务都已完成时，才能先将当前交付对应 Task、随后 Root 设置为 `DONE`；不能在 Task 集成后提前关闭。

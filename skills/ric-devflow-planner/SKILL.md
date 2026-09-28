@@ -11,6 +11,8 @@ description: 仅在用户显式调用或入口准备完成后精确路由时，�
 
 先检查同级 `ric-devflow/SKILL.md`、入口内 `references/bootstrap.md` 及当前动作必要文件可读，再追踪外部链接。已确认同源、安装完整且角色可用时直接进入正文，不重读安装流程。已启动的 `planner` 子角色遇缺件只回交宿主，不安装、不派生。
 
+能力提示须绑定宿主/会话、逻辑来源/范围、固定源 SHA、当前角色/动作闭包、配置及启用/加载状态；以可信变更信号或一批清单/类型/模式/内容核验确认未变后复用，不重读 bootstrap。miss 本身不联网、安装或创建 Root；无 Root 仅存会话，已有 Root 仅用 .local，旧调用不证明本次已调用。需要建立提示或补查失效依据时只读[同会话能力提示](../ric-devflow/references/bootstrap.md#同会话能力提示)，来源或必要输入变化只重验受影响范围。
+
 **仅主会话缺件时恢复**：分开确认逻辑 `discovered_path`、可信 `source_root` 和 `install_scope`；不能用 symlink realpath 推断写入范围。确认发布源 `https://github.com/lichong-a/ric-dev-workflow-skills`，优先可信完整本地 checkout 或安装记录的完整 SHA；无记录只从已确认源取一次候选并固定 SHA，不猜历史、不执行下载代码。按候选完整清单逐字核对本角色及已有入口的全部包文件与类型；源/范围不明、候选不完整、定制/异版本、未知文件或断链时保持目标零写入。离线仅在可信本地源完整匹配时可继续。
 
 匹配后先从可信候选源只读 `skills/ric-devflow/references/bootstrap.md` 和当前平台一份参考；在复制任何缺件之前预检全部所需 Skill、原生定义/配置、父目录的冲突、禁用和权限。通过后只排他创建缺项，写前复核、写后逐字读回；保留定制、禁用与无关配置，中断后重新核对，不绕过拒绝。详细恢复只在此路径读取[准备与恢复](../ric-devflow/references/bootstrap.md)。独立角色不要求无关角色，完整开发仍检查五 Skill 与当前宿主四原生角色；安装完整性核验不等于加载全部正文。
@@ -34,7 +36,7 @@ description: 仅在用户显式调用或入口准备完成后精确路由时，�
 
 新 Root Issue 使用 `../ric-devflow/assets/templates/compact/`，在 `.devflow/changes/<REQ-ID>/` 按阶段创建四个固定文件。旧 v1 按原模板继续运行；发现旧版本树时按[无损迁移](../ric-devflow/references/shared/legacy-migration.md)提出一次建议，未经该 Root 授权不迁移。不得发明或依赖 DevFlow CLI。
 
-从第一次角色委派开始就遵循[编排与交接](../ric-devflow/references/shared/orchestration.md)，而不是等到实现阶段才加载；派发前按其中[会话复用](../ric-devflow/references/shared/orchestration.md#按需派发与会话复用)与[职责命名](../ric-devflow/references/shared/orchestration.md#职责命名与可读交接)核对。交接以持久产物为事实源，对话只负责传递精确身份和当前增量。
+从第一次角色委派开始就遵循[编排与交接](../ric-devflow/references/shared/orchestration.md)中当前动作所需章节，不整篇预读；派发前按其中[会话复用](../ric-devflow/references/shared/orchestration.md#按需派发与会话复用)与[职责命名](../ric-devflow/references/shared/orchestration.md#职责命名与可读交接)核对。交接以持久产物为事实源，对话只负责传递精确身份和当前增量。
 
 ## 必需输入
 
@@ -66,7 +68,7 @@ description: 仅在用户显式调用或入口准备完成后精确路由时，�
 |---|---|
 | 建立基线或续作接管 | [仓库基线](references/planning-workflow.md#1-建立仓库基线)，记录事实与必要基线审核 |
 | 形成 Spec 和 Task | [行为和任务](references/planning-workflow.md#2-定义行为和任务)，G2/G3/G4 有效后才实现 |
-| 派发、返修和集成 | [实现与集成](references/planning-workflow.md#3-协调实现与集成)，G6 后保持 VERIFIED |
+| 派发、返修和集成 | [实现与集成](references/planning-workflow.md#3-协调实现与集成)，按独立波次有界派发，最后 Task 检查 G6/G7 条件批次，G6 后保持 VERIFIED |
 | 所有 Task 验证后交付 | [发布与关闭](references/planning-workflow.md#4-完整验证发布审核与关闭)，目标 SHA 冒烟和关闭证据齐备才 DONE |
 
 每个 Root 默认复用或创建唯一功能分支作为 `integration_branch`，无命名规范时用 `feature/<REQ-ID>`。READY Task 从精确基线按需创建 detached worktree；同 Task 实现、测试及返修复用并串行交接，无冲突 Task 可并行。具体基线、集成、保全及清理按 Git 策略，目标分支不默认 main。

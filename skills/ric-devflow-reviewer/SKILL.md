@@ -11,6 +11,8 @@ description: 仅在用户显式调用或 Planner 精确委派时，独立审核 
 
 先检查同级 `ric-devflow/SKILL.md`、入口内 `references/bootstrap.md` 及当前动作必要文件可读，再追踪外部链接。已确认同源、安装完整且角色可用时直接进入正文，不重读安装流程。已启动的 `reviewer` 子角色遇缺件只回交宿主，不安装、不派生。
 
+能力提示须绑定宿主/会话、逻辑来源/范围、固定源 SHA、当前角色/动作闭包、配置及启用/加载状态；以可信变更信号或一批清单/类型/模式/内容核验确认未变后复用，不重读 bootstrap。miss 本身不联网、安装或创建 Root；无 Root 仅存会话，已有 Root 仅用 .local，旧调用不证明本次已调用。需要建立提示或补查失效依据时只读[同会话能力提示](../ric-devflow/references/bootstrap.md#同会话能力提示)，来源或必要输入变化只重验受影响范围。
+
 **仅主会话缺件时恢复**：分开确认逻辑 `discovered_path`、可信 `source_root` 和 `install_scope`；不能用 symlink realpath 推断写入范围。确认发布源 `https://github.com/lichong-a/ric-dev-workflow-skills`，优先可信完整本地 checkout 或安装记录的完整 SHA；无记录只从已确认源取一次候选并固定 SHA，不猜历史、不执行下载代码。按候选完整清单逐字核对本角色及已有入口的全部包文件与类型；源/范围不明、候选不完整、定制/异版本、未知文件或断链时保持目标零写入。离线仅在可信本地源完整匹配时可继续。
 
 匹配后先从可信候选源只读 `skills/ric-devflow/references/bootstrap.md` 和当前平台一份参考；在复制任何缺件之前预检全部所需 Skill、原生定义/配置、父目录的冲突、禁用和权限。通过后只排他创建缺项，写前复核、写后逐字读回；保留定制、禁用与无关配置，中断后重新核对，不绕过拒绝。详细恢复只在此路径读取[准备与恢复](../ric-devflow/references/bootstrap.md)。独立角色不要求无关角色，完整开发仍检查五 Skill 与当前宿主四原生角色；安装完整性核验不等于加载全部正文。

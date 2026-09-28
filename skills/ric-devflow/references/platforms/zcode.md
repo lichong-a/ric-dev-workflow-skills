@@ -12,4 +12,6 @@ Agent 定义在下一次运行加载；Skill 刷新后还要确认真正发现�
 
 主会话只转发已确认原生同级角色；唯一 Planner 子代理作决定并写状态，四子角色都不派生。完整开发检查五 Skill 与四原生角色；显式独立角色仅所需闭包。依据[原生平级调用](../shared/orchestration.md#原生平级调用)处理调用与恢复，不用通用代理冒充角色，不以 AGENTS.md 注入替代读取实际局部规则。
 
+warm 准备只按入口守卫及当前动作核对能力提示；加载/来源变更使相关提示失效，旧运行不证明本次已加载或调用。Planner 决定有界 READY 波次和末 Task G6/G7 条件批次，主会话不自行合并动作或重跑工作。完整载荷首传、后续固定指针和失败恢复按[紧凑交接](../shared/orchestration.md#紧凑且精确的交接)；只读 Reviewer 不写 Git 缓存，由 Planner 保持原对象和必要持久证据可恢复。
+
 本包未宣称标准安装器支持 ZCode；使用普通复制和宿主官方管理入口。本文不证明原生实机已运行。2026-09-12 核验来源：[ZCode Skill](https://zcode.z.ai/cn/docs/skill)、[ZCode 子代理](https://zcode.z.ai/cn/docs/subagents)。

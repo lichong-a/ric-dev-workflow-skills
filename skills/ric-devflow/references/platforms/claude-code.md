@@ -10,4 +10,6 @@
 
 完整开发检查五 Skill 和四原生角色；独立调用只准备入口、当前角色及其原生定义。主会话显式加载角色 Skill 时，准备就绪后实际调用同名子角色，不能亲自执行角色正文。唯一 Planner 子代理决定下一动作；主会话按其精确交接继续调用平级角色并原样回传，四子角色均不再派生。缺工具、未加载、权限拒绝或旧 Planner 生命周期未知时按[编排](../shared/orchestration.md#原生平级调用)停止受影响动作，不启动第二写入者。
 
+warm 准备按入口守卫核对能力提示，失效只补查当前动作的必要输入，不重复加载整篇 bootstrap。Planner 可按共享契约交接有界 READY 波次或末 Task G6/G7 条件批次，主会话只机械转发；结果首次完整传输、后续固定指针及丢失恢复按[紧凑交接](../shared/orchestration.md#紧凑且精确的交接)。Reviewer 仍仅只读，Git 对象缓存由 Planner 提取/核验/恢复，blob 复用不能省略 Commit/路径/模式绑定。
+
 文件安装、宿主加载、实际调用分列；需新会话时保留原任务与恢复信息。本文不证明真实 Claude 运行已通过。2026-09-12 核验来源：[Skills](https://code.claude.com/docs/en/skills)、[Sub-agents](https://code.claude.com/docs/en/sub-agents)。

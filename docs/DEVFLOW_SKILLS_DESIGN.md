@@ -29,6 +29,8 @@ G0 需求 → G1 条件基线 → G2 Spec 审核 → G3 用户批准 → G4 测�
 
 门禁的精确输入和决策所有者见[门禁策略](../skills/ric-devflow/references/contracts/gate-policy.md)。Root 主路径和全部辅助状态、Task 主路径与辅助状态仍由[工作流状态](../skills/ric-devflow/references/contracts/workflow-state.md)定义，不增加迁移或 Compact 专用状态。
 
+最后 Task 的 G6 可由 Planner 在集成阶段与 G7 作一次条件交接：固定相同 SHA、Spec/计划、测试资产、环境/依赖、数据及命令覆盖，先 G6、PASS 且输入未变才 G7。两份原报告保持独立，已有有效命令只按其范围引用；Planner 先持久 G6、再 VERIFIED、再 G7，G6 失败停止后续。G8 和目标 SHA 的 G9 仍独立，详细规则只在[条件批量执行](../skills/ric-devflow/references/contracts/gate-policy.md#最后-task-的-g6-与-g7-条件批量执行)维护。
+
 Task 集成完成不是目标交付关闭；依赖接受具有当前有效证据的 VERIFIED 或完整关闭的 DONE。恢复时不信任孤立状态名，旧 DONE 缺冒烟等矛盾通过追加事件纠正，历史报告不改写。
 
 首次 G2 前执行一次聚焦事实侦察、一次必要缺口补查和规模判断。当前决策条件满足就进入下一步；连续两次同类检查无新事实停止搜索，继续调查须关联当前 AC、已观察失败或必要约束。默认一个完整纵向 Task；仅真实独立发布/验收边界在初始规划分期，保留完整目标，不因为文件多、上下文长或执行慢递归拆分。
@@ -87,6 +89,8 @@ Custom Agents 使用入口 `assets/agents/codex/*.toml` 模板，准备后位于
 
 每 Root 的 `integration_branch` 默认就是唯一功能分支，优先复用用户指定或已确认的分支；新建遵循仓库规范，无规范用 `feature/<REQ-ID>`，目标分支仍独立识别。就绪 Task 从精确基线用 `git worktree add --detach <path> <base_sha>` 按需隔离，不创建 Task/测试/返修分支。独立 Task 在既有并发约束下并行，同 Task 实现/测试/返修串行复用；审核不新建写工作区。`base_ref` 是来源提示，detached 不改变 `base_sha/head_sha/tested_sha` 的权威性。
 
+首次 G2 前按独立 AC/所有权识别波次，不为性能改写冻结 DAG。默认最多两个 READY Task、合计两个 Tester 进程组，服从更严格限制；共享契约、可变数据、构建配置、端口、fixture、输出或快照冲突则串行。优先复用空闲匹配会话，每次调用只处理一个 Task；候选按 DAG 顺序逐一集成，每个新 SHA 都做 G6，进程结果全部收集并清理自有资源。
+
 Planner 集成精确获批候选，遵从仓库策略，无约定时可快进则快进，否则普通 merge 保留祖先；冲突代码仍交原作者。换基线/回收前保护所有已发布候选（含被拒/取代版本），不能仅靠 detached reflog 或 .local。squash 等不保留血缘时先持久 bundle 并实际验证恢复，再清理空闲且干净的 worktree。不批量清理历史业务分支、不自动迁移 Root，不增加机器路径状态字段。完整规则只在 Git 契约维护。
 
 ## 5. 修订、身份与不可变性
@@ -100,6 +104,8 @@ current/test-plan 原地维护最新版，底部 Change Log 记录修订、时�
 无 Git、不允许跟踪证据或无提交授权：正式文档边界保存不可变持久快照与哈希，标注仅本地可恢复；不能用临时缓存承担唯一历史。缺少真实代码 SHA 的门禁仍阻塞。详细冻结/取代/失效规则见[生命周期](../skills/ric-devflow/references/contracts/artifact-lifecycle.md)。
 
 先证据后状态；同 ID 同载荷复用，异载荷阻塞；写入中断不得引用半条记录。state 不再累计完整 transitions 或迁移历史，事件进入 evidence。账本由 Planner 汇聚不改变各角色作者身份，原始载荷不可被“摘要优化”。
+
+原作者报告首次完整返回，Planner 逐字保全后仅传稳定指针与 Delta；首次指针仅限宿主已提供完整稳定可校验的原始结果。截断请求重传同一原件，证据落地后的状态失败只补索引，下一动作由 Planner 决定。成功仅压缩重复调试日志，命令、退出码、对象身份、覆盖和关键结果仍持久；失败、BLOCKED、not_run 与必要复现材料不得只留 `.local`。
 
 ## 6. 收敛、复审与上下文
 
@@ -119,9 +125,13 @@ current/test-plan 原地维护最新版，底部 Change Log 记录修订、时�
 
 上述参数仅在宿主实际支持时使用；Claude/ZCode 使用其原生完成返回/事件与恢复能力。只有完整角色结果/门禁决策/真实阻塞才恢复 Planner；旧调用未结束或状态不明时不启动第二个写入者。主会话原样返回载荷，丢失/截断先向原作者重传，不自动重跑审核。工具受限 Reviewer 的历史缓存由 Planner 用原生 Git 精确提取和核验；正式 Review 绑定原 SHA，不能只依赖 .local 或只审摘要。
 
+Git blob 字节可缓存，仓库/Commit/路径/类型/模式绑定每次仍核验；Diff 另绑定 base/head、范围和选项。删除、rename、模式、symlink 目标、二进制和 gitlink 证据不能省略。损坏从精确源重建，缺源阻塞；删除 `.local` 仍能从持久来源恢复。此路径仅适用于缺 Git/Bash 的 Reviewer，Codex 继续直接只读 Git。
+
 ## 7. Brownfield、环境与完整交付
 
 [Brownfield 策略](../skills/ric-devflow/references/contracts/brownfield-policy.md)和[仓库侦察](../skills/ric-devflow/references/shared/repository-discovery.md)保留：真实分支来源、工作区保护、沿现有纵向路径续作、生成/保护区域、基线分类与特征测试。
+
+仓库画像沿用既有章节并绑定来源/依赖身份，静态事实未变时复用；HEAD、dirty/worktree、环境及权限每次刷新。输入变化更新关联事实，未知影响或新局部规则触发聚焦调查。测试计划明确实际工具、锁文件、affected/完整/冒烟命令及隔离清理；选择器依据 Delta、AC 和消费者，不可靠或为空时扩大相关完整集合。依赖缓存绑定平台/架构/运行时/包管理器/锁/配置，服务租约绑定配置/迁移/数据/健康/所有者，miss 走原准备流程，失败如实记录，不改用户服务。
 
 默认一个足够相关的稳定实现作参考；有具体缺口再补。仓库规则、真实契约和工具配置优先；不照搬已知不安全模式。重构分 REQUIRED/INCIDENTAL/OPPORTUNISTIC，仅必要改动默认在范围。预算包含测试、生成物、必要文档及余量，不添加统一文件/行/字节硬阈值；宿主已有硬限制及其计数口径继续生效。
 
@@ -149,6 +159,8 @@ current/test-plan 原地维护最新版，底部 Change Log 记录修订、时�
 
 按动作加载：仓库接管/工作区操作读取 Brownfield 与 Git；正式产物创建/恢复读取生命周期及实际布局；派发、状态迁移、门禁分别读取对应章节；审核只选一个模式，测试只选当前动作；发布/关闭和迁移到达阶段后读取。Planner、Tester 的阶段细节与 Reviewer 的正式审核方法移入各自参考；三平台原生模板遵循相同路由，已读未变复用。四角色 SKILL 的自包含守卫在任何外部引用前：主会话缺入口可在逻辑安装范围内从已确认同源固定 SHA 补缺；已启动子角色缺件只回交宿主，不安装、不派生。完整开发检查五 Skill 与当前宿主四原生角色；独立角色只核验必要闭包。
 
+warm 准备可使用同会话能力提示，绑定宿主/会话、逻辑来源/范围、源 SHA、当前角色/动作必要闭包、配置/启用/加载状态。先用可信变更信号或批量清单/类型/模式/内容核验，再复用未变正文；不要求每次读整篇 bootstrap，不承诺通用 O(1)。miss 本身不联网、安装或创建 Root，无 Root 只存会话、已有 Root 只用 `.local`；旧调用不是新调用证据。规则在入口短守卫和[提示核验](../skills/ric-devflow/references/bootstrap.md#同会话能力提示)对应章节执行，安装恢复仅实际缺件且授权成立时触发。
+
 准备区分 discovered_path、source_root、install_scope；逻辑发现位置决定范围，symlink realpath 只用于核验源。完整可信本地 checkout / 安装记录固定 SHA 优先，无记录时仅从已确认发布源取得一次固定候选；所有现存包文件逐字匹配才补缺，旧版不匹配需原 SHA，不静默升级。先预检全部目标，保留定制、异版本、普通同名冲突、不明断链、禁用和已有指引/配置，仅普通复制缺文件或必要缺失配置项，写后读回，中断后逐文件恢复。规则唯一来源见[准备与恢复](../skills/ric-devflow/references/bootstrap.md)。
 
 仅写当前宿主。ZCode 项目入口只有原生 Agent 定义获准使用用户 ~/.zcode/agents，五 Skill 留在项目；模板不绑定某个项目路径。文件安装、宿主加载和实际调用分列，目录存在不能证明加载。需重载时保留原任务及恢复信息，恢复后不重复安装；来源/身份/权限/工具未知时报告精确缺口，不用通用 Agent 冒充。安装方式见 README，平台加载事实及来源见入口当前平台参考。
@@ -158,6 +170,8 @@ current/test-plan 原地维护最新版，底部 Change Log 记录修订、时�
 Planner 在规划前、Implementer 在设计与实现前按单份[设计模式参考与模块化设计](../skills/ric-devflow/references/shared/modular-design.md)检测本地 `ric-design-patterns-skill`；发现可用技能时分别实际读取，按语言和变化点参考。Planner 落实工程级职责与依赖方向，Implementer 落实代码级职责分离、边界封装与可测试性；记录复用现有 Spec／Decision 和实现报告字段。未发现技能不阻塞，也不自动补装；读取或来源缺口只暂停依赖该参考的工作。采用模式须有真实收益，不扩大预算、不自动拆分 Task；外部技能不是安装闭包或第六个发布 Skill，三平台原生角色继续消费共享入口。
 
 ## 10. 评测与完成定义
+
+性能验证必须同时检查可观察行为和保持边界。有限 A/B 使用冷准备、同会话 warm 准备、末 Task G6/G7、三个 READY Task 四种动作，每种三对交替顺序样本；固定受测材料、宿主/模型与资源条件，实际派发并记录全部样本、命令/读取/缓存原因、median 与范围。不可测指标明确披露，不由文件大小推算 token/端到端时间、不给小样本 p95；明显回归至多一次有假设的针对性复验，不作无限重试。复现与结果分别由现有验证指南和追加报告承载，不新增 CI 或产品脚本。
 
 [工作流评测](../skills/ric-devflow/references/evals/workflow-cases.md)保留 WF-01–15，并新增 WF-16–22：固定文件/独立修订、Git 分类、全源迁移、失败恢复、本地远端历史恢复、独立角色行为、无 Git/不跟踪/只读/v1 兼容。另保留[触发评测](../skills/ric-devflow/references/evals/trigger-cases.md)和[Brownfield 评测](../skills/ric-devflow/references/evals/brownfield-cases.md)。
 

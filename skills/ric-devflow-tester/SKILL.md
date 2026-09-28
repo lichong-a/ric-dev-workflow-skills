@@ -11,6 +11,8 @@ description: 仅在用户显式调用或 Planner 精确委派时，为已批准�
 
 先检查同级 `ric-devflow/SKILL.md`、入口内 `references/bootstrap.md` 及当前动作必要文件可读，再追踪外部链接。已确认同源、安装完整且角色可用时直接进入正文，不重读安装流程。已启动的 `tester` 子角色遇缺件只回交宿主，不安装、不派生。
 
+能力提示须绑定宿主/会话、逻辑来源/范围、固定源 SHA、当前角色/动作闭包、配置及启用/加载状态；以可信变更信号或一批清单/类型/模式/内容核验确认未变后复用，不重读 bootstrap。miss 本身不联网、安装或创建 Root；无 Root 仅存会话，已有 Root 仅用 .local，旧调用不证明本次已调用。需要建立提示或补查失效依据时只读[同会话能力提示](../ric-devflow/references/bootstrap.md#同会话能力提示)，来源或必要输入变化只重验受影响范围。
+
 **仅主会话缺件时恢复**：分开确认逻辑 `discovered_path`、可信 `source_root` 和 `install_scope`；不能用 symlink realpath 推断写入范围。确认发布源 `https://github.com/lichong-a/ric-dev-workflow-skills`，优先可信完整本地 checkout 或安装记录的完整 SHA；无记录只从已确认源取一次候选并固定 SHA，不猜历史、不执行下载代码。按候选完整清单逐字核对本角色及已有入口的全部包文件与类型；源/范围不明、候选不完整、定制/异版本、未知文件或断链时保持目标零写入。离线仅在可信本地源完整匹配时可继续。
 
 匹配后先从可信候选源只读 `skills/ric-devflow/references/bootstrap.md` 和当前平台一份参考；在复制任何缺件之前预检全部所需 Skill、原生定义/配置、父目录的冲突、禁用和权限。通过后只排他创建缺项，写前复核、写后逐字读回；保留定制、禁用与无关配置，中断后重新核对，不绕过拒绝。详细恢复只在此路径读取[准备与恢复](../ric-devflow/references/bootstrap.md)。独立角色不要求无关角色，完整开发仍检查五 Skill 与当前宿主四原生角色；安装完整性核验不等于加载全部正文。
@@ -58,6 +60,7 @@ description: 仅在用户显式调用或 Planner 精确委派时，为已批准�
 | 起草或修订计划 | [测试计划](references/testing-workflow.md#2-设计测试计划)与其中路由的测试策略 |
 | 新增或修正测试代码 | [测试实现原则](references/testing-workflow.md#测试实现原则)与[测试代码交付](../ric-devflow/references/shared/test-code-delivery.md)，原 Task worktree 串行交接，不创建测试分支 |
 | 执行增量、完整或 Smoke | [实现并执行测试](references/testing-workflow.md#3-实现并执行测试)，只取集成参考的相应阶段 |
+| 最后 Task 的 G6/G7 条件批次 | [条件批次](references/integration-testing.md#最后-task-的条件批次)，仅按 Planner 交接先 G6、PASS 且输入未变才 G7，独立原报告 |
 | 失败取证或发布结果 | [失败和结果](references/testing-workflow.md#4-报告失败和结果)，按实际 SHA 返回原模板载荷 |
 
 正式 `tested_sha` 必须包含实际测试代码，未提交测试只能形成诊断；外部测试资产须固定可恢复身份。结论仅为 PASS、FAIL 或 BLOCKED，不把未运行、Mock 或本地结果冒充必需 live 验收。Tester 不批准自己的计划或测试代码，G5/G6 和返修仍由原角色分工执行。
