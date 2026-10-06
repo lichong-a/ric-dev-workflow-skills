@@ -167,9 +167,9 @@ Skill 按“入口分类 → 选中角色 → 当前动作参考 → 必要模�
 
 角色交接只传 Root Issue、动作、精确产物路径/版本、适用 SHA、当前 Finding/Defect、允许与保护路径、输出和停止条件；续作只补 Delta。原作者报告首次完整传输，Planner 逐字持久化后改用稳定指针；首次指针只适用于宿主已提供完整、稳定、可校验的原始结果。截断重传原件，状态写入失败只修复索引，不重跑工作。平台支持时默认使用最小上下文继承，例如 `fork_turns: "none"`。
 
-三个平台统一由主会话担任 Planner，同一主会话固定复用 Reviewer、Tester、Implementer 三个子代理；首次有工作才创建，后续按实际 agent ID 继续，跨 Task、返修和新 Root 均复用，忙碌排队。Root 关闭或上下文压缩不自动重建；用户取消不自动恢复，状态未知先核验，确实不可恢复或不满足权限/独立性时才在旧实例停止后替换。不同角色可在隔离条件满足时交错推进，默认最多两个 READY Task、两个 Tester 命令进程组；不为第二位同角色作者或盲评扩容。每个新集成 SHA 仍逐一验证，冻结 DAG 与职责分离保持。完整规则见[按需派发与会话复用](skills/ric-devflow/references/shared/orchestration.md#按需派发与会话复用)。
+三个平台统一由主会话担任 Planner，固定 Reviewer、Tester、Implementer 三种职责，默认每角色一个实例并优先复用。固定职责不要求常驻线程或永久相同 ID：配额不足、无恢复接口等情况，在旧动作结束、结果与副作用保全后可安全回收或受控替换，不重做旧动作。用户取消按作用范围保持停止，独立新 Root 不被旧任务的局部取消误阻塞。已批准的两个独立 READY Task 在隔离、资源和收益条件满足时，可增加一个临时同角色实例；工作流最多四个打开实例，服从更严格宿主限制，不修改全局上限。每个新集成 SHA 仍逐一验证，不把减少创建或允许并行当作已证明提速。入口见[会话复用](skills/ric-devflow/references/shared/orchestration.md#按需派发与会话复用)，具体容量、替换和取消仅按需读[实例生命周期](skills/ric-devflow/references/shared/agent-lifecycle.md)。
 
-交接首行、首条进度和返回结果会注明“职责：实现者｜Skill布局”等中文职责与工作。原生角色 ID 保持稳定；工具支持时，首次调用任务名采用 `ric_implementer` 等稳定角色名，已有实例保留原名字。Skill UI 展示名与平台子代理昵称不同，修改展示名不会保证旧会话改名；当前没有重命名接口时用职责自述说明，不为换名新开代理。临时 ID 映射保存在主会话上下文，已有 Root 的 `.local` 仅缓存相关投影，Root 关闭不清空槽位，正式证据仍使用业务 ID 与真实作者。见[职责命名与可读交接](skills/ric-devflow/references/shared/orchestration.md#职责命名与可读交接)。
+交接首行、首条进度和返回结果会注明“职责：实现者｜Skill布局”等中文职责与工作。原生角色 ID 保持稳定；工具支持时，首次调用任务名采用 `ric_implementer` 等稳定角色名，已有实例保留原名字。Skill UI 展示名与平台子代理昵称不同，修改展示名不会保证旧会话改名；当前没有重命名接口时用职责自述说明，不为换名新开代理。临时 ID 映射保存在主会话上下文，已有 Root 的 `.local` 仅缓存相关投影，Root 关闭不清空逻辑职责与证据关系，实例可按容量策略回收，正式证据仍使用业务 ID 与真实作者。见[职责命名与可读交接](skills/ric-devflow/references/shared/orchestration.md#职责命名与可读交接)。
 
 ### 6. Reviewer 循环可收敛
 

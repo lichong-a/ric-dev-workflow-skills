@@ -21,13 +21,13 @@
 
 实际调用工具支持 `task_name` 时按[职责命名](../shared/orchestration.md#职责命名与可读交接)首次使用稳定的 `ric_<role>`；只在工具确实提供人类标题字段时传“实现者｜Skill布局”等标题。平台昵称、调用任务名和 Skill `agents/openai.yaml` 的 `display_name` 是不同对象。当前工具没有旧子代理重命名接口时，不承诺修改 Skill UI 或 TOML 描述会改名、不重建会话来模拟改名、不追溯修改旧会话；通过后续进度和交接自述说明职责。
 
-完整性要求核验三个原生子角色，不要求立即创建全部实例；按[会话复用](../shared/orchestration.md#按需派发与会话复用)由同一主会话跨 Root 复用现有角色。官方字段与宿主能力以[Codex subagents 文档](https://learn.chatgpt.com/docs/agent-configuration/subagents)及当前实际工具 Schema 为准，配置可解析不证明界面昵称已经变化。
+完整性要求核验三个原生子角色，不要求立即创建全部实例；按[会话复用](../shared/orchestration.md#按需派发与会话复用)由同一主会话跨 Root 保持职责、优先复用实例。官方字段与宿主能力以[Codex subagents 文档](https://learn.chatgpt.com/docs/agent-configuration/subagents)及当前实际工具 Schema 为准，配置可解析不证明界面昵称已经变化。
 
 ## 当前实例的继续与恢复
 
-首次必要派发保存真实 agent ID；后续使用当前 Schema 暴露的恢复/后续任务能力，不能再次 spawn 相同角色名来模拟复用。接口若提供 `followup_task`，以旧 ID/已确认目标继续；若仅有消息工具，须核实它是否能唤醒已完成实例，不能把“消息已排队”当作恢复执行。运行中用宿主允许的消息/等待处理原动作，不同时交给它另一个 Task。
+首次必要派发保存真实 agent ID；后续优先使用当前 Schema 暴露的恢复/后续任务能力；新建同角色是替换或扩容，必须明确原因，不能称作同一实例复用。接口若提供 `followup_task`，以旧 ID/已确认目标继续；若仅有消息工具，须核实它是否能唤醒已完成实例，不能把“消息已排队”当作恢复执行。运行中用宿主允许的消息/等待处理原动作，不同时交给它另一个 Task。
 
-同主会话跨 Root 保留映射，换任务先核对权限和工作区；不可恢复、用户取消或无恢复接口按共享编排分别处理。既有 Planner 原生定义不删除、不调用；旧工作流先完成停止和证据交接再由主会话接管。不为本包三个槽位修改用户的全局并发上限。
+同主会话跨 Root 保留逻辑职责、实际实例和证据映射，换任务先核对权限和工作区；容量回收、无恢复接口、取消范围和受控替换按[生命周期](../shared/agent-lifecycle.md)当前章节处理。既有 Planner 原生定义不删除、不调用；旧工作流先完成停止和证据交接再由主会话接管。不修改用户全局并发上限。`agents.max_concurrent_threads_per_session` 约束同时打开的子代理线程，不只是正在执行的动作；完成/中断不视为额度释放。创建与恢复前核对容量和其他占用，额度为 1、2 时按已结束且证据保全的实例串行回收/恢复/替换。只用本会话真实暴露的资源释放接口，确认回执后再派发；没有安全推进路径时提前报告，不假造 close/resume 工具。来源：[官方并发配置](https://learn.chatgpt.com/docs/agent-configuration/subagents)。
 
 ## 加载与路由
 

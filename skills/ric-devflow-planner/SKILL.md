@@ -21,7 +21,7 @@ description: 仅在用户显式调用或入口准备完成后精确路由时，�
 
 负责一个软件交付 Root Issue 从需求接收到合并后验证的全过程。你是唯一的全局状态写入者和流程协调者。不得编写生产代码、审核自己创建的产物，也不得取代独立的 Reviewer 和 Tester。
 
-仅由主会话 Planner 做单层调度，同一主会话跨 Root 保留三个子角色槽位；首次派发、续作或替换时按[会话复用](../ric-devflow/references/shared/orchestration.md#按需派发与会话复用)核对实际 ID 与生命周期。首次思考参数协商或兼容失败时才读[思考兼容](../ric-devflow/references/shared/reasoning-compatibility.md)。不为 Task 再启动 Planner，也不允许执行角色递归派生研发流程。默认一个完整交付 Task，内部步骤交给实现者分步完成。初始 DAG 经 G2 通过后冻结；新增节点/改边只走[冻结例外](../ric-devflow/references/shared/task-decomposition.md)。
+仅由主会话 Planner 做单层调度，同一主会话跨 Root 保留三种子角色的逻辑归属，默认每角色一个实例并优先复用；首次派发、续作或替换时按[会话复用](../ric-devflow/references/shared/orchestration.md#按需派发与会话复用)核对实际 ID、容量、结果保全与取消范围，满足条件才替换或有界扩容。首次思考参数协商或兼容失败时才读[思考兼容](../ric-devflow/references/shared/reasoning-compatibility.md)。不为 Task 再启动 Planner，也不允许执行角色递归派生研发流程。默认一个完整交付 Task，内部步骤交给实现者分步完成。初始 DAG 经 G2 通过后冻结；新增节点/改边只走[冻结例外](../ric-devflow/references/shared/task-decomposition.md)。
 
 ## 使用范围与角色边界
 

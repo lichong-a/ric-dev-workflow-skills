@@ -1,0 +1,853 @@
+{
+  "metadata": {
+    "evaluation": "independent_skill_maintainer_forward_decision_simulation",
+    "scenario_count": 22,
+    "simulation_only": true,
+    "real_native_calls": 0,
+    "real_provider_calls": 0,
+    "real_business_writes": 0,
+    "files_written": [
+      ".devflow-validation-lifecycle-jgf8r488/lifecycle-decisions.json"
+    ],
+    "input": ".devflow-validation-lifecycle-jgf8r488/lifecycle-inputs.json",
+    "input_sha256": "ebd65c1064ac3c9cf3514ce92ab117e7726356346be4664a4d7bdf00d0fd2e25",
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow/references/shared/agent-lifecycle.md",
+      "skills/ric-devflow/references/shared/orchestration.md"
+    ],
+    "reference_scope": {
+      "skills/ric-devflow/SKILL.md": "当前入口全文",
+      "skills/ric-devflow/references/shared/agent-lifecycle.md": "当前生命周期全文；修正后重新读取职责、替换、回收、取消与扩容各节",
+      "skills/ric-devflow/references/shared/orchestration.md": "按需派发、命名、原生平级调用、紧凑交接、等待/恢复与审核收敛相关段落"
+    },
+    "candidate_file_sha256": {
+      "skills/ric-devflow/SKILL.md": "85c580d1ac5d5bc74d8992b6e52b549681fbd84d385c2c1a162d7714eeb3bb1b",
+      "skills/ric-devflow/references/shared/agent-lifecycle.md": "992c44f4c5b85566d92786920d483755646b8b238be0fb27eaefd93c109bf641",
+      "skills/ric-devflow/references/shared/orchestration.md": "9aa85b22cffe6ba976a11716aaa7e6c0e513843dc5100e969e46529125025840"
+    },
+    "platform_reference_selection": "22 个案例均声明 synthetic host contract；直接采用各项提供的工具/角色 Schema，不猜 Codex/Claude/ZCode 身份，故本轮未读取平台专属参考。",
+    "shared_constraints": "所有案例相互独立；主会话作为 Planner；模型保持 unchanged-current-model；不删历史、不改线程上限、不关闭外部代理，不执行真实业务 Gate。",
+    "input_interpretation": "采用 next_action_authorization 的完备性前提和明确给定的实例/回执事实；未提供的新查询结果、ID 或业务完成结果不编造。task 参数表达场景已给定当前批准动作，未枚举身份值不造占位 SHA。",
+    "count_definitions": {
+      "spawn_count": "本段模拟轨迹中拟调用 spawn 的次数；不等于真实创建数量或已收到成功业务结果。",
+      "recovery_count": "本段轨迹中的有界容量/实例回收轮次，包括波次结束后的临时实例回收；尚未确认释放的已发起轮次也计数。",
+      "resume_count": "本段轨迹通过 followup 恢复/向旧实例请求后续动作的调用次数；不与回收轮次混计。",
+      "closed_ids": "仅记录本段 close 的给定合成回执明确确认关闭并释放的实例；历史回收另列。",
+      "canceled_work_reexecuted": "仅判断原取消范围内的工作是否重执行，合法独立新工作不记为重执行。"
+    },
+    "ambiguities": [
+      {
+        "id": "LC-07-initial-release-precondition",
+        "status": "resolved_by_maintainer_then_reevaluated",
+        "initial_text": "如果旧线程仍占额度，还须先按下节安全释放",
+        "effect": "初读该句会要求所有仍占额的旧线程先释放，与 LC-07 有足够余量但无关闭接口的受控替换路径形成歧义。",
+        "verified_correction": "只有创建/恢复下一实例会超出宿主或本工作流上限时才必须先释放；未释放的旧实例持续计入打开总量和每角色上限。",
+        "reevaluated_cases": [
+          "LC-07",
+          "LC-10",
+          "LC-15",
+          "LC-16",
+          "LC-22"
+        ],
+        "conclusion": "LC-07 可在保留旧占用计数的前提下创建当前替代 Reviewer；结果基于修正后的最终摘要。"
+      }
+    ],
+    "remaining_candidate_ambiguities": [],
+    "evidence_limits": [
+      "inspect 没有给出新返回时，LC-05/08/09/13/21 的缺口仍保留；安全请求不算成功保全或释放。",
+      "LC-15 的扩容依据场景提供的独立可执行证据，派发前仍须覆盖 fixture/快照等全部隔离条件；任一条件不成立则串行。"
+    ]
+  },
+  "cases": [
+    {
+      "id": "LC-01",
+      "actions": [
+        {
+          "tool": "inspect",
+          "target": [
+            "R1"
+          ],
+          "parameters": {
+            "ids": [
+              "R1"
+            ]
+          },
+          "reason": "核对 R1 属于本工作流、已结束且完整结果已保存，并按打开线程计数核对 quota=1。"
+        },
+        {
+          "tool": "close",
+          "target": "R1",
+          "parameters": {
+            "id": "R1"
+          },
+          "receipt": "confirmed_closed_and_capacity_released",
+          "reason": "唯一安全闲置候选；保留历史和报告，确认释放才能为下一角色使用额度。"
+        },
+        {
+          "tool": "spawn",
+          "target": "tester",
+          "parameters": {
+            "role": "tester",
+            "task": "职责：测试者｜当前已批准的 Tester 动作；绑定当前对象、计划、环境、精确 SHA 和允许路径"
+          },
+          "instance_kind": "default",
+          "result_binding": "使用宿主返回的新实例 ID，不预造 ID",
+          "reason": "close 的合成回执明确确认额度释放，随后仅创建本次需要的 Tester。"
+        }
+      ],
+      "spawn_count": 1,
+      "recovery_count": 1,
+      "resume_count": 0,
+      "closed_ids": [
+        "R1"
+      ],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "Tester 一次派发后等待当前结果；后续恢复 R1 时重新核对占额，不在本段提前恢复。",
+      "reason": "完成仍占额，但允许关闭并以后恢复；quota=1 可逐角色串行推进，不要求三个角色常驻。",
+      "capacity": {
+        "before": 1,
+        "after_close": 0,
+        "after_spawn": 1,
+        "limit": 1
+      }
+    },
+    {
+      "id": "LC-02",
+      "actions": [
+        {
+          "tool": "inspect",
+          "target": [
+            "R1",
+            "T1"
+          ],
+          "parameters": {
+            "ids": [
+              "R1",
+              "T1"
+            ]
+          },
+          "reason": "两者均为本工作流已保全且近期无待办的闲置实例，核对最近使用顺序。"
+        },
+        {
+          "tool": "close",
+          "target": "R1",
+          "parameters": {
+            "id": "R1"
+          },
+          "receipt": "confirmed_closed_and_capacity_released",
+          "reason": "同等条件下 R1 的 last_used=1 早于 T1 的 2，优先回收最近最少使用者；只需释放一个。"
+        },
+        {
+          "tool": "spawn",
+          "target": "implementer",
+          "parameters": {
+            "role": "implementer",
+            "task": "职责：实现者｜当前单个已批准 Task；核对精确候选、允许路径和唯一写入窗口"
+          },
+          "instance_kind": "default",
+          "result_binding": "使用宿主返回的新实例 ID，不预造 ID",
+          "reason": "回执确认释放一个额度后创建 Implementer；T1 保持可复用。"
+        }
+      ],
+      "spawn_count": 1,
+      "recovery_count": 1,
+      "resume_count": 0,
+      "closed_ids": [
+        "R1"
+      ],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "Implementer 派发后等本次报告，不再关闭 T1 或扩充其他角色。",
+      "reason": "quota=2 按下一动作释放必要的闲置实例；LRU 用于同等条件，不把完成直接视为释放。",
+      "capacity": {
+        "before": 2,
+        "after_close": 1,
+        "after_spawn": 2,
+        "limit": 2
+      }
+    },
+    {
+      "id": "LC-03",
+      "actions": [
+        {
+          "tool": "inspect",
+          "target": [
+            "E1",
+            "R1"
+          ],
+          "parameters": {
+            "ids": [
+              "E1",
+              "R1"
+            ]
+          },
+          "reason": "区分外部占用 E1 与本工作流可安全回收的 R1。"
+        },
+        {
+          "tool": "close",
+          "target": "R1",
+          "parameters": {
+            "id": "R1"
+          },
+          "receipt": "confirmed_closed_and_capacity_released",
+          "reason": "只处理本工作流拥有且报告已保全的已结束实例；E1 不属于本流程。"
+        },
+        {
+          "tool": "spawn",
+          "target": "tester",
+          "parameters": {
+            "role": "tester",
+            "task": "职责：测试者｜当前已批准 Tester 动作"
+          },
+          "instance_kind": "default",
+          "result_binding": "使用宿主返回的新实例 ID，不预造 ID",
+          "reason": "R1 释放后连同保留的 E1，总占用不超过 quota=2。"
+        }
+      ],
+      "spawn_count": 1,
+      "recovery_count": 1,
+      "resume_count": 0,
+      "closed_ids": [
+        "R1"
+      ],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "等待 Tester 本次结果；E1 保持原状，不删除任何历史。",
+      "reason": "外部实例减少实际余量，但不授予关闭它的权限。",
+      "untouched_ids": [
+        "E1"
+      ],
+      "capacity": {
+        "before": 2,
+        "after_close": 1,
+        "after_spawn": 2,
+        "limit": 2
+      }
+    },
+    {
+      "id": "LC-04",
+      "actions": [
+        {
+          "tool": "inspect",
+          "target": [
+            "E1",
+            "E2"
+          ],
+          "parameters": {
+            "ids": [
+              "E1",
+              "E2"
+            ]
+          },
+          "reason": "核对满额占用全部属于另一工作流；本流程没有安全回收候选。"
+        }
+      ],
+      "spawn_count": 0,
+      "recovery_count": 0,
+      "resume_count": 0,
+      "closed_ids": [],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "停止本次 Reviewer 创建，报告容量被外部实例占用；只有真实释放/新资源事件后重新评估，不静态轮询或反复 spawn。",
+      "reason": "不能关闭外部 E1，也不能因 E2 已完成就代其关闭。没有释放动作在进行，不把缺口包装为无限等待。",
+      "untouched_ids": [
+        "E1",
+        "E2"
+      ],
+      "capacity": {
+        "before": 2,
+        "available": 0,
+        "limit": 2
+      }
+    },
+    {
+      "id": "LC-05",
+      "actions": [
+        {
+          "tool": "inspect",
+          "target": [
+            "R1"
+          ],
+          "parameters": {
+            "ids": [
+              "R1"
+            ]
+          },
+          "reason": "先核对回收候选 R1 已结束、归属本流程且结果完整保全。"
+        },
+        {
+          "tool": "close",
+          "target": "R1",
+          "parameters": {
+            "id": "R1"
+          },
+          "receipt": "accepted_request_but_release_unknown",
+          "reason": "允许发起一次安全关闭，但接收确认不证明关闭完成或额度释放。"
+        },
+        {
+          "tool": "inspect",
+          "target": [
+            "R1"
+          ],
+          "parameters": {
+            "ids": [
+              "R1"
+            ]
+          },
+          "reason": "查询该关闭请求的结束与释放结果；输入没有提供新的确认回执，不预设已释放。"
+        }
+      ],
+      "spawn_count": 0,
+      "recovery_count": 1,
+      "resume_count": 0,
+      "closed_ids": [],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "保持本次 Tester 派发停止，等待已发出的关闭事件或权威释放回执；不重复 close/spawn，也不把 accepted 当作释放。",
+      "reason": "回收已发起但尚未完成，quota=1 仍不能证明足以创建 Tester。",
+      "pending_close_ids": [
+        "R1"
+      ],
+      "capacity": {
+        "released_confirmed": false,
+        "available": "unknown"
+      }
+    },
+    {
+      "id": "LC-06",
+      "actions": [],
+      "spawn_count": 0,
+      "recovery_count": 0,
+      "resume_count": 0,
+      "closed_ids": [],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "同一交接已经用尽一轮回收和一次重新派发；没有新外部事件时停止重复创建，报告外部占用。",
+      "reason": "不因再次收到 continue 就重置配额恢复预算，也不另起思考参数循环来增加尝试次数。",
+      "historical_budget": {
+        "recovery_rounds_consumed": 1,
+        "redispatches_consumed": 1,
+        "closed_ids": [
+          "R1"
+        ],
+        "remaining_redispatches": 0
+      }
+    },
+    {
+      "id": "LC-07",
+      "actions": [
+        {
+          "tool": "inspect",
+          "target": [
+            "R1"
+          ],
+          "parameters": {
+            "ids": [
+              "R1"
+            ]
+          },
+          "reason": "核对旧 Spec 审核结束且完整结果已持久化；记录 R1 仍打开，占用真实总量和 Reviewer 数量。"
+        },
+        {
+          "tool": "spawn",
+          "target": "reviewer",
+          "parameters": {
+            "role": "reviewer",
+            "task": "职责：审核者｜对本次新测试计划执行完整 TEST_REVIEW；接收必要审核谱系，只核对旧 SPEC_REVIEW 适用性"
+          },
+          "instance_kind": "replacement",
+          "result_binding": "使用宿主返回的新实例 ID，不预造 ID",
+          "reason": "宿主没有恢复接口，允许受控替换；旧活动绑定退出后 R1 仍计入占用，新增后总打开数及 Reviewer 数均为 2，不超出 quota=3 或每角色上限。"
+        }
+      ],
+      "spawn_count": 1,
+      "recovery_count": 0,
+      "resume_count": 0,
+      "closed_ids": [],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "等待新 Reviewer 本次 TEST_REVIEW 结果；后续若再替换会触及每角色 2 个上限，须先确认新的安全释放路径，不保证无限续作。",
+      "reason": "依据修正后条文，仍占额本身不强制先关闭；本次有足够余量、旧动作结束且证据保全，因此无恢复接口不构成当前阻塞。",
+      "retired_active_binding": [
+        "R1"
+      ],
+      "still_open_ids": [
+        "R1"
+      ],
+      "capacity": {
+        "before": 1,
+        "after_spawn": 2,
+        "reviewer_open_after": 2,
+        "host_limit": 3,
+        "workflow_limit": 4,
+        "role_limit": 2
+      },
+      "reevaluation": "保留共享 metadata 中的初始 LC-07 歧义；此结论绑定修正后候选。"
+    },
+    {
+      "id": "LC-08",
+      "actions": [
+        {
+          "tool": "inspect",
+          "target": [
+            "R1"
+          ],
+          "parameters": {
+            "ids": [
+              "R1"
+            ]
+          },
+          "reason": "确认旧动作结束及唯一可能报告副本的位置，不先关闭线程。"
+        },
+        {
+          "tool": "followup",
+          "target": "R1",
+          "parameters": {
+            "id": "R1",
+            "task": "职责：审核者｜仅重传上一已发布报告的完整原始载荷及原 ID/SHA；不得重新审核、重写或猜测报告。若无法取回原字节，返回精确缺口。"
+          },
+          "reason": "利用给定的 followup 向原作者请求同一报告；这只是取回原结果，不是重新执行审核。能否成功取回尚未给定。"
+        }
+      ],
+      "spawn_count": 0,
+      "recovery_count": 0,
+      "resume_count": 1,
+      "closed_ids": [],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "没有原结果完整取回并稳定保全的证据前，不 close R1，不 spawn 下一角色；取回失败则保留线程和缺口，不重做审核来补造旧报告。",
+      "reason": "关闭可能切断唯一报告来源；现有 followup 可安全请求原件，但不能假称请求成功等于报告已保存。",
+      "evidence_status": "retrieval_requested_not_confirmed",
+      "capacity": {
+        "occupied": 1,
+        "limit": 1
+      }
+    },
+    {
+      "id": "LC-09",
+      "actions": [
+        {
+          "tool": "inspect",
+          "target": [
+            "I1"
+          ],
+          "parameters": {
+            "ids": [
+              "I1"
+            ]
+          },
+          "reason": "查询原交接是否已接受/启动及实际生命周期，原动作超时不能等同于未执行。"
+        }
+      ],
+      "spawn_count": 0,
+      "recovery_count": 0,
+      "resume_count": 0,
+      "closed_ids": [],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "在原调用结果未明前，不 followup 同一 Task、不 spawn 替代者、不 close I1。运行中等原结果，完成则取回原件；只有明确恢复条件后才决定下一动作。",
+      "reason": "quota=4 的空余不能豁免幂等和唯一写入窗口；用户要求 repeat 也不能让未知旧动作被重复执行。"
+    },
+    {
+      "id": "LC-10",
+      "actions": [
+        {
+          "tool": "inspect",
+          "target": [
+            "I1"
+          ],
+          "parameters": {
+            "ids": [
+              "I1"
+            ]
+          },
+          "reason": "确认 Root A 的旧动作已停止、检查点和副作用已保全；取消范围仅 A，新 Root B 的批准、仓库和允许路径独立。"
+        },
+        {
+          "tool": "spawn",
+          "target": "implementer",
+          "parameters": {
+            "role": "implementer",
+            "task": "职责：实现者｜仅执行独立新 Root B 的已批准 Task；重新绑定 B 的仓库、工作区、精确 SHA、批准和允许路径"
+          },
+          "instance_kind": "replacement",
+          "result_binding": "使用宿主返回的新实例 ID，不预造 ID",
+          "reason": "取消 ID 不支持 follow-up，不恢复 I1 或重做 A；为 B 受控创建同职责替代者。未给 I1 释放回执，仍将其计入占额。"
+        }
+      ],
+      "spawn_count": 1,
+      "recovery_count": 0,
+      "resume_count": 0,
+      "closed_ids": [],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "等待 B 的本次结果；A 与 I1 的取消事实持续保留，不要求先恢复 A。",
+      "reason": "Root A 级取消不扩展成 Implementer 永久禁令；明确独立且新授权的 B 满足受控替换入口。",
+      "cancelled_scope_preserved": "Root A",
+      "retired_active_binding": [
+        "I1"
+      ],
+      "capacity": {
+        "old_instance_counted_conservatively": 1,
+        "open_after_upper_bound": 2,
+        "implementer_open_upper_bound": 2,
+        "host_limit": 3
+      }
+    },
+    {
+      "id": "LC-11",
+      "actions": [],
+      "spawn_count": 0,
+      "recovery_count": 0,
+      "resume_count": 0,
+      "closed_ids": [],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "保持 Implementer 后续执行停止，直到用户明确解除该角色禁令；不为 Root B spawn/followup Implementer。",
+      "reason": "禁令覆盖当前主会话的全部后续 Implementer 动作，新 Root 请求不自动解除更广的取消范围。",
+      "cancelled_scope_preserved": "all future Implementer execution in this main session"
+    },
+    {
+      "id": "LC-12",
+      "actions": [],
+      "spawn_count": 0,
+      "recovery_count": 0,
+      "resume_count": 0,
+      "closed_ids": [],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "全部相应派发保持停止，等待用户明确恢复；不创建新实例或子会话，不通过 READY 队列绕过。",
+      "reason": "取消范围为全部自动化且未解除，排队工作 ready 不是新的恢复授权。",
+      "cancelled_scope_preserved": "all automation in this main session"
+    },
+    {
+      "id": "LC-13",
+      "actions": [
+        {
+          "tool": "inspect",
+          "target": [
+            "I1"
+          ],
+          "parameters": {
+            "ids": [
+              "I1"
+            ]
+          },
+          "reason": "取消请求不证明旧动作已停止；先查询 A 的真实停止状态及可保全检查点/副作用。"
+        }
+      ],
+      "spawn_count": 0,
+      "recovery_count": 0,
+      "resume_count": 0,
+      "closed_ids": [],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "旧停止、写入窗口结束和检查点/副作用保全未获确认之前，不为 B 创建替代者，不为确认取消重跑 A。",
+      "reason": "B 的独立授权没有补足旧实例生命周期前提；本例明确 stop unknown，不能按已取消且安全停止处理。"
+    },
+    {
+      "id": "LC-14",
+      "actions": [],
+      "spawn_count": 0,
+      "recovery_count": 0,
+      "resume_count": 0,
+      "closed_ids": [],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "保持 A 工作取消；停止以 B 名称重新派发同一未完成工作，直到存在对原工作明确恢复或真正独立新工作的授权。",
+      "reason": "目标未变且没有新用户授权，调度器改名不能把取消范围外观上转移。",
+      "cancelled_scope_preserved": "Root A and the same unfinished work relabelled as B"
+    },
+    {
+      "id": "LC-15",
+      "actions": [
+        {
+          "tool": "inspect",
+          "target": [
+            "I1",
+            "R1",
+            "T1"
+          ],
+          "parameters": {
+            "ids": [
+              "I1",
+              "R1",
+              "T1"
+            ]
+          },
+          "reason": "核对当前 3 个打开默认实例、I1 的 Task A 以及已给定的 B 独立执行证据和资源隔离。"
+        },
+        {
+          "tool": "spawn",
+          "target": "implementer",
+          "parameters": {
+            "role": "implementer",
+            "task": "职责：实现者｜独立 READY Task B 的完整已批准实现；使用 B 自有工作区、契约、数据、构建、端口、fixture、输出和快照边界"
+          },
+          "instance_kind": "temporary",
+          "result_binding": "使用宿主返回的新实例 ID，不预造 ID",
+          "reason": "A 的独立长动作形成已说明的排队段；新增一个临时 Implementer 后为 2 个 Task、Implementer 2 个、全流程 4 个、临时 1 个，均在界内。"
+        }
+      ],
+      "spawn_count": 1,
+      "recovery_count": 0,
+      "resume_count": 0,
+      "closed_ids": [],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "仅增加本次一个临时实例；等待 A/B 各自结果。波次结束且无临时后续动作时保全结果并回收，不把预计减少排队写成已测得性能。",
+      "reason": "以输入关于独立、已批准、READY 和可并行执行的证据为前提；不修改冻结 DAG，不向 I1 同时塞入 B，不关闭仍工作的 I1。",
+      "capacity": {
+        "open_before": 3,
+        "open_after": 4,
+        "implementer_open_after": 2,
+        "temporary_open_after": 1,
+        "active_tasks_after": 2
+      },
+      "pre_dispatch_checks": "已给定独立执行证据须涵盖生命周期列出的所有隔离项，包含 fixture/快照；核对不成立即停止扩容。"
+    },
+    {
+      "id": "LC-16",
+      "actions": [
+        {
+          "tool": "inspect",
+          "target": [
+            "I1",
+            "I2",
+            "T1"
+          ],
+          "parameters": {
+            "ids": [
+              "I1",
+              "I2",
+              "T1"
+            ]
+          },
+          "reason": "I2 虽已完成仍是打开的临时实例；不能因 Reviewer 未打开或总量有余量忽略一个临时实例上限。"
+        },
+        {
+          "tool": "close",
+          "target": "I2",
+          "parameters": {
+            "id": "I2"
+          },
+          "receipt": "confirmed_closed_and_capacity_released",
+          "reason": "I2 已保存且没有同波次后续工作，优先回收它并确认释放临时实例名额。"
+        },
+        {
+          "tool": "spawn",
+          "target": "tester",
+          "parameters": {
+            "role": "tester",
+            "task": "职责：测试者｜独立 Task B 的完整批准测试动作；核对 B 自有资源和输出，Tester 命令进程组总数仍不超过 2"
+          },
+          "instance_kind": "temporary",
+          "result_binding": "使用宿主返回的新实例 ID，不预造 ID",
+          "reason": "释放 I2 后才为另一职责临时扩容；保留 I1 默认实例和运行中的 T1，不提前开启 Reviewer。"
+        }
+      ],
+      "spawn_count": 1,
+      "recovery_count": 1,
+      "resume_count": 0,
+      "closed_ids": [
+        "I2"
+      ],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "等待新 Tester 的 B 结果；如 I2 未确认释放，则在该处停止，不创建第二个仍打开的临时实例。",
+      "reason": "“最多一个临时实例”按未释放实例计数，与宿主剩余线程额度分开核对。",
+      "capacity": {
+        "open_before": 3,
+        "after_close": 2,
+        "after_spawn": 3,
+        "tester_open_after": 2,
+        "temporary_open_after": 1,
+        "active_tasks_after": 2
+      },
+      "untouched_ids": [
+        "I1",
+        "T1"
+      ]
+    },
+    {
+      "id": "LC-17",
+      "actions": [
+        {
+          "tool": "inspect",
+          "target": [
+            "I1"
+          ],
+          "parameters": {
+            "ids": [
+              "I1"
+            ]
+          },
+          "reason": "核对 A 的当前动作；给定 B 与 A 共享可变契约/构建配置，已不满足并行隔离条件。"
+        }
+      ],
+      "spawn_count": 0,
+      "recovery_count": 0,
+      "resume_count": 0,
+      "closed_ids": [],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "B 在主会话排队，等待 A 结束并重新核对共享输入和批准；当前不 spawn 第二个 Implementer，不把 B 并发 followup 给 I1。",
+      "reason": "有并行收益不能覆盖已知共享写入冲突，也不能为扩容修改冻结 DAG 或提高上限。"
+    },
+    {
+      "id": "LC-18",
+      "actions": [
+        {
+          "tool": "inspect",
+          "target": [
+            "I1",
+            "I2"
+          ],
+          "parameters": {
+            "ids": [
+              "I1",
+              "I2"
+            ]
+          },
+          "reason": "核对波次已结束、I2 无后续动作且完整结果已保存；I1 为可复用默认实例。"
+        },
+        {
+          "tool": "close",
+          "target": "I2",
+          "parameters": {
+            "id": "I2"
+          },
+          "receipt": "confirmed_closed_and_capacity_released",
+          "reason": "安全回收临时实例并确认释放，保留 I1、原报告和旧新实例证据关系。"
+        }
+      ],
+      "spawn_count": 0,
+      "recovery_count": 1,
+      "resume_count": 0,
+      "closed_ids": [
+        "I2"
+      ],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "确认 I2 释放后本次回收完成，回到默认实例布局；无需创建或恢复任何角色。",
+      "reason": "临时扩容不会自动变成常驻副本；回收线程不删除历史或工作区。",
+      "untouched_ids": [
+        "I1"
+      ],
+      "capacity": {
+        "open_before": 2,
+        "open_after": 1,
+        "temporary_open_after": 0
+      }
+    },
+    {
+      "id": "LC-19",
+      "actions": [],
+      "spawn_count": 0,
+      "recovery_count": 0,
+      "resume_count": 0,
+      "closed_ids": [],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "首次派发前报告无法支撑完整流程的生命周期缺口；需确认安全释放、自动释放、恢复能力或足够可持续容量之一，当前不占用唯一额度。",
+      "reason": "quota=1、完成仍占额、无释放/恢复接口且无自动释放，已知没有串行跨三角色推进路径。不能先创建第一个代理再无限等待，也不能由 Planner 代做后续角色。",
+      "gap": "no_confirmed_serial_progress_path_before_first_dispatch"
+    },
+    {
+      "id": "LC-20",
+      "actions": [
+        {
+          "tool": "inspect",
+          "target": [
+            "R1"
+          ],
+          "parameters": {
+            "ids": [
+              "R1"
+            ]
+          },
+          "reason": "复核给定真实宿主回执：R1 已完成且相关容量已释放，报告已保存；停止 ID 不可恢复。"
+        },
+        {
+          "tool": "spawn",
+          "target": "tester",
+          "parameters": {
+            "role": "tester",
+            "task": "职责：测试者｜当前已批准的下一 Tester 动作；绑定新的对象、权限与精确 SHA"
+          },
+          "instance_kind": "default",
+          "result_binding": "使用宿主返回的新实例 ID，不预造 ID",
+          "reason": "自动释放已由实际回执确认，quota=1 的额度可供下一角色；无 resume 接口不妨碍此受控推进。"
+        }
+      ],
+      "spawn_count": 1,
+      "recovery_count": 0,
+      "resume_count": 0,
+      "closed_ids": [],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "Tester 一次派发后等待当前结果；不虚构 close 接口或声称旧 ID 已恢复。",
+      "reason": "可推进性依据自动释放的已确认行为，不依据“完成通常会释放”的猜测。",
+      "previously_released_ids": [
+        "R1"
+      ],
+      "capacity": {
+        "occupied_before_spawn": 0,
+        "after_spawn": 1,
+        "limit": 1
+      }
+    },
+    {
+      "id": "LC-21",
+      "actions": [
+        {
+          "tool": "inspect",
+          "target": [
+            "I1"
+          ],
+          "parameters": {
+            "ids": [
+              "I1"
+            ]
+          },
+          "reason": "核对中断后是否真实停止、检查点和未完成副作用；同时确认线程仍打开，interrupt 从不释放容量。"
+        }
+      ],
+      "spawn_count": 0,
+      "recovery_count": 0,
+      "resume_count": 0,
+      "closed_ids": [],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "停止下一角色创建，报告没有安全释放当前额度的接口；仅再次 interrupt 无法改变此条件，不伪造 close/unload 或删除历史。",
+      "reason": "中断、动作停止与线程释放是三个不同事实。本例 quota=1 仍被 I1 占用，即使随后确认停止也不会自动取得空余。",
+      "gap": "open_thread_has_no_safe_release_interface",
+      "capacity": {
+        "occupied": 1,
+        "limit": 1
+      }
+    },
+    {
+      "id": "LC-22",
+      "actions": [
+        {
+          "tool": "inspect",
+          "target": [
+            "R1"
+          ],
+          "parameters": {
+            "ids": [
+              "R1"
+            ]
+          },
+          "reason": "核对 R1 不可恢复、旧 Spec 审核完整保存且批准仍有效，并采用场景给定的全部替换/容量前提。"
+        },
+        {
+          "tool": "spawn",
+          "target": "reviewer",
+          "parameters": {
+            "role": "reviewer",
+            "task": "职责：审核者｜对新测试计划执行本次完整 TEST_REVIEW；读取必要审核谱系并核对旧 SPEC_REVIEW 的适用性"
+          },
+          "instance_kind": "replacement",
+          "result_binding": "使用宿主返回的新实例 ID，不预造 ID",
+          "reason": "替代 Reviewer 是新的实际实例，对当前新对象做完整审核；不把本次称为原 R1 的增量复审，不重做历史有效 SPEC_REVIEW。"
+        }
+      ],
+      "spawn_count": 1,
+      "recovery_count": 0,
+      "resume_count": 0,
+      "closed_ids": [],
+      "canceled_work_reexecuted": false,
+      "stop_condition": "等待新 Reviewer 的当前 TEST_REVIEW 完整结果；只有相关对象变化或证据失效时才决定额外历史审核，不机械重跑旧链。",
+      "reason": "实例失效不等于旧报告/批准失效；历史作者、ID、SHA 和结论均保留。",
+      "review_mode": "TEST_REVIEW",
+      "old_spec_review_reexecuted": false,
+      "retired_active_binding": [
+        "R1"
+      ],
+      "capacity": "按输入已满足替换与容量条件；未释放的旧实例仍计数，不因解除活动绑定而隐去。"
+    }
+  ]
+}

@@ -1,0 +1,198 @@
+{
+  "kind": "maintainer_assessment_separate_from_original_actor_reports",
+  "source_baseline": "ffe2e7ff6897539614bdddd055fe676865144b59",
+  "business_gates_executed": false,
+  "product_tested_sha": null,
+  "decision_validation": {
+    "cases": 22,
+    "result": "PASS",
+    "supplement_cases": 5,
+    "supplement_result": "PASS",
+    "source_role_calls": 0,
+    "supplier_calls": 0
+  },
+  "native_cli": {
+    "version": "0.160.0",
+    "verified_slices": [
+      "native Reviewer/Tester/Implementer selection and same-ID followups in the recorded test session",
+      "completed threads can exhaust quota=2; actual thread-limit rejection preserved",
+      "quota=1 same-process preserve-close-create rotation",
+      "two native Implementers in isolated detached worktrees with one temporary instance and targeted closure",
+      "real ambient test-agent occupancy protected while only workflow-owned idle instances are closed"
+    ],
+    "limits": {
+      "quota1_initial": "TIMEOUT at 420 seconds; first Reviewer completed, continuation requested, whole run not PASS",
+      "quota2_recovery": "Reviewer execution/followup observed, but parent process restart and resume-created pending_init confound the original scarce-capacity recovery; do not accept its blanket PASS as proof of that claim",
+      "query_guard": "Added explicit ban on lifecycle-mutating resume as a lookup and not_found as completion/release proof; verified by independent decision supplement, not by a post-fix native unknown-state injection",
+      "creation_only_host": "not_run natively; tested hosts expose continuation; decision-only cases cover fallback",
+      "user_cancel_A_then_B": "not_run natively; no safe real user-cancel injection used; decision cases cover scope",
+      "lost_results_unknown_lifecycle": "initial real timeout retained; full loss-and-recovery success not established",
+      "quota4_policy_ceiling": "decision-level only; live processes used stricter quota=1 or 2",
+      "Codex_desktop": "not_run",
+      "Claude_Code": "not_run",
+      "ZCode": "not_run"
+    },
+    "parallel_turn_intervals": [
+      {
+        "thread": "01a10ff5-6fe7-7121-9e17-76f71537c3f4",
+        "started_at": 1791269106,
+        "completed_at": 1791269254
+      },
+      {
+        "thread": "01a10ff5-7d23-74b1-af2f-dd062d7e729d",
+        "started_at": 1791269109,
+        "completed_at": 1791269207
+      }
+    ],
+    "parallel_turn_overlap_seconds_from_second_resolution_events": 98,
+    "measured_speedup_claimed": false,
+    "actual_models_by_capture": [
+      {
+        "case": "native-preflight",
+        "models": [
+          "gpt-6-astra"
+        ]
+      },
+      {
+        "case": "native-quota1",
+        "models": [
+          "gpt-6-astra"
+        ]
+      },
+      {
+        "case": "native-quota2",
+        "models": [
+          "zcode/GLM-5.3"
+        ]
+      },
+      {
+        "case": "native-quota2-recovery",
+        "models": [
+          "zcode/GLM-5.3"
+        ]
+      },
+      {
+        "case": "native-parallel",
+        "models": [
+          "zcode/GLM-5.3"
+        ]
+      },
+      {
+        "case": "native-rotate-q1",
+        "models": [
+          "zcode/GLM-5.3"
+        ]
+      },
+      {
+        "case": "native-occupied",
+        "models": [
+          "zcode/GLM-5.3"
+        ]
+      }
+    ],
+    "environment_warnings": [
+      "configured MCP startups/keyring/auth warnings",
+      "legacy_notify hook missing executable",
+      "fallback metadata warning for an unknown configured model alias; no causal claim for timeout"
+    ]
+  },
+  "three_platform_acceptance": "OPEN",
+  "independent_review": {
+    "resolved": [
+      "WF-33 stale no-resume stop rule",
+      "one simultaneous temporary instance including completed-but-unreleased instances",
+      "occupied capacity versus insufficient capacity",
+      "read-only lookup and not_found boundary"
+    ],
+    "remaining_source_findings": []
+  },
+  "fixture_preservation": {
+    "bundle": "docs/evidence/lifecycle-20261006/native-fixtures.bundle",
+    "bytes": 211575,
+    "sha256": "78a8d71033659c57f61d48b608fcae06dd1fe00189ebfb6195c5763fb5b32c52",
+    "restored_fixture_count": 4,
+    "fixtures": [
+      {
+        "fixture": "quota1-initial",
+        "bundle": "docs/evidence/lifecycle-20261006/native-fixtures.bundle",
+        "fixture_sha": "d99f2821750c9ac789ec9caa90bf4995205f213d",
+        "files_restored_and_byte_compared": 105,
+        "restore_exit": 0,
+        "archive_ref": "refs/heads/agent/fixture-quota1-initial"
+      },
+      {
+        "fixture": "quota2-and-rotation",
+        "bundle": "docs/evidence/lifecycle-20261006/native-fixtures.bundle",
+        "fixture_sha": "d1afe6c821dcfba11c75eda19360e373545dcfb4",
+        "files_restored_and_byte_compared": 105,
+        "restore_exit": 0,
+        "archive_ref": "refs/heads/agent/fixture-quota2-and-rotation"
+      },
+      {
+        "fixture": "parallel",
+        "bundle": "docs/evidence/lifecycle-20261006/native-fixtures.bundle",
+        "fixture_sha": "79f839ea81c12e4b4cd5c3d71e9557e84260d039",
+        "files_restored_and_byte_compared": 106,
+        "restore_exit": 0,
+        "archive_ref": "refs/heads/agent/fixture-parallel"
+      },
+      {
+        "fixture": "occupied",
+        "bundle": "docs/evidence/lifecycle-20261006/native-fixtures.bundle",
+        "fixture_sha": "915c0ed1c4c8bf759d792a50aefcc1072465880e",
+        "files_restored_and_byte_compared": 105,
+        "restore_exit": 0,
+        "archive_ref": "refs/heads/agent/fixture-occupied"
+      }
+    ],
+    "restore_and_byte_checks": "PASS"
+  },
+  "configuration_side_effect": {
+    "initial_cleanup": {
+      "removed_only_task_owned_trust_entries": 4,
+      "remaining_settings_semantically_and_bytewise_unchanged_outside_removed_spans": true,
+      "before_cleanup_sha256": "0adad1cdc3bb264b389c271dfeffd084725a4188446bb74e5b47fa2faa1d67e0",
+      "after_cleanup_sha256": "f42c5bd616466d6906108bf94b154e75e7c37c651a9b7d031808a5fe5e07026b",
+      "start_baseline_sha256": "41a59524556ac3568b959d3987555fdb6008bce5936a634fed8e1e5b8db49d99",
+      "remaining_difference_from_start": true,
+      "other_difference_origin": "unconfirmed; current non-owned values preserved; no whole-file rollback",
+      "repository_codex_unchanged": true
+    },
+    "process_trust_probe": {
+      "argv": [
+        "codex",
+        "--no-daemon",
+        "-c",
+        "projects.\"<owned-fixture>\".trust_level=\"trusted\"",
+        "exec",
+        "--json",
+        "-C",
+        "native-fixture-q2",
+        "-"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 23.774,
+      "user_config_before": "f42c5bd616466d6906108bf94b154e75e7c37c651a9b7d031808a5fe5e07026b",
+      "user_config_after": "33b7e6562d52ed84065b9bb2d4615b251627277343f6687ceec2dd86765adb31",
+      "byte_identical": false
+    },
+    "probe_cleanup": {
+      "scoped_process_trust_override_prevented_write": false,
+      "test_exit_code": 0,
+      "automatic_owned_project_entry_removed": 1,
+      "exact_pre_probe_config_restored": true,
+      "restored_sha256": "f42c5bd616466d6906108bf94b154e75e7c37c651a9b7d031808a5fe5e07026b",
+      "original_task_baseline_still_differs": true,
+      "no_more_native_startup_probes": true
+    },
+    "attribution_of_other_initial_to_final_difference": "unconfirmed; clarification requested, current non-owned settings preserved"
+  },
+  "collection_errors_preserved": [
+    "Native parallel A initially used a newline-stripping shell comparison, then compared streams correctly.",
+    "Native parallel B original report contains a blob transcription typo; original report retained and actual Git object readback recorded separately.",
+    "Native quota1 rotation display check initially over-escaped newline; corrected against the original hex/byte oracle without editing fixture.",
+    "Initial global-config preservation assertion failed; CLI-created fixture trust entries identified and removed, while the unrelated remaining fingerprint difference was not rolled back.",
+    "Assessment collector first failed with a Python comprehension bracket SyntaxError (exit 1); collector corrected, no native scenario rerun or candidate change."
+  ]
+}

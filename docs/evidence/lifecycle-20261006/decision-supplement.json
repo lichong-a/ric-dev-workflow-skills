@@ -1,0 +1,122 @@
+{
+  "record_kind": "lifecycle_evidence_constraint_supplement",
+  "simulation_only": true,
+  "real_native_calls": 0,
+  "real_provider_calls": 0,
+  "real_business_writes": 0,
+  "baseline": {
+    "path": ".devflow-validation-lifecycle-jgf8r488/lifecycle-decisions.json",
+    "sha256": "a2e2e5c0d996e79de3c4a35b15122456930c80d597cbc2ccf8d8e6a0671d63dd",
+    "mutated": false
+  },
+  "input": {
+    "path": ".devflow-validation-lifecycle-jgf8r488/lifecycle-inputs.json",
+    "sha256": "ebd65c1064ac3c9cf3514ce92ab117e7726356346be4664a4d7bdf00d0fd2e25",
+    "changed": false
+  },
+  "reference": {
+    "path": "skills/ric-devflow/references/shared/agent-lifecycle.md",
+    "sha256": "3a6fa188a10dce91c86d6cf9f9788cc5ef891f3ead24022ce5cdac12a51fd146",
+    "read_line": 21,
+    "previous_sha256": "992c44f4c5b85566d92786920d483755646b8b238be0fb27eaefd93c109bf641",
+    "constraint": "查询不得用会改变生命周期的恢复、继续或重新派发代替；`not_found` 只表示当前接口未找到目标，不单独证明旧动作已结束或额度已释放。"
+  },
+  "scope": [
+    "LC-09",
+    "LC-13",
+    "LC-19",
+    "LC-21",
+    "LC-08"
+  ],
+  "conclusion": "五个场景的原决定不变；补充明确只读状态取证与已确认完成后的原报告重传之间的边界。",
+  "cases": [
+    {
+      "id": "LC-09",
+      "decision_changed": false,
+      "retained_actions": [
+        {
+          "tool": "inspect",
+          "parameters": {
+            "ids": [
+              "I1"
+            ]
+          }
+        }
+      ],
+      "reason": "原轨迹只查询 I1，随后保持未知调用停止；没有通过 followup、恢复或 spawn 来探测是否接受/启动。",
+      "not_found_handling": "保留原交接是否接受/启动未知，不据此声明旧动作结束或空出额度，不创建替代实例。",
+      "stop_condition": "获得原动作的权威结束/结果或明确安全恢复依据之前，不重派同一 Task。"
+    },
+    {
+      "id": "LC-13",
+      "decision_changed": false,
+      "retained_actions": [
+        {
+          "tool": "inspect",
+          "parameters": {
+            "ids": [
+              "I1"
+            ]
+          }
+        }
+      ],
+      "reason": "旧取消仅已请求而停止未知；原轨迹用 inspect 取证，不恢复 I1 来确认它是否已停止。",
+      "not_found_handling": "不把接口未找到当作取消完成；停止状态、旧写入窗口及检查点/副作用保全仍待确认。",
+      "stop_condition": "在旧生命周期和保全条件明确前，不为 B 创建替代者，也不重跑 A。"
+    },
+    {
+      "id": "LC-19",
+      "decision_changed": false,
+      "retained_actions": [],
+      "reason": "只有 spawn 且已知 quota=1 无释放/自动释放/恢复路径，原轨迹在首次派发前即停止；不能以 spawn 探测生命周期能力。",
+      "not_found_handling": "本场景没有查询接口，不虚构查询或 not_found 回执；没有结果不能被当作容量证据。",
+      "stop_condition": "必须先确认可持续串行推进的实际能力；只出现恢复工具名称本身不足以证明跨角色容量可推进。"
+    },
+    {
+      "id": "LC-21",
+      "decision_changed": false,
+      "retained_actions": [
+        {
+          "tool": "inspect",
+          "parameters": {
+            "ids": [
+              "I1"
+            ]
+          }
+        }
+      ],
+      "reason": "原轨迹只查询停止与保全状态，不再次 interrupt 或用恢复动作充当查询；已知 interrupt 不释放打开线程。",
+      "not_found_handling": "不据此确认停止或释放，仍保留 I1 的占用证据及缺口。",
+      "stop_condition": "没有权威释放证据与安全释放路径，不创建下一角色，不删除历史。"
+    },
+    {
+      "id": "LC-08",
+      "decision_changed": false,
+      "retained_actions": [
+        {
+          "tool": "inspect",
+          "parameters": {
+            "ids": [
+              "R1"
+            ]
+          }
+        },
+        {
+          "tool": "followup",
+          "parameters": {
+            "id": "R1",
+            "task": "仅请求上一已发布报告的完整原始载荷和原 ID/SHA；不得重做审核、重写或猜测报告。"
+          }
+        }
+      ],
+      "reason": "输入明确 R1 为 completed-open，旧动作结束不是通过 followup 推断的。后续向已完成的原作者重传原报告是一个明确的结果获取请求，不是用会改变生命周期的动作探测未知执行状态。",
+      "lifecycle_distinction": "followup 可能唤醒实例，不能标记成只读状态查询；原结果已计 resume_count=1，且仍把线程计入 quota=1。",
+      "not_found_handling": "not_found 本身既不证明结束也不证明释放；它不抹去输入给定的旧完成事实。若无法再确认真实目标/可用交接能力，则停在缺口处，不能把恢复当查询试一遍。",
+      "stop_condition": "完整原载荷未实际取回并稳定保全前，不 close、不 spawn；原字节不可取回就如实报告，不通过重做审核补造旧结果。"
+    }
+  ],
+  "forbidden_reads_performed": false,
+  "files_written": [
+    ".devflow-validation-lifecycle-jgf8r488/lifecycle-decision-supplement.json"
+  ]
+}

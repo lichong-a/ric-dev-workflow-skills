@@ -4749,3 +4749,143 @@ A/B/C结果始终绑定runtime1 `58072f014063919e5cb62cf9c7a6213986488826ac6f1e7
 未运行三平台用户安装、原生 DevFlow 加载/调用、真实供应商 API 和端到端性能 A/B；当前会话没有选择这些原生 DevFlow 角色的指定调用入口，维护者评测代理不能替代它们，也未改用户安装来补做实机实验。GUIDE 第三块旧 Git 机制回归未重跑：本轮未改变 Git 命令/保全机制，相关 v1/v2 与目录契约已由上述检查覆盖。
 
 本轮未提交、推送或修改用户配置；既有未跟踪 .codex/config.toml 的 SHA-256 保持 12de89de408b658600d73783b8fff15b138a7e89e3a57a1a5d4d105938ff6e82。临时评测产物在完整输入与作者载荷保全后精确清理；旧安装中的 Planner 定义由新运行规则保留且不调用，本轮没有操作那些安装目录。
+
+
+## 2026-10-06 — 逻辑职责、低配额与受控实例替换
+
+本轮按对 ffe2e7f 的评审修正生命周期，保留主会话 Planner、五 Skill/九份原生定义、模型继承与思考适配算法。固定的是三种逻辑职责；默认复用、必要时受控替换，取消按作用范围处理，独立 READY 波次最多一个未回收临时实例。打开实例数和动作完成分开计数，创建与恢复前核对容量。
+
+此前 306753 字节完整保留；旧决定级结果不改成新策略的通过证据。本轮未提交候选只绑定实际集合摘要，不把 fixture SHA 或原基线当作产品 tested_sha。
+
+```json
+{
+  "record": "MAINT-20261006-LIFECYCLE-REVISION",
+  "source_baseline": "ffe2e7ff6897539614bdddd055fe676865144b59",
+  "candidate_sha256": "25dc6b43b882e456fb65b8f02766f8127da4c5ac7f6e507a430e64e6307fc65c",
+  "product_tested_sha": null,
+  "source_checks": "PASS",
+  "decision_cases": 22,
+  "decision_supplement_cases": 5,
+  "codex_cli": "verified_selected_slices_with_preserved_failures",
+  "three_platform_acceptance": "OPEN",
+  "previous_report_bytes": 306753,
+  "previous_report_sha256": "562bf38174de0c12db37dd3c2ad3055b9c995eca911346380b380bc6045fafe4",
+  "static_pre_append_counts": {
+    "yaml": 13,
+    "toml": 4,
+    "frontmatter": 14,
+    "markdown": 90,
+    "current_links": 271,
+    "historical_links": 3
+  }
+}
+```
+
+### 源码、隔离与独立决定检查
+
+- 实际执行验证指南第一、第二个完整 Bash 块；命令使用 `PYTHONUTF8=1 PYTHONIOENCODING=utf-8 python3 -B`，bundled 验证器路径仅当前命令指定。五 Skill、13 YAML、4 TOML、14 frontmatter、90 Markdown、相对链接、必要闭包与三个子角色集合通过；16 份 v1 模板字节保持，4 份 Compact 模板兼容。
+- 隔离复制/负控 14 组、16 个子进程通过：五 Skill 复制 100 文件，入口复制 77 文件；重复/冲突不产生额外覆盖，负控错误均被拒绝，自建检查目录已清理。检查器后来只作报告保全和实机说明更新，最终源码检查再次通过。
+- 独立前向决定评测 22 例，按真实可观察的模拟工具目标、关闭对象、创建数、取消范围、预算和停止条件核对通过；追加 5 例窄复核，原结果未改写。这些模拟本身真实角色/供应商调用和业务写入均为 0。
+- 独立只读复核发现并关闭：WF-33 旧阻塞判定、临时实例跨角色累计上限歧义、“占额”被误等同于“余量不足”。从实机恢复观察再补“resume 不是只读查询，not_found 不证明结束/释放”，并经窄复核。没有残留的可证实源码问题；此维护复核不作为业务 Gate。
+
+### Codex CLI 实际验证
+
+CLI 实际版本为 0.160.0，使用隔离 fixture、实际 agent_type 和宿主暴露的继续/关闭接口。沿用各次当前配置，不通过 model 参数换模型；实际记录出现 gpt-6-astra/max/v2 与 zcode/GLM-5.3/max/v1，结果分别绑定，不能跨会话假设同一工具集或作性能对比。配置额度只使用该进程的 `-c agents.max_concurrent_threads_per_session=1` 或 `=2`；无全局配额修改。
+
+| 切片 | 实际结果与边界 |
+|---|---|
+| 三种原生角色与同 ID 续作 | quota=2 测试会话及其后续恢复中，Tester、Implementer、Reviewer 均实际以原生角色调用，各自第二动作使用同一 ID；以工具事件、指定接收 ID 和已完成结果核对。均为受保护 fixture 的独立只读动作，不是完整业务交付。 |
+| 配额 2 的占用 | 两个已完成实例保留后，第三个角色创建实际返回 `agent thread limit reached`；该失败原样保留，没有写成成功。 |
+| 配额 1，同进程回收轮换 | 完成并保全 Tester，实际 close 该 ID 后，Implementer 在同一进程、未提高额度下创建并完成；最后关闭自己的完成实例。连续 create/complete/close/create 的真实回执符合规则。没有独立配额计数 API，释放依据是关闭成功和后续准入。 |
+| 无关实例占用额度 | 显式创建另一测试任务 E 作为真实环境占用（不冒充 DevFlow 角色），配额 2 下只关闭 W 的完成 Tester 后创建 Implementer，最后关闭 W 的 Implementer。实际关闭目标不包含 E，E 在 W 结束时保留。 |
+| 两个独立 READY Task | 两个原生 Implementer 使用不同 detached worktree，真实接受一次有限扩容，峰值已知子实例 2、临时实例 1。完成后只关闭临时 B，默认 A 保留；工作区无变更。外层采集的原生轮次事件显示约 98 秒重叠（秒级时间边界），没有基线或实测加速结论。 |
+| 初次 quota=1 运行 | 420 秒截止后 exit -15；Reviewer 首动作完成、同 ID 续作请求已发出，但整段未完成。保留 TIMEOUT，不能把它计为全流程通过。 |
+| 跨进程恢复尝试 | 原父会话恢复后旧 ID 查询 not_found，resume 产生 pending_init 资源后关闭；之后 Reviewer 调用/续作确实成功。但进程重启改变资源登记，不能把该段作者的总体 PASS 单独当作原稀缺配额回收证明；以另一同进程轮换切片验证相应行为。 |
+
+### 未运行、环境与配置保全
+
+宿主只提供创建而完全无恢复、真实用户取消 A 再授权 B、完整的结果丢失/未知状态恢复链，以及工作流四实例上限的实机拒绝分支均未完成原生覆盖；对应决定级检查不能替代它们。Codex 桌面、Claude Code、ZCode 未运行，三平台整体验收保持 OPEN。既有 Git 机制第三块和端到端性能 A/B 未重跑，不声称性能提升或生产 Gate 通过。
+
+CLI 产生过 MCP 启动/认证/keyring 及 legacy_notify 告警，保留分类而不把它们无证据地归因为超时根因。native 并行辅助 Shell 比较、旋转检查的转义展示与一个 blob 文本转录存在采集错误；原作者文字保留，真实字节/Git 对象与修正检查独立记录，未改 fixture 或降低正确预期。维护者 assessment 收集代码曾因括号 SyntaxError exit 1，修正收集器后完成，不重跑成功的角色动作。
+
+配置保全检查发现 CLI 自动为四个自建 fixture 写入 trusted 项目条目；只精确清理这四个已确认本轮条目，保留其他当前字节。一次进程级 trust 覆盖预检仍自动产生一条记录，故该方法未被记为可防止持久写入；再次精确清理，并验证恢复到该预检前的完整配置字节，停止进一步启动预检。用户配置在去除这些条目后仍不匹配本轮最初摘要，其余差异来源未确认，已请求澄清，未整份回滚或覆盖当前非测试设置。不能宣称用户配置与开始完全一致。仓库原有未跟踪 .codex/config.toml 保持原 SHA-256，未纳入本轮源码改动。
+
+### 可恢复证据
+
+原始 CLI 日志只作受控临时采集，不提交隐藏推理、加密 Prompt、凭据、无关记忆或完整机器路径。附件标明规范化方式，原作者测试报告与维护者判定分离；同一父会话的两次调用按 turn ordinal 区分，线程历史只存一次。四个精确 fixture 快照保存在一个去重 Git bundle，实际克隆恢复并逐文件比较了 105/105/106/105 个文件；均通过，大小 211575 字节。fixture SHA 仅为测试素材身份。
+
+- [维护者判定与验证边界](evidence/lifecycle-20261006/assessment.json)
+- [22 个原始决定场景](evidence/lifecycle-20261006/decision-inputs.json)
+- [独立决定结果原载荷](evidence/lifecycle-20261006/decision-results.json)
+- [五例补充复核](evidence/lifecycle-20261006/decision-supplement.json)
+- [原生事件、精确自有会话工具记录与复跑输入](evidence/lifecycle-20261006/native-observations.json)
+- [四个 fixture 的可恢复 Git bundle](evidence/lifecycle-20261006/native-fixtures.bundle)
+
+```json
+{
+  "artifact_hashes": {
+    "assessment.json": {
+      "bytes": 8177,
+      "sha256": "57850bba28a59ced4843941734d55fe8c65fb7ca4e48c9a6535b9b67d726cd6a"
+    },
+    "decision-inputs.json": {
+      "bytes": 24528,
+      "sha256": "ebd65c1064ac3c9cf3514ce92ab117e7726356346be4664a4d7bdf00d0fd2e25"
+    },
+    "decision-results.json": {
+      "bytes": 32314,
+      "sha256": "a2e2e5c0d996e79de3c4a35b15122456930c80d597cbc2ccf8d8e6a0671d63dd"
+    },
+    "decision-supplement.json": {
+      "bytes": 5276,
+      "sha256": "5520821cc4d51dec2db379ae99075e68e95902d9154b82dd0b452b187379cd42"
+    },
+    "native-fixtures.bundle": {
+      "bytes": 211575,
+      "sha256": "78a8d71033659c57f61d48b608fcae06dd1fe00189ebfb6195c5763fb5b32c52"
+    },
+    "native-observations.json": {
+      "bytes": 140878,
+      "sha256": "bdec562a97099eaca3419193135192c3964133fbc9583a3559b45e2ff7a26598"
+    }
+  },
+  "fixture_archive_refs": [
+    {
+      "fixture": "quota1-initial",
+      "bundle": "docs/evidence/lifecycle-20261006/native-fixtures.bundle",
+      "fixture_sha": "d99f2821750c9ac789ec9caa90bf4995205f213d",
+      "files_restored_and_byte_compared": 105,
+      "restore_exit": 0,
+      "archive_ref": "refs/heads/agent/fixture-quota1-initial"
+    },
+    {
+      "fixture": "quota2-and-rotation",
+      "bundle": "docs/evidence/lifecycle-20261006/native-fixtures.bundle",
+      "fixture_sha": "d1afe6c821dcfba11c75eda19360e373545dcfb4",
+      "files_restored_and_byte_compared": 105,
+      "restore_exit": 0,
+      "archive_ref": "refs/heads/agent/fixture-quota2-and-rotation"
+    },
+    {
+      "fixture": "parallel",
+      "bundle": "docs/evidence/lifecycle-20261006/native-fixtures.bundle",
+      "fixture_sha": "79f839ea81c12e4b4cd5c3d71e9557e84260d039",
+      "files_restored_and_byte_compared": 106,
+      "restore_exit": 0,
+      "archive_ref": "refs/heads/agent/fixture-parallel"
+    },
+    {
+      "fixture": "occupied",
+      "bundle": "docs/evidence/lifecycle-20261006/native-fixtures.bundle",
+      "fixture_sha": "915c0ed1c4c8bf759d792a50aefcc1072465880e",
+      "files_restored_and_byte_compared": 105,
+      "restore_exit": 0,
+      "archive_ref": "refs/heads/agent/fixture-occupied"
+    }
+  ]
+}
+```
+
+报告追加后再次执行静态检查 exit 0：当前链接 277、历史链接 3，集合摘要与报告前一致；附件 JSON 可解析，旧报告 306753 字节前缀保持。
+
+最终清理：精确移除本轮自建临时树中的 1502 个文件，保全的四份 fixture 已先从持久 bundle 恢复并逐字核验。临时 fixture 信任项剩余 0；仓库 .codex/config.toml 字节未变。用户级配置清理后摘要为 f42c5bd616466d6906108bf94b154e75e7c37c651a9b7d031808a5fe5e07026b，仍与最初摘要不同，其余差异来源未确认，保留当前设置。本轮源码未提交、未推送。

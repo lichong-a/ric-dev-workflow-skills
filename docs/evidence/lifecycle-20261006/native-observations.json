@@ -1,0 +1,2302 @@
+{
+  "kind": "actual_codex_cli_events_and_exact_owned_session_tool_records",
+  "cli_version": "0.160.0",
+  "normalization": "Repository/user-home/Codex-home path prefixes replaced with labels. Hidden reasoning, encrypted handoff bodies, credentials, unrelated memory output and full raw stderr are omitted. Native actor report strings are normalized but not corrected; assessor conclusions are separate. Parent q2 and recovery share one transcript and are separated by turn ordinal; per-thread history is stored once.",
+  "cases": {
+    "native-preflight": {
+      "run": {
+        "argv": [
+          "codex",
+          "--no-daemon",
+          "-c",
+          "agents.max_concurrent_threads_per_session=1",
+          "exec",
+          "--json",
+          "-C",
+          "native-fixture",
+          "-"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "seconds": 62.809
+      },
+      "parent_thread": "01a10fdf-6ff0-7c70-8d80-b4e55090b1c8",
+      "parent_turn_ordinal": 0,
+      "collab_events": [],
+      "turn_completed": true,
+      "last_report": "仅依据本轮可见的原生工具 schema 和启动上下文：\n\n| 能力 | 实际工具名与参数键 | 可见状态 |\n|---|---|---|\n| 选择原生角色并创建子代理 | `collaboration.spawn_agent`：必填 `task_name`、`message`；可选 `agent_type`、`fork_turns`、`model`、`reasoning_effort` | 通过 `agent_type` 选择角色 |\n| 按 ID 继续已有子代理 | `collaboration.followup_task`：`target`、`message` | `target` 接受子代理 ID 或规范任务名；空闲时触发新一轮，运行时投递任务 |\n| 关闭／卸载已完成子代理以释放配额 | **未暴露对应工具** | 存在 `collaboration.interrupt_agent`，参数为 `target`；它仅中断当前轮次，代理仍保留，不能据此声称已关闭或释放配额 |\n| 检查生命周期／结果 | `collaboration.list_agents`：可选 `path_prefix`；`collaboration.wait_agent`：可选 `timeout_ms` | 前者列出存活代理；后者等待消息或最终状态通知，返回通知摘要。子代理消息及最终答案自动投递给父代理；未暴露按 ID 拉取完整结果的独立工具 |\n\n实际暴露的自定义角色 ID：\n\n- `ric_devflow_reviewer`\n- `ric_devflow_tester`\n- `ric_devflow_implementer`\n\n辅助通信工具为 `collaboration.send_message`，参数键是 `target`、`message`；它不会触发新一轮执行。\n\n**配额：**启动上下文明示 **2 个并发槽位，包含主代理**。因此主代理活跃时最多另有 1 个子代理同时活跃；未提供独立的子代理总量／驻留配额配置。\n\n本轮未调用工具、未创建子代理、未读取或修改文件；没有执行运行时子代理测试。",
+      "raw_stdout_sha256": "45531b51d43ace6c0f253be7de007726ebe22b18477e9b0ba953e7c7eff45e2c",
+      "prompt_sha256": null
+    },
+    "native-quota1": {
+      "run": {
+        "argv": [
+          "codex",
+          "--no-daemon",
+          "-c",
+          "agents.max_concurrent_threads_per_session=1",
+          "exec",
+          "--json",
+          "-C",
+          "native-fixture",
+          "-"
+        ],
+        "exit_code": -15,
+        "timed_out": true,
+        "seconds": 420.045,
+        "fixture_sha": "d99f2821750c9ac789ec9caa90bf4995205f213d"
+      },
+      "parent_thread": "01a10fe2-5a76-70c2-80d7-c1ba17049082",
+      "parent_turn_ordinal": 0,
+      "collab_events": [
+        {
+          "event": "item.started",
+          "item_id": "item_9",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_9",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_11",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_11",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_13",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_13",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [],
+          "states": {}
+        }
+      ],
+      "turn_completed": false,
+      "last_report": "Reviewer 首次审核已完成并返回 `APPROVE`，发现数为 0；完整结果已保存在父会话。`list_agents` 已确认它完成，我已通过 `followup_task` 将独立的 `REVIEW-LINES` 动作交给同一个 `/root/ric_reviewer`。\n",
+      "raw_stdout_sha256": "c0412e3b9db8c73868b4c464ed3bfb9c585d3acf6c0ecf7e0b34ef7fb26e7591",
+      "prompt_sha256": "c478fa5b4981ab7f4909fc355c32df3b7eca687e33c2e2fe8401ddf79b8d20ae"
+    },
+    "native-quota2": {
+      "run": {
+        "argv": [
+          "codex",
+          "--no-daemon",
+          "-c",
+          "agents.max_concurrent_threads_per_session=2",
+          "exec",
+          "--json",
+          "-C",
+          "native-fixture-q2",
+          "-"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "seconds": 224.975,
+        "fixture_sha": "d1afe6c821dcfba11c75eda19360e373545dcfb4"
+      },
+      "parent_thread": "01a10fea-c4cf-7af1-aeab-9d30f3a3bf20",
+      "parent_turn_ordinal": 0,
+      "collab_events": [
+        {
+          "event": "item.started",
+          "item_id": "item_7",
+          "tool": "spawn_agent",
+          "status": "in_progress",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_7",
+          "tool": "spawn_agent",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10feb-b35a-7db0-a236-02476683d665"
+          ],
+          "states": {
+            "01a10feb-b35a-7db0-a236-02476683d665": "pending_init"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_9",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10feb-b35a-7db0-a236-02476683d665"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_9",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10feb-b35a-7db0-a236-02476683d665"
+          ],
+          "states": {
+            "01a10feb-b35a-7db0-a236-02476683d665": "completed"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_11",
+          "tool": "send_input",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10feb-b35a-7db0-a236-02476683d665"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_11",
+          "tool": "send_input",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10feb-b35a-7db0-a236-02476683d665"
+          ],
+          "states": {
+            "01a10feb-b35a-7db0-a236-02476683d665": "completed"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_12",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10feb-b35a-7db0-a236-02476683d665"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_12",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10feb-b35a-7db0-a236-02476683d665"
+          ],
+          "states": {
+            "01a10feb-b35a-7db0-a236-02476683d665": "completed"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_14",
+          "tool": "spawn_agent",
+          "status": "in_progress",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_14",
+          "tool": "spawn_agent",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10fec-a88c-7823-902b-1a8f8daef84b"
+          ],
+          "states": {
+            "01a10fec-a88c-7823-902b-1a8f8daef84b": "pending_init"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_15",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10fec-a88c-7823-902b-1a8f8daef84b"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_15",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10fec-a88c-7823-902b-1a8f8daef84b"
+          ],
+          "states": {
+            "01a10fec-a88c-7823-902b-1a8f8daef84b": "completed"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_16",
+          "tool": "send_input",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10fec-a88c-7823-902b-1a8f8daef84b"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_16",
+          "tool": "send_input",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10fec-a88c-7823-902b-1a8f8daef84b"
+          ],
+          "states": {
+            "01a10fec-a88c-7823-902b-1a8f8daef84b": "completed"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_17",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10fec-a88c-7823-902b-1a8f8daef84b"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_17",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10fec-a88c-7823-902b-1a8f8daef84b"
+          ],
+          "states": {
+            "01a10fec-a88c-7823-902b-1a8f8daef84b": "completed"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_19",
+          "tool": "spawn_agent",
+          "status": "in_progress",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_19",
+          "tool": "spawn_agent",
+          "status": "failed",
+          "receiver_ids": [],
+          "states": {}
+        }
+      ],
+      "turn_completed": true,
+      "last_report": "{\n  \"fixture_sha\": \"d1afe6c821dcfba11c75eda19360e373545dcfb4\",\n  \"native_schema_used\": {\n    \"selector_field\": \"agent_type\",\n    \"fork_context_field\": \"fork_context\",\n    \"fork_context_value\": false,\n    \"followup_interface\": \"multi_agent_v1__send_input\",\n    \"wait_interface\": \"multi_agent_v1__wait_agent\"\n  },\n  \"counts\": {\n    \"role_creations\": 2,\n    \"same_id_followups\": 2,\n    \"unique_actions_completed\": 4,\n    \"reviewer_creations\": 0,\n    \"close_or_interrupt_operations\": 0\n  },\n  \"actions\": [\n    {\n      \"slice\": \"TEST-BASELINE-EXACT-BYTES\",\n      \"role\": \"ric_devflow_tester\",\n      \"agent_id\": \"01a10feb-b35a-7db0-a236-02476683d665\",\n      \"nickname\": \"Dewey\",\n      \"command\": \"python3 -c 'import subprocess,sys; sha=\\\"d1afe6c821dcfba11c75eda19360e373545dcfb4\\\"; expected=b\\\"lifecycle-fixture\\\\n\\\"; actual=subprocess.check_output([\\\"git\\\",\\\"show\\\",f\\\"{sha}:sample.txt\\\"]); print(f\\\"actual={actual!r}\\\"); sys.exit(0 if actual == expected else 1)'\",\n      \"exit_code\": 0,\n      \"result\": \"actual=b'lifecycle-fixture\\\\n'\",\n      \"file_changes\": \"none\",\n      \"status\": \"PASS\",\n      \"retained\": true\n    },\n    {\n      \"slice\": \"TEST-BASELINE-LINE-COUNT\",\n      \"role\": \"ric_devflow_tester\",\n      \"agent_id\": \"01a10feb-b35a-7db0-a236-02476683d665\",\n      \"followup_submission_id\": \"01a10fec-3935-7a40-82a4-b5519e2e07d2\",\n      \"command\": \"python3 -c 'import subprocess,sys; sha=\\\"d1afe6c821dcfba11c75eda19360e373545dcfb4\\\"; data=subprocess.check_output([\\\"git\\\",\\\"show\\\",f\\\"{sha}:sample.txt\\\"]); print(f\\\"line_count={data.count(chr(10).encode())}\\\"); sys.exit(0 if data.count(chr(10).encode()) == 1 else 1)'\",\n      \"exit_code\": 0,\n      \"result\": \"line_count=1\",\n      \"file_changes\": \"none\",\n      \"status\": \"PASS\",\n      \"retained\": true\n    },\n    {\n      \"slice\": \"IMP-INSPECT\",\n      \"role\": \"ric_devflow_implementer\",\n      \"agent_id\": \"01a10fec-a88c-7823-902b-1a8f8daef84b\",\n      \"nickname\": \"James\",\n      \"command\": \"python3 -c 'import subprocess,sys; sha=\\\"d1afe6c821dcfba11c75eda19360e373545dcfb4\\\"; expected=b\\\"lifecycle-fixture\\\\n\\\"; actual=subprocess.check_output([\\\"git\\\",\\\"show\\\",f\\\"{sha}:sample.txt\\\"]); print(f\\\"actual={actual!r} requirement_satisfied={actual == expected} edits_necessary={actual != expected}\\\"); sys.exit(0 if actual == expected else 1)'\",\n      \"exit_code\": 0,\n      \"result\": \"actual=b'lifecycle-fixture\\\\n'; requirement_satisfied=true; edits_necessary=false\",\n      \"file_changes\": \"none\",\n      \"status\": \"PASS\",\n      \"retained\": true\n    },\n    {\n      \"slice\": \"IMP-INSPECT-SECOND\",\n      \"role\": \"ric_devflow_implementer\",\n      \"agent_id\": \"01a10fec-a88c-7823-902b-1a8f8daef84b\",\n      \"followup_submission_id\": \"01a10fed-163d-73a1-ba2a-182aab8cd7d7\",\n      \"command\": \"python3 -c 'import subprocess,sys; sha=\\\"d1afe6c821dcfba11c75eda19360e373545dcfb4\\\"; data=subprocess.check_output([\\\"git\\\",\\\"show\\\",f\\\"{sha}:sample.txt\\\"]); ok=data.endswith(b\\\"\\\\n\\\") and b\\\"\\\\r\\\" not in data; print(f\\\"ends_with_lf={data.endswith(chr(10).encode())} contains_cr={chr(13).encode() in data}\\\"); sys.exit(0 if ok else 1)'\",\n      \"exit_code\": 0,\n      \"result\": \"ends_with_lf=true; contains_cr=false\",\n      \"file_changes\": \"none\",\n      \"status\": \"PASS\",\n      \"retained\": true\n    }\n  ],\n  \"lifecycle_and_capacity\": {\n    \"quota\": 2,\n    \"retained_completed_instances\": [\n      \"01a10feb-b35a-7db0-a236-02476683d665\",\n      \"01a10fec-a88c-7823-902b-1a8f8daef84b\"\n    ],\n    \"same_thread_followups_observed\": true,\n    \"automatic_release_evidence\": \"none observed\",\n    \"close_interface_observed\": \"a close tool exists, but it was not invoked\",\n    \"reviewer_creation_attempt\": {\n      \"role\": \"ric_devflow_reviewer\",\n      \"agent_type\": \"ric_devflow_reviewer\",\n      \"fork_context\": false,\n      \"real_rejection\": \"collab spawn failed: agent thread limit reached\",\n      \"status\": \"BLOCKED\"\n    },\n    \"final_workspace_observation\": {\n      \"git_status\": \"## main\",\n      \"head\": \"d1afe6c821dcfba11c75eda19360e373545dcfb4\",\n      \"sample_txt_bytes\": \"b'lifecycle-fixture\\\\n'\",\n      \"changes\": \"none\"\n    }\n  },\n  \"slice_status\": {\n    \"tester_exact_bytes\": \"PASS\",\n    \"tester_same_id_line_count\": \"PASS\",\n    \"implementer_imp_inspect\": \"PASS\",\n    \"implementer_same_id_imp_inspect_second\": \"PASS\",\n    \"baseline_review\": \"BLOCKED\"\n  },\n  \"overall\": \"BLOCKED\",\n  \"stopped_after_requested_actions\": true\n}",
+      "raw_stdout_sha256": "43f4b016c54007d06cb4b14a323b14e1d8b6588b01f186d15565f2c40f7f9c95",
+      "prompt_sha256": "eac2654f2c8c84d85656975f9e70efe66f0fc02445dcdfbabf1088d1b78e3b68"
+    },
+    "native-quota2-recovery": {
+      "run": {
+        "argv": [
+          "codex",
+          "--no-daemon",
+          "-c",
+          "agents.max_concurrent_threads_per_session=2",
+          "-C",
+          "native-fixture-q2",
+          "exec",
+          "resume",
+          "--json",
+          "01a10fea-c4cf-7af1-aeab-9d30f3a3bf20",
+          "-"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "seconds": 252.718,
+        "fixture_sha": "d1afe6c821dcfba11c75eda19360e373545dcfb4"
+      },
+      "parent_thread": "01a10fea-c4cf-7af1-aeab-9d30f3a3bf20",
+      "parent_turn_ordinal": 1,
+      "collab_events": [
+        {
+          "event": "item.started",
+          "item_id": "item_3",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10feb-b35a-7db0-a236-02476683d665",
+            "01a10fec-a88c-7823-902b-1a8f8daef84b"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_3",
+          "tool": "wait",
+          "status": "failed",
+          "receiver_ids": [
+            "01a10feb-b35a-7db0-a236-02476683d665",
+            "01a10fec-a88c-7823-902b-1a8f8daef84b"
+          ],
+          "states": {
+            "01a10feb-b35a-7db0-a236-02476683d665": "not_found",
+            "01a10fec-a88c-7823-902b-1a8f8daef84b": "not_found"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_4",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10feb-b35a-7db0-a236-02476683d665"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_4",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10feb-b35a-7db0-a236-02476683d665"
+          ],
+          "states": {
+            "01a10feb-b35a-7db0-a236-02476683d665": "pending_init"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_6",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10feb-b35a-7db0-a236-02476683d665"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_6",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_7",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10feb-b35a-7db0-a236-02476683d665"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_7",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_8",
+          "tool": "close_agent",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10feb-b35a-7db0-a236-02476683d665"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_8",
+          "tool": "close_agent",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10feb-b35a-7db0-a236-02476683d665"
+          ],
+          "states": {
+            "01a10feb-b35a-7db0-a236-02476683d665": "pending_init"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_9",
+          "tool": "spawn_agent",
+          "status": "in_progress",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_9",
+          "tool": "spawn_agent",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10ff4-1240-7a72-9f0a-1e43d05478f0"
+          ],
+          "states": {
+            "01a10ff4-1240-7a72-9f0a-1e43d05478f0": "pending_init"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_10",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10ff4-1240-7a72-9f0a-1e43d05478f0"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_10",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10ff4-1240-7a72-9f0a-1e43d05478f0"
+          ],
+          "states": {
+            "01a10ff4-1240-7a72-9f0a-1e43d05478f0": "completed"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_11",
+          "tool": "send_input",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10ff4-1240-7a72-9f0a-1e43d05478f0"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_11",
+          "tool": "send_input",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10ff4-1240-7a72-9f0a-1e43d05478f0"
+          ],
+          "states": {
+            "01a10ff4-1240-7a72-9f0a-1e43d05478f0": "completed"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_12",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10ff4-1240-7a72-9f0a-1e43d05478f0"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_12",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10ff4-1240-7a72-9f0a-1e43d05478f0"
+          ],
+          "states": {
+            "01a10ff4-1240-7a72-9f0a-1e43d05478f0": "completed"
+          }
+        }
+      ],
+      "turn_completed": true,
+      "last_report": "{\n  \"session_continuity\": {\n    \"fixture_sha\": \"d1afe6c821dcfba11c75eda19360e373545dcfb4\",\n    \"fixture_verified_before_actions\": {\n      \"git_status\": \"## main\",\n      \"sample_txt\": \"b'lifecycle-fixture\\\\n'\"\n    },\n    \"prior_tester_id\": \"01a10feb-b35a-7db0-a236-02476683d665\",\n    \"prior_tester_receipts_retained\": 2,\n    \"prior_implementer_id\": \"01a10fec-a88c-7823-902b-1a8f8daef84b\",\n    \"prior_implementer_receipts_retained\": 2,\n    \"implementer_untouched\": true,\n    \"initial_reviewer_rejection_preserved\": \"collab spawn failed: agent thread limit reached\"\n  },\n  \"current_interfaces\": {\n    \"schema_inspection\": \"multi_agent_v1 tool discovery exposed spawn_agent, send_input, resume_agent, close_agent, wait_agent\",\n    \"state_lookup\": \"multi_agent_v1__wait_agent\",\n    \"resume_lookup\": \"multi_agent_v1__resume_agent\",\n    \"release_interface\": \"multi_agent_v1__close_agent\",\n    \"followup_interface\": \"multi_agent_v1__send_input\",\n    \"selector_field\": \"agent_type\",\n    \"fork_context_field\": \"fork_context\",\n    \"fork_context_value\": false\n  },\n  \"quota_recovery\": {\n    \"rounds_authorized\": 1,\n    \"close_attempts\": 1,\n    \"tester_initial_lookup\": {\n      \"id\": \"01a10feb-b35a-7db0-a236-02476683d665\",\n      \"wait_agent_result\": \"not_found after parent process resume\",\n      \"interpretation\": \"thread resource was no longer enumerable as the prior completed thread\"\n    },\n    \"resume_probe\": {\n      \"interface\": \"multi_agent_v1__resume_agent\",\n      \"id\": \"01a10feb-b35a-7db0-a236-02476683d665\",\n      \"result\": \"pending_init\",\n      \"subsequent_wait\": \"timed_out with no completed result\",\n      \"interpretation\": \"created a new live resource handle rather than recovering the prior completed payload\"\n    },\n    \"close\": {\n      \"id\": \"01a10feb-b35a-7db0-a236-02476683d665\",\n      \"interface\": \"multi_agent_v1__close_agent\",\n      \"previous_status\": \"pending_init\",\n      \"host_notification\": \"shutdown\",\n      \"result\": \"PASS\"\n    },\n    \"other_closed\": \"none\",\n    \"automatic_release_evidence\": \"none observed\",\n    \"quota_recovered_observation\": \"reviewer spawn was subsequently accepted\"\n  },\n  \"reviewer\": {\n    \"pending_action\": \"BASELINE_REVIEW\",\n    \"role\": \"ric_devflow_reviewer\",\n    \"agent_id\": \"01a10ff4-1240-7a72-9f0a-1e43d05478f0\",\n    \"nickname\": \"Helmholtz\",\n    \"executed_exactly_once\": true,\n    \"command\": \"python3 -c 'import subprocess,sys; sha=\\\"d1afe6c821dcfba11c75eda19360e373545dcfb4\\\"; expected=b\\\"lifecycle-fixture\\\\n\\\"; actual=subprocess.check_output([\\\"git\\\",\\\"show\\\",f\\\"{sha}:sample.txt\\\"]); print(f\\\"actual={actual!r} matches={actual == expected}\\\"); sys.exit(0 if actual == expected else 1)'\",\n    \"exit_code\": 0,\n    \"actual_bytes\": \"b'lifecycle-fixture\\\\n'\",\n    \"matches\": true,\n    \"verdict\": \"APPROVE\",\n    \"findings\": [],\n    \"file_changes\": \"none\",\n    \"status\": \"PASS\",\n    \"retained\": true\n  },\n  \"reviewer_followup\": {\n    \"action\": \"REVIEW-NEWLINE\",\n    \"same_id\": \"01a10ff4-1240-7a72-9f0a-1e43d05478f0\",\n    \"submission_id\": \"01a10ff5-6cdb-7ab0-a381-507111044961\",\n    \"command\": \"python3 -c 'import subprocess,sys; sha=\\\"d1afe6c821dcfba11c75eda19360e373545dcfb4\\\"; data=subprocess.check_output([\\\"git\\\",\\\"show\\\",f\\\"{sha}:sample.txt\\\"]); ok=data.endswith(b\\\"\\\\n\\\"); print(f\\\"ends_with_lf={data.endswith(chr(10).encode())}\\\"); sys.exit(0 if ok else 1)'\",\n    \"exit_code\": 0,\n    \"printed_result\": \"ends_with_lf=True\",\n    \"verdict\": \"APPROVE\",\n    \"findings\": [],\n    \"file_changes\": \"none\",\n    \"status\": \"PASS\",\n    \"retained\": true\n  },\n  \"final_fixture_verification\": {\n    \"git_status\": \"## main\",\n    \"head\": \"d1afe6c821dcfba11c75eda19360e373545dcfb4\",\n    \"sample_txt\": \"b'lifecycle-fixture\\\\n'\",\n    \"changes\": \"none\"\n  },\n  \"slice_status\": {\n    \"close_release\": \"PASS\",\n    \"quota_recovery\": \"PASS\",\n    \"reviewer_invocation\": \"PASS\",\n    \"reviewer_same_id_continuation\": \"PASS\"\n  },\n  \"limits\": {\n    \"further_retry\": \"not_run; not authorized\",\n    \"other_scenarios\": \"not_run; not authorized\"\n  },\n  \"overall\": \"PASS\"\n}",
+      "raw_stdout_sha256": "fdbb91fe11123489001cfce7cd36e8a7f75e78e99ab4c37d8ef55e5cf810d801",
+      "prompt_sha256": "92584d6c32efaf58237869e886d7096f4412cff150caefa3160951ba8c2b9882"
+    },
+    "native-parallel": {
+      "run": {
+        "argv": [
+          "codex",
+          "--no-daemon",
+          "-c",
+          "agents.max_concurrent_threads_per_session=2",
+          "exec",
+          "--json",
+          "-C",
+          "native-fixture-parallel",
+          "-"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "seconds": 358.671,
+        "fixture_sha": "79f839ea81c12e4b4cd5c3d71e9557e84260d039"
+      },
+      "parent_thread": "01a10ff4-0ede-7dd0-a005-d01215f83350",
+      "parent_turn_ordinal": 0,
+      "collab_events": [
+        {
+          "event": "item.started",
+          "item_id": "item_12",
+          "tool": "spawn_agent",
+          "status": "in_progress",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_12",
+          "tool": "spawn_agent",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10ff5-6fe7-7121-9e17-76f71537c3f4"
+          ],
+          "states": {
+            "01a10ff5-6fe7-7121-9e17-76f71537c3f4": "pending_init"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_13",
+          "tool": "spawn_agent",
+          "status": "in_progress",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_13",
+          "tool": "spawn_agent",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10ff5-7d23-74b1-af2f-dd062d7e729d"
+          ],
+          "states": {
+            "01a10ff5-7d23-74b1-af2f-dd062d7e729d": "pending_init"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_16",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10ff5-6fe7-7121-9e17-76f71537c3f4",
+            "01a10ff5-7d23-74b1-af2f-dd062d7e729d"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_16",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10ff5-7d23-74b1-af2f-dd062d7e729d"
+          ],
+          "states": {
+            "01a10ff5-7d23-74b1-af2f-dd062d7e729d": "completed"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_18",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10ff5-6fe7-7121-9e17-76f71537c3f4"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_18",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10ff5-6fe7-7121-9e17-76f71537c3f4"
+          ],
+          "states": {
+            "01a10ff5-6fe7-7121-9e17-76f71537c3f4": "completed"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_20",
+          "tool": "close_agent",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10ff5-7d23-74b1-af2f-dd062d7e729d"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_20",
+          "tool": "close_agent",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10ff5-7d23-74b1-af2f-dd062d7e729d"
+          ],
+          "states": {
+            "01a10ff5-7d23-74b1-af2f-dd062d7e729d": "completed"
+          }
+        }
+      ],
+      "turn_completed": true,
+      "last_report": "{\n  \"fixture\": {\n    \"path\": \"<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-parallel\",\n    \"business_root_created\": false,\n    \"production_gate_claimed\": false,\n    \"base_sha\": \"79f839ea81c12e4b4cd5c3d71e9557e84260d039\",\n    \"head_tree\": \"2581e700fbc0dbbe20dda626fe175d4e6847b7e7\",\n    \"instructions_read\": [\n      \"AGENTS.md\",\n      \".agents/skills/ric-devflow/SKILL.md\",\n      \".agents/skills/ric-devflow-implementer/SKILL.md\",\n      \".agents/skills/ric-devflow/references/shared/orchestration.md#按需派发与会话复用\",\n      \".agents/skills/ric-devflow/references/shared/agent-lifecycle.md#复用与受控替换\",\n      \".agents/skills/ric-devflow/references/shared/agent-lifecycle.md#配额与安全回收\",\n      \".agents/skills/ric-devflow/references/shared/agent-lifecycle.md#有限扩容\",\n      \".codex/agents/ric-devflow-implementer.toml\"\n    ],\n    \"python_invoked\": false,\n    \"python_utf8_requirement_triggered\": false,\n    \"writes_allowed\": [],\n    \"writes_detected\": 0\n  },\n  \"native_dispatch\": {\n    \"actual_tool\": \"multi_agent_v1.spawn_agent\",\n    \"invocation_mode\": \"single multi_tool_use.parallel wrapper containing two native spawn_agent calls\",\n    \"native_agent_type\": \"ric_devflow_implementer\",\n    \"generic_or_forbidden_roles_spawned\": false,\n    \"model\": \"inherited current configured model\",\n    \"model_override\": null,\n    \"reasoning_override\": null,\n    \"dispatch_time_bracket_utc\": [\n      \"2026-10-06T06:44:49.795516625Z\",\n      \"2026-10-06T06:45:21.147234827Z\"\n    ],\n    \"host_event_ids_exposed\": false,\n    \"tasks\": [\n      {\n        \"diagnostic_name\": \"native-lifecycle-A\",\n        \"instance_role\": \"default reusable\",\n        \"agent_id\": \"01a10ff5-6fe7-7121-9e17-76f71537c3f4\",\n        \"nickname\": \"Peirce\",\n        \"spawn_receipt\": {\n          \"agent_id\": \"01a10ff5-6fe7-7121-9e17-76f71537c3f4\",\n          \"nickname\": \"Peirce\"\n        }\n      },\n      {\n        \"diagnostic_name\": \"native-lifecycle-B-distinct\",\n        \"instance_role\": \"sole temporary expansion\",\n        \"agent_id\": \"01a10ff5-7d23-74b1-af2f-dd062d7e729d\",\n        \"nickname\": \"Nietzsche\",\n        \"spawn_receipt\": {\n          \"agent_id\": \"01a10ff5-7d23-74b1-af2f-dd062d7e729d\",\n          \"nickname\": \"Nietzsche\"\n        }\n      }\n    ],\n    \"schema_task_name_field_used\": false,\n    \"schema_task_name_note\": \"Schema exposed no task_name parameter; distinct diagnostic names were carried in the task payload, and host-returned agent IDs distinguished instances.\"\n  },\n  \"completion\": {\n    \"wait_tool\": \"multi_agent_v1.wait_agent\",\n    \"A\": {\n      \"agent_id\": \"01a10ff5-6fe7-7121-9e17-76f71537c3f4\",\n      \"status\": \"completed\",\n      \"result\": \"PASS\",\n      \"change_needed\": false,\n      \"object\": {\n        \"path\": \".worktrees/alpha/alpha.txt\",\n        \"head_blob\": \"cda5681d8ea2baaf6c5ee2d6090f779291d22583\",\n        \"worktree_blob\": \"cda5681d8ea2baaf6c5ee2d6090f779291d22583\",\n        \"size_bytes\": 16,\n        \"hex\": \"61 6c 70 68 61 2d 6c 69 66 65 63 79 63 6c 65 0a\",\n        \"oracle_equal\": true\n      },\n      \"command_result\": \"all reported read-only checks exited 0; one preliminary shell comparison exited 1 due to command substitution stripping the trailing newline, then the exact stream comparison exited 0\",\n      \"final_status\": \"## HEAD (no branch)\"\n    },\n    \"B\": {\n      \"agent_id\": \"01a10ff5-7d23-74b1-af2f-dd062d7e729d\",\n      \"status\": \"completed\",\n      \"result\": \"PASS\",\n      \"change_needed\": false,\n      \"object\": {\n        \"path\": \".worktrees/beta/beta.txt\",\n        \"head_blob\": \"13fdfe51995c1442abc5dc0968b79151e8a1664a\",\n        \"authoritative_worktree_blob\": \"13fdfe51995c1442abc5dc0968b79151e8a1664a\",\n        \"size_bytes\": 15,\n        \"hex\": \"626574612d6c6966656379636c650a\",\n        \"oracle_equal\": true\n      },\n      \"command_result\": \"reported read-only Git/object/byte verification aggregate exited 0\",\n      \"final_status\": \"## HEAD (no branch)\",\n      \"child_reported_agent_id_gap\": \"The child could not see a host agent ID in its environment. The host spawn/wait/close receipts nevertheless provide the actual raw agent ID.\"\n    }\n  },\n  \"full_results\": {\n    \"A\": \"职责：实现者｜独立维护诊断 A\\n\\n结论：`native-lifecycle-A` 通过，不需要修改。目标 detached worktree 存在，HEAD、`alpha.txt` 的 Git 对象、工作区文件和干净状态均满足批准字节 AC/oracle：`b'alpha-lifecycle\\\\n'`。\\n\\n关键身份：\\n- HEAD：`79f839ea81c12e4b4cd5c3d71e9557e84260d039`\\n- HEAD tree：`2581e700fbc0dbbe20dda626fe175d4e6847b7e7`\\n- `alpha.txt` blob：`cda5681d8ea2baaf6c5ee2d6090f779291d22583`\\n- 模式/大小：`100644`，16 bytes\\n- 十六进制字节：`61 6c 70 68 61 2d 6c 69 66 65 63 79 63 6c 65 0a`\\n- 工作区 `hash-object alpha.txt`：同样为 `cda5681d8ea2baaf6c5ee2d6090f779291d22583`\\n\\n实际验证与退出码：\\n- `test -d .worktrees/alpha`：0\\n- `test -f .worktrees/alpha/alpha.txt`：0\\n- `git -C .worktrees/alpha rev-parse --verify HEAD`：0\\n- `git -C .worktrees/alpha rev-parse HEAD^{tree}`：0\\n- `git -C .worktrees/alpha ls-tree HEAD -- alpha.txt`：0\\n- `git -C .worktrees/alpha cat-file -s cda5681d8ea2baaf6c5ee2d6090f779291d22583`：0\\n- `git -C .worktrees/alpha cat-file -t cda5681d8ea2baaf6c5ee2d6090f779291d22583`：0\\n- `git -C .worktrees/alpha show <blob> | od -An -tx1`：0\\n- `git -C .worktrees/alpha cat-file blob <blob> | cmp -s - <(printf '%s' 'alpha-lifecycle\\\\n')`：0\\n- `git -C .worktrees/alpha diff --quiet -- alpha.txt` 与 `git diff --cached --quiet -- alpha.txt`：0\\n- `cmp -s .worktrees/alpha/alpha.txt <(printf '%s' 'alpha-lifecycle\\\\n')`：0\\n- `git -C .worktrees/alpha hash-object alpha.txt`：0\\n\\n最终状态：\\n```text\\n$ git -C .worktrees/alpha status --short --branch\\n## HEAD (no branch)\\n[exit 0]\\n```\\n\\n透明记录：第一次辅助 shell 字节比较曾返回 1，原因是 Bash command substitution 剥离尾部换行，不是 Git 对象或文件内容失败；随后使用流式 `cmp` 完成精确字节比较并通过。\\n\\n未运行：任何构建、测试、格式化或产生输出的验证命令；未调用 Python；未派生代理或调用其他角色。允许写入路径为空，本次零文件变化。\",\n    \"B\": \"职责：实现者｜独立维护诊断 B\\n\\n**诊断结论：PASS｜无需修改，零文件变化**\\n\\n- 目标路径：`.worktrees/beta`\\n- HEAD：`79f839ea81c12e4b4cd5c3d71e9557e84260d039`\\n- HEAD tree：`2581e700fbc0dbbe20dda626fe175d4e6847b7e7`\\n- `beta.txt` HEAD blob：`13fdfe51995c1442abc5dc0968b79151e8a1664a`\\n- worktree `beta.txt` blob：`13fdfe519c1442abc5dc0968b79151e8a1664a`\\n- 精确字节：15 bytes，`626574612d6c6966656379636c650a`，等值于 `b'beta-lifecycle\\\\n'`\\n- 最终状态：`## HEAD (no branch)`，无未提交或未跟踪变化\\n- 结论：内容与状态均满足批准 oracle，不需要写入；未写任何文件，未修改 Git 状态、路径或配置。\\n\\n**角色与 Agent ID**\\n\\n- 核对的稳定原生角色：`ric_devflow_implementer`\\n- 诊断名：`native-lifecycle-B-distinct`\\n- 当前执行环境未暴露可验证的 `agent_id` 字段或原生 lifecycle 调用返回值；仅有当前 Codex session/thread 相关环境变量，不能将其虚构或等同为本次 agent ID。\\n- 实际 Agent ID：**缺失，未返回**。\\n- 未派生任何代理，未调用其他角色。\\n\\n**命令与退出码**\\n\\n1. `find .agents/skills ...` / `rg ... ric_devflow_implementer`：退出码 `0`\\n2. `cat .agents/skills/ric-devflow-implementer/SKILL.md`：退出码 `0`\\n3. `rg -n -C 3 ... git-policy.md` 与读取 `.codex/agents/ric-devflow-implementer.toml`：退出码 `0`\\n4. 在 `.worktrees/beta` 执行只读 Git/object/byte 核验：\\n   - `git rev-parse --show-toplevel`\\n   - `git rev-parse HEAD`\\n   - `git rev-parse 'HEAD^{tree}'`\\n   - `git rev-parse 'HEAD:beta.txt'`\\n   - `git cat-file -t/-s/-p`\\n   - `git hash-object beta.txt`\\n   - `wc -c`\\n   - `od -An -v -tx1`\\n   - `git status --short --branch`\\n   - 聚合命令退出码：`0`\\n5. 只读检查 agent 相关环境变量名称且不回显值：退出码 `0`\\n\\n**未运行与限制**\\n\\n- 未运行构建、测试或任何会产生输出的验证；原因是任务明确禁止且已判定无需修改。\\n- 未调用 Python；因此 `PYTHONUTF8=1 PYTHONIOENCODING=utf-8` 前缀规则未被触发。\\n- 唯一残余缺口是宿主未暴露实际 agent ID；其余强制证据均已满足。\"\n  },\n  \"overlap\": {\n    \"parallel_dispatch_accepted\": true,\n    \"peak_open_agents_observed\": 2,\n    \"peak_temporary_implementers_observed\": 1,\n    \"quota_requested_and_respected\": 2,\n    \"real_execution_overlap_observable\": false,\n    \"reason\": \"The host exposed spawn receipts and completion results but no per-agent execution start/end timestamps or lifecycle event IDs.\",\n    \"measured_speedup_claimed\": false,\n    \"sleeps_added\": false\n  },\n  \"final_readback\": {\n    \"timestamp_utc\": \"2026-10-06T06:47:45.133551294Z\",\n    \"timestamp_local\": \"2026-10-06T14:47:45.135541192+08:00\",\n    \"main_status\": \"## main\",\n    \"main_alpha_beta_diff_exit\": 0,\n    \"main_alpha_beta_cached_diff_exit\": 0,\n    \"worktrees\": {\n      \"alpha\": {\n        \"head\": \"79f839ea81c12e4b4cd5c3d71e9557e84260d039\",\n        \"tree\": \"2581e700fbc0dbbe20dda626fe175d4e6847b7e7\",\n        \"head_blob\": \"cda5681d8ea2baaf6c5ee2d6090f779291d22583\",\n        \"worktree_blob\": \"cda5681d8ea2baaf6c5ee2d6090f779291d22583\",\n        \"diff_exit\": 0,\n        \"cached_diff_exit\": 0,\n        \"git_status\": \"## HEAD (no branch)\"\n      },\n      \"beta\": {\n        \"head\": \"79f839ea81c12e4b4cd5c3d71e9557e84260d039\",\n        \"tree\": \"2581e700fbc0dbbe20dda626fe175d4e6847b7e7\",\n        \"head_blob\": \"13fdfe51995c1442abc5dc0968b79151e8a1664a\",\n        \"worktree_blob\": \"13fdfe51995c1442abc5dc0968b79151e8a1664a\",\n        \"diff_exit\": 0,\n        \"cached_diff_exit\": 0,\n        \"git_status\": \"## HEAD (no branch)\"\n      }\n    },\n    \"zero_file_change\": true\n  },\n  \"B_reclamation\": {\n    \"actual_tool\": \"multi_agent_v1.close_agent\",\n    \"target_agent_id\": \"01a10ff5-7d23-74b1-af2f-dd062d7e729d\",\n    \"closed_only_B\": true,\n    \"preclose_status_from_receipt\": \"completed\",\n    \"receipt\": {\n      \"previous_status\": {\n        \"completed\": \"full B result preserved in full_results.B\"\n      }\n    },\n    \"call_error\": false,\n    \"history_deleted_or_interrupted\": false,\n    \"post_close_capacity_probe\": \"not_run; no safe capacity-enumeration API was exposed\",\n    \"temporary_followup_remaining\": false\n  },\n  \"A_retention\": {\n    \"agent_id\": \"01a10ff5-6fe7-7121-9e17-76f71537c3f4\",\n    \"closed\": false,\n    \"role\": \"reusable default ric_devflow_implementer\"\n  },\n  \"verdicts\": {\n    \"native_selection\": \"PASS\",\n    \"bounded_expansion\": \"PASS\",\n    \"isolation\": \"PASS\",\n    \"cleanup\": \"PASS\"\n  }\n}",
+      "raw_stdout_sha256": "54aef845f5e5524aba6c3175bcbd7ade9b9a1242e855b15dfa600641f2f65bea",
+      "prompt_sha256": "a4dd611fc3aad806de02927483db01faf3a5aa5716836bfc56538e224db33c85"
+    },
+    "native-rotate-q1": {
+      "run": {
+        "argv": [
+          "codex",
+          "--no-daemon",
+          "-c",
+          "agents.max_concurrent_threads_per_session=1",
+          "exec",
+          "--json",
+          "-C",
+          "native-fixture-q2",
+          "-"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "seconds": 310.106,
+        "fixture_sha": "d1afe6c821dcfba11c75eda19360e373545dcfb4"
+      },
+      "parent_thread": "01a10ff9-1c94-7713-a218-29f1f01c607b",
+      "parent_turn_ordinal": 0,
+      "collab_events": [
+        {
+          "event": "item.started",
+          "item_id": "item_8",
+          "tool": "spawn_agent",
+          "status": "in_progress",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_8",
+          "tool": "spawn_agent",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10ffa-28ec-72e0-9385-2db01ec937fb"
+          ],
+          "states": {
+            "01a10ffa-28ec-72e0-9385-2db01ec937fb": "pending_init"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_9",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10ffa-28ec-72e0-9385-2db01ec937fb"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_9",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_10",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10ffa-28ec-72e0-9385-2db01ec937fb"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_10",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_11",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10ffa-28ec-72e0-9385-2db01ec937fb"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_11",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10ffa-28ec-72e0-9385-2db01ec937fb"
+          ],
+          "states": {
+            "01a10ffa-28ec-72e0-9385-2db01ec937fb": "completed"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_13",
+          "tool": "close_agent",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10ffa-28ec-72e0-9385-2db01ec937fb"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_13",
+          "tool": "close_agent",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10ffa-28ec-72e0-9385-2db01ec937fb"
+          ],
+          "states": {
+            "01a10ffa-28ec-72e0-9385-2db01ec937fb": "completed"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_14",
+          "tool": "spawn_agent",
+          "status": "in_progress",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_14",
+          "tool": "spawn_agent",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10ffb-8593-73b1-9978-a2559f44503c"
+          ],
+          "states": {
+            "01a10ffb-8593-73b1-9978-a2559f44503c": "pending_init"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_15",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10ffb-8593-73b1-9978-a2559f44503c"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_15",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_16",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10ffb-8593-73b1-9978-a2559f44503c"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_16",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10ffb-8593-73b1-9978-a2559f44503c"
+          ],
+          "states": {
+            "01a10ffb-8593-73b1-9978-a2559f44503c": "completed"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_17",
+          "tool": "close_agent",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a10ffb-8593-73b1-9978-a2559f44503c"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_17",
+          "tool": "close_agent",
+          "status": "completed",
+          "receiver_ids": [
+            "01a10ffb-8593-73b1-9978-a2559f44503c"
+          ],
+          "states": {
+            "01a10ffb-8593-73b1-9978-a2559f44503c": "completed"
+          }
+        }
+      ],
+      "turn_completed": true,
+      "last_report": "{\n  \"result\": \"PASS\",\n  \"schema\": {\n    \"namespace\": \"multi_agent_v1\",\n    \"version_visible\": \"namespace v1 only; product/schema version field not exposed\",\n    \"visible_apis\": [\"spawn_agent\", \"wait_agent\", \"close_agent\", \"resume_agent\", \"send_input\"],\n    \"release_interface\": \"multi_agent_v1.close_agent\",\n    \"quota_counter_api\": \"not exposed\",\n    \"startup_capacity\": {\n      \"configured_quota\": 1,\n      \"source\": \"user authorization\",\n      \"first_spawn_admitted\": true,\n      \"pre_spawn_instance_list\": \"unavailable\"\n    }\n  },\n  \"policy_decision\": {\n    \"source\": \".agents/skills/ric-devflow/references/shared/agent-lifecycle.md\",\n    \"decision\": \"quota=1 permits serial progression only after completed result preservation and confirmed safe closure; close must target only this workflow's completed owned instance\"\n  },\n  \"fixture\": {\n    \"head\": \"d1afe6c821dcfba11c75eda19360e373545dcfb4\",\n    \"sample_txt\": {\n      \"length\": 18,\n      \"hex\": \"6c6966656379636c652d666978747572650a\",\n      \"literal\": \"b'lifecycle-fixture\\\\n'\",\n      \"exact\": true\n    },\n    \"final_git_status\": \"## main\",\n    \"git_diff\": 0,\n    \"git_diff_check\": 0,\n    \"file_changes\": []\n  },\n  \"timeline\": [\n    {\n      \"order\": 1,\n      \"event\": \"create\",\n      \"native_call\": \"multi_agent_v1.spawn_agent\",\n      \"selected_agent_type\": \"ric_devflow_tester\",\n      \"candidate_definition\": \".codex/agents/ric-devflow-tester.toml\",\n      \"skill_path\": \".agents/skills/ric-devflow-tester/SKILL.md\",\n      \"agent_id\": \"01a10ffa-28ec-72e0-9385-2db01ec937fb\",\n      \"admitted\": true\n    },\n    {\n      \"order\": 2,\n      \"event\": \"complete\",\n      \"status\": \"completed\",\n      \"verdict\": \"PASS\",\n      \"result_summary\": \"HEAD matched; sample.txt was exactly 18 bytes with required hex; status remained ## main; sample.txt diff exit 0; no writes, Root, child agent, or network\",\n      \"commands\": [\n        \"pwd\",\n        \"git rev-parse HEAD\",\n        \"git status --short --branch\",\n        \"cat .agents/skills/ric-devflow-tester/SKILL.md\",\n        \"cat .agents/skills/ric-devflow/references/shared/agent-lifecycle.md\",\n        \"PYTHONUTF8=1 PYTHONIOENCODING=utf-8 python3 exact-byte/length/hex assertion heredoc\",\n        \"git status --short --branch\",\n        \"git diff --exit-code -- sample.txt\"\n      ],\n      \"exit_codes\": \"all 0\",\n      \"python_assertion\": \"actual = Path(\\\"sample.txt\\\").read_bytes(); expected = b\\\"lifecycle-fixture\\\\n\\\"; fail unless actual == expected, len(actual) == 18, and actual.hex() == \\\"6c6966656379636c652d666978747572650a\\\"\"\n    },\n    {\n      \"order\": 3,\n      \"event\": \"preserve+close\",\n      \"native_call\": \"multi_agent_v1.close_agent\",\n      \"target_id\": \"01a10ffa-28ec-72e0-9385-2db01ec937fb\",\n      \"receipt\": {\n        \"returned\": true,\n        \"receipt_mode\": \"previous_status\",\n        \"previous_status\": \"completed\",\n        \"preserved_result\": \"full Tester PASS result including command and exit evidence\",\n        \"other_ids_closed\": []\n      }\n    },\n    {\n      \"order\": 4,\n      \"event\": \"create\",\n      \"native_call\": \"multi_agent_v1.spawn_agent\",\n      \"selected_agent_type\": \"ric_devflow_implementer\",\n      \"candidate_definition\": \".codex/agents/ric-devflow-implementer.toml\",\n      \"skill_path\": \".agents/skills/ric-devflow-implementer/SKILL.md\",\n      \"agent_id\": \"01a10ffb-8593-73b1-9978-a2559f44503c\",\n      \"admitted\": true,\n      \"same_process\": true,\n      \"quota_raised\": false\n    },\n    {\n      \"order\": 5,\n      \"event\": \"complete\",\n      \"status\": \"completed\",\n      \"task\": \"ROTATE-INSPECT\",\n      \"result_summary\": \"HEAD and exact bytes matched; worktree/staged diffs clean; no edit needed; no blocker\",\n      \"commands\": [\n        \"cat .agents/skills/ric-devflow-implementer/SKILL.md\",\n        \"rg -n -C 8 'ROTATE-INSPECT|no-change|Implementer' .agents/skills/ric-devflow/references/shared/agent-lifecycle.md\",\n        \"pwd -P\",\n        \"git rev-parse --show-toplevel\",\n        \"git rev-parse HEAD\",\n        \"PYTHONUTF8=1 PYTHONIOENCODING=utf-8 python3 sample.txt byte comparison\",\n        \"git status --porcelain -- sample.txt\",\n        \"git diff --quiet -- sample.txt\",\n        \"git diff --cached --quiet -- sample.txt\"\n      ],\n      \"exit_codes\": \"all 0\",\n      \"edit_decision\": \"no edit needed\"\n    },\n    {\n      \"order\": 6,\n      \"event\": \"preserve+close\",\n      \"native_call\": \"multi_agent_v1.close_agent\",\n      \"target_id\": \"01a10ffb-8593-73b1-9978-a2559f44503c\",\n      \"receipt\": {\n        \"returned\": true,\n        \"receipt_mode\": \"previous_status\",\n        \"previous_status\": \"completed\",\n        \"preserved_result\": \"full Implementer ROTATE-INSPECT result including commands, exit codes, and no-edit decision\",\n        \"other_ids_closed\": []\n      }\n    }\n  ],\n  \"rotation_evidence\": {\n    \"maximum_observed_open_child_count\": 1,\n    \"second_role_admitted_after_first_close\": true,\n    \"same_process\": true,\n    \"quota_increase_or_auth_permission_model_change\": false,\n    \"release_verification\": \"successful close receipts plus successful subsequent same-process spawn; explicit updated quota counter was unavailable\"\n  },\n  \"unavailable_slices\": [\n    \"explicit API schema/product version\",\n    \"runtime quota counter or post-close instance-list readback\",\n    \"automatic-release interface; not used because explicit close_agent was available\"\n  ],\n  \"postcheck_note\": \"A planner display comparison initially used an over-escaped literal and printed exact=false despite unchanged bytes; the corrected hex-anchored assertion exited 0 with exact=true. Both native role assertions independently passed.\"\n}",
+      "raw_stdout_sha256": "876fc1fc6ea1c0828458949504ce708d1af84cb3e27a7a94f6e87e26944b46e2",
+      "prompt_sha256": "f00a73b92dcac2a6f242afe597db51d3787435198f290fa8ee62bc6e8f8f7b45"
+    },
+    "native-occupied": {
+      "run": {
+        "argv": [
+          "codex",
+          "--no-daemon",
+          "-c",
+          "agents.max_concurrent_threads_per_session=2",
+          "exec",
+          "--json",
+          "-C",
+          "native-fixture-occupied",
+          "-"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "seconds": 254.587,
+        "fixture_sha": "915c0ed1c4c8bf759d792a50aefcc1072465880e"
+      },
+      "parent_thread": "01a11002-84b2-7210-9b07-11a528e3a767",
+      "parent_turn_ordinal": 0,
+      "collab_events": [
+        {
+          "event": "item.started",
+          "item_id": "item_8",
+          "tool": "spawn_agent",
+          "status": "in_progress",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_8",
+          "tool": "spawn_agent",
+          "status": "completed",
+          "receiver_ids": [
+            "01a11003-a8ec-7ba0-9755-99ea904913b9"
+          ],
+          "states": {
+            "01a11003-a8ec-7ba0-9755-99ea904913b9": "pending_init"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_9",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a11003-a8ec-7ba0-9755-99ea904913b9"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_9",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [
+            "01a11003-a8ec-7ba0-9755-99ea904913b9"
+          ],
+          "states": {
+            "01a11003-a8ec-7ba0-9755-99ea904913b9": "completed"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_11",
+          "tool": "spawn_agent",
+          "status": "in_progress",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_11",
+          "tool": "spawn_agent",
+          "status": "completed",
+          "receiver_ids": [
+            "01a11003-eaf7-7e30-94cb-b1bc07af1b0e"
+          ],
+          "states": {
+            "01a11003-eaf7-7e30-94cb-b1bc07af1b0e": "pending_init"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_12",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a11003-eaf7-7e30-94cb-b1bc07af1b0e"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_12",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [
+            "01a11003-eaf7-7e30-94cb-b1bc07af1b0e"
+          ],
+          "states": {
+            "01a11003-eaf7-7e30-94cb-b1bc07af1b0e": "completed"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_14",
+          "tool": "close_agent",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a11003-eaf7-7e30-94cb-b1bc07af1b0e"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_14",
+          "tool": "close_agent",
+          "status": "completed",
+          "receiver_ids": [
+            "01a11003-eaf7-7e30-94cb-b1bc07af1b0e"
+          ],
+          "states": {
+            "01a11003-eaf7-7e30-94cb-b1bc07af1b0e": "completed"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_15",
+          "tool": "spawn_agent",
+          "status": "in_progress",
+          "receiver_ids": [],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_15",
+          "tool": "spawn_agent",
+          "status": "completed",
+          "receiver_ids": [
+            "01a11004-c7a3-7fd3-b6f8-fa792e99f8ff"
+          ],
+          "states": {
+            "01a11004-c7a3-7fd3-b6f8-fa792e99f8ff": "pending_init"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_16",
+          "tool": "wait",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a11004-c7a3-7fd3-b6f8-fa792e99f8ff"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_16",
+          "tool": "wait",
+          "status": "completed",
+          "receiver_ids": [
+            "01a11004-c7a3-7fd3-b6f8-fa792e99f8ff"
+          ],
+          "states": {
+            "01a11004-c7a3-7fd3-b6f8-fa792e99f8ff": "completed"
+          }
+        },
+        {
+          "event": "item.started",
+          "item_id": "item_17",
+          "tool": "close_agent",
+          "status": "in_progress",
+          "receiver_ids": [
+            "01a11004-c7a3-7fd3-b6f8-fa792e99f8ff"
+          ],
+          "states": {}
+        },
+        {
+          "event": "item.completed",
+          "item_id": "item_17",
+          "tool": "close_agent",
+          "status": "completed",
+          "receiver_ids": [
+            "01a11004-c7a3-7fd3-b6f8-fa792e99f8ff"
+          ],
+          "states": {
+            "01a11004-c7a3-7fd3-b6f8-fa792e99f8ff": "completed"
+          }
+        }
+      ],
+      "turn_completed": true,
+      "last_report": "{\n  \"overall\": \"PASS\",\n  \"fixture\": {\n    \"sha\": \"915c0ed1c4c8bf759d792a50aefcc1072465880e\",\n    \"sample_bytes\": \"b'lifecycle-fixture\\\\n'\",\n    \"final_status\": \"## main\",\n    \"final_git_diff_check_exit\": 0\n  },\n  \"actual_apis\": [\n    \"multi_agent_v1.spawn_agent\",\n    \"multi_agent_v1.wait_agent\",\n    \"multi_agent_v1.close_agent\"\n  ],\n  \"ambient_E\": {\n    \"slice\": \"ambient_setup\",\n    \"status\": \"PASS\",\n    \"actual_type_selector\": \"default\",\n    \"id\": \"01a11003-a8ec-7ba0-9755-99ea904913b9\",\n    \"result\": \"AMBIENT-READY\",\n    \"ownership\": \"external named test job outside W\",\n    \"retained\": true,\n    \"untouched_by_W\": true\n  },\n  \"tester_T\": {\n    \"slice\": \"baseline_exact_byte_check\",\n    \"status\": \"PASS\",\n    \"actual_type_selector\": \"ric_devflow_tester\",\n    \"id\": \"01a11003-eaf7-7e30-94cb-b1bc07af1b0e\",\n    \"verdict\": \"PASS\",\n    \"commands\": [\n      {\n        \"command\": \"git rev-parse HEAD; rc=$?; printf 'exit_code=%d\\\\n' \\\"$rc\\\"; exit \\\"$rc\\\"\",\n        \"exit_code\": 0,\n        \"full_output\": \"915c0ed1c4c8bf759d792a50aefcc1072465880e\\nexit_code=0\"\n      },\n      {\n        \"command\": \"PYTHONUTF8=1 PYTHONIOENCODING=utf-8 python3 -c 'from pathlib import Path; data=Path(\\\"sample.txt\\\").read_bytes(); expected=b\\\"lifecycle-fixture\\\\n\\\"; print(f\\\"actual={data!r}\\\"); print(f\\\"expected={expected!r}\\\"); print(f\\\"match={data == expected}\\\")'; rc=$?; printf 'exit_code=%d\\\\n' \\\"$rc\\\"; exit \\\"$rc\\\"\",\n        \"exit_code\": 0,\n        \"full_output\": \"actual=b'lifecycle-fixture\\\\n'\\nexpected=b'lifecycle-fixture\\\\n'\\nmatch=True\\nexit_code=0\"\n      }\n    ],\n    \"no_write_evidence\": \"Only git rev-parse, sample.txt read, and stdout; no file writes, Git writes, installs, secrets, subagents, or business Gates.\"\n  },\n  \"implementer_I\": {\n    \"slice\": \"no_change_diagnostic\",\n    \"status\": \"PASS\",\n    \"actual_type_selector\": \"ric_devflow_implementer\",\n    \"id\": \"01a11004-c7a3-7fd3-b6f8-fa792e99f8ff\",\n    \"verdict\": \"PASS\",\n    \"edit_needed\": false,\n    \"allowed_write_paths\": [],\n    \"full_result\": \"职责：实现者｜no-change 诊断完成，不需要任何编辑。sample.txt 已满足 exact-byte AC；实施改动应为空。独立 Tester PASS；worktree 与 HEAD:sample.txt 均为 18 字节，hex 6c6966656379636c652d666978747572650a，blob b416c3a7ef9c40944223cfc54e7d55d2c910f5ab。HEAD 匹配，porcelain entries 0，diff/staged diff clean。仅只读检查；未编辑、提交、合并、安装、读取密钥、派生子代理或执行业务 Gate。\",\n    \"no_write_evidence\": \"Read-only Git/file checks only; final repository status and git diff --check remain clean.\"\n  },\n  \"lifecycle_events\": [\n    {\"event\": \"create_E\", \"selector\": \"default\", \"id\": \"01a11003-a8ec-7ba0-9755-99ea904913b9\"},\n    {\"event\": \"wait_E_completed\", \"id\": \"01a11003-a8ec-7ba0-9755-99ea904913b9\", \"result\": \"AMBIENT-READY\"},\n    {\"event\": \"create_T\", \"selector\": \"ric_devflow_tester\", \"id\": \"01a11003-eaf7-7e30-94cb-b1bc07af1b0e\"},\n    {\"event\": \"wait_T_completed\", \"id\": \"01a11003-eaf7-7e30-94cb-b1bc07af1b0e\", \"verdict\": \"PASS\"},\n    {\"event\": \"observed_peak_open_threads\", \"count\": 2, \"members\": [\"E\", \"T\"]},\n    {\"event\": \"close_T_after_result_preserved\", \"target\": \"01a11003-eaf7-7e30-94cb-b1bc07af1b0e\", \"previous_status\": \"completed\", \"verdict\": \"PASS\"},\n    {\"event\": \"create_I_after_T_close\", \"selector\": \"ric_devflow_implementer\", \"id\": \"01a11004-c7a3-7fd3-b6f8-fa792e99f8ff\"},\n    {\"event\": \"wait_I_completed\", \"id\": \"01a11004-c7a3-7fd3-b6f8-fa792e99f8ff\", \"verdict\": \"PASS\"},\n    {\"event\": \"observed_peak_open_threads\", \"count\": 2, \"members\": [\"E\", \"I\"]},\n    {\"event\": \"close_I_after_result_preserved\", \"target\": \"01a11004-c7a3-7fd3-b6f8-fa792e99f8ff\", \"previous_status\": \"completed\", \"verdict\": \"PASS\"},\n    {\"event\": \"final_E_retained_untouched\", \"id\": \"01a11003-a8ec-7ba0-9755-99ea904913b9\"}\n  ],\n  \"quota\": {\n    \"configured_limit_claimed_by_scenario\": 2,\n    \"actual_peak_occupied_threads\": 2,\n    \"counter_limitations\": \"No native quota-counter or remaining-capacity readback API was exposed. Occupancy was tracked from actual create/completion/close events; T close returned previous_status, and subsequent I creation was admitted. This is lifecycle evidence, not a numeric quota-counter receipt.\",\n    \"E_never_targeted\": true,\n    \"close_targets_exactly\": [\n      \"01a11003-eaf7-7e30-94cb-b1bc07af1b0e\",\n      \"01a11004-c7a3-7fd3-b6f8-fa792e99f8ff\"\n    ]\n  },\n  \"per_slice\": {\n    \"ambient_E_setup\": \"PASS\",\n    \"tester_T\": \"PASS\",\n    \"quota_rotation\": \"PASS\",\n    \"implementer_I\": \"PASS\",\n    \"final_no_write_state\": \"PASS\"\n  }\n}",
+      "raw_stdout_sha256": "4a033b07bdcbd6740e3ab06acbd244741cb8ec59317a31ddd72511e35d7700f2",
+      "prompt_sha256": "5caac5ed4fccdc31b675a5cb8a3614058df4070e33f656adc737adf3eb4b14b5"
+    }
+  },
+  "threads": {
+    "01a10fdf-6ff0-7c70-8d80-b4e55090b1c8": {
+      "contexts": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:21:22.571Z",
+          "turn_id": "01a10fdf-a546-7a32-b659-cf92f633811a",
+          "root_turn_id": "01a10fdf-a546-7a32-b659-cf92f633811a",
+          "model": "gpt-6-astra",
+          "effort": "max",
+          "multi_agent_version": "v2"
+        }
+      ],
+      "lifecycle_calls": [],
+      "fixture_commands": [],
+      "completed_turns": [
+        {
+          "ordinal": 0,
+          "turn_id": "01a10fdf-a546-7a32-b659-cf92f633811a",
+          "started_at": 1791267680,
+          "completed_at": 1791267723,
+          "duration_ms": 43411
+        }
+      ],
+      "own_test_rollout_found": true
+    },
+    "01a10fe2-5a76-70c2-80d7-c1ba17049082": {
+      "contexts": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:24:29.221Z",
+          "turn_id": "01a10fe2-620c-7411-ae86-5fd3edd5a2a4",
+          "root_turn_id": "01a10fe2-620c-7411-ae86-5fd3edd5a2a4",
+          "model": "gpt-6-astra",
+          "effort": "max",
+          "multi_agent_version": "v2"
+        }
+      ],
+      "lifecycle_calls": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:25:27.244Z",
+          "tool": "list_agents",
+          "call_id": "call_rs7fmjiGcU7dDBJ3u3bSIayK",
+          "args": {},
+          "receipt_sha256": "32b6f387b51a36c1a11f1da2decd8bb944995cfa0daff0f8108045642fa99df4"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:25:49.161Z",
+          "tool": "spawn_agent",
+          "call_id": "call_883a9dcca575438f91188e30c55942ec",
+          "args": {
+            "task_name": "ric_reviewer",
+            "agent_type": "ric_devflow_reviewer",
+            "fork_turns": "none"
+          },
+          "receipt_sha256": "957145431aa616d78ee23ed7d4d9e6d64f283d380a92938adb124a5dbd0462ba"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:26:08.967Z",
+          "tool": "wait_agent",
+          "call_id": "call_jaDuQHbYfF7PmI8uk8vO9wey",
+          "args": {
+            "timeout_ms": 60000
+          },
+          "receipt_sha256": "f3810007a893e410d076977e215da689182edff23620144fa1a7e24b7b4de3ef"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:27:13.431Z",
+          "tool": "list_agents",
+          "call_id": "call_dca8ebd15e3e443b99455649a9cd1327",
+          "args": {},
+          "receipt_sha256": "dacf845cf1c3f70f8db07923cdfd8f82bbc14122a13d526eda9c828f6bcf15ce"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:27:21.564Z",
+          "tool": "wait_agent",
+          "call_id": "call_mvG2y7Yr8VKXZ21aHLhwVni5",
+          "args": {
+            "timeout_ms": 60000
+          },
+          "receipt_sha256": "f3810007a893e410d076977e215da689182edff23620144fa1a7e24b7b4de3ef"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:29:06.994Z",
+          "tool": "list_agents",
+          "call_id": "call_GrLHV9Uuu5DmYEGh6uHdifpJ",
+          "args": {},
+          "receipt_sha256": "e31c5be4346e21e94712628152738ff2774b8bfdc0f91c813b393dd7aa0b039d"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:29:23.242Z",
+          "tool": "followup_task",
+          "call_id": "call_7142b51cd24c4dc384678cc0bcc0e325",
+          "args": {
+            "target": "/root/ric_reviewer"
+          },
+          "receipt_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:29:43.154Z",
+          "tool": "wait_agent",
+          "call_id": "call_48df844908824c91b24b85238053d49b",
+          "args": {
+            "timeout_ms": 60000
+          },
+          "receipt_sha256": "f3810007a893e410d076977e215da689182edff23620144fa1a7e24b7b4de3ef"
+        }
+      ],
+      "fixture_commands": [],
+      "completed_turns": [],
+      "own_test_rollout_found": true
+    },
+    "01a10fea-c4cf-7af1-aeab-9d30f3a3bf20": {
+      "contexts": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:33:43.278Z",
+          "turn_id": "01a10fea-ccaa-7f11-94ac-18de46f4d4f2",
+          "root_turn_id": "01a10fea-ccaa-7f11-94ac-18de46f4d4f2",
+          "model": "zcode/GLM-5.3",
+          "effort": "max",
+          "multi_agent_version": "v1"
+        },
+        {
+          "ordinal": 1,
+          "time": "2026-10-06T06:41:52.121Z",
+          "turn_id": "01a10ff2-74bf-7fe1-879a-32aee6088af3",
+          "root_turn_id": "01a10ff2-74bf-7fe1-879a-32aee6088af3",
+          "model": "zcode/GLM-5.3",
+          "effort": "max",
+          "multi_agent_version": "v1"
+        }
+      ],
+      "lifecycle_calls": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:34:27.529Z",
+          "tool": "spawn_agent",
+          "call_id": "call_084b53f074c345fca1cbb137",
+          "args": {
+            "agent_type": "ric_devflow_tester",
+            "fork_context": false
+          },
+          "receipt_sha256": "77e71122147b819fc7f5ba2af38bde38b4817001d38b8cfffe7d9bd457e5bf97"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:34:41.283Z",
+          "tool": "wait_agent",
+          "call_id": "call_54fce9988c7a4166bd0f4721",
+          "args": {
+            "timeout_ms": 120000
+          },
+          "receipt_sha256": "33a1e545c19333edff6965b404bdc2dde2332234258b8d53f2e12fe133f0f00d"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:35:01.798Z",
+          "tool": "send_input",
+          "call_id": "call_8d073871e65c420c82738f19",
+          "args": {
+            "target": "01a10feb-b35a-7db0-a236-02476683d665"
+          },
+          "receipt_sha256": "5864425588f7f4e1e0d230125f5f1abc807a68cf0d9e517e9e07287ea2af1102"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:35:07.812Z",
+          "tool": "wait_agent",
+          "call_id": "call_1ec8bd9b977c4d85842dec7a",
+          "args": {
+            "timeout_ms": 120000
+          },
+          "receipt_sha256": "d863a70317fdce532809fe4e3114bb184cb5fc61980b0f904820c3a6e864cea3"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:35:30.299Z",
+          "tool": "spawn_agent",
+          "call_id": "call_15f564e7ee254ae5bc9ba819",
+          "args": {
+            "agent_type": "ric_devflow_implementer",
+            "fork_context": false
+          },
+          "receipt_sha256": "541b9085649f3dbb06b696168a4ad5a62ba02b6443f8eb15760bf210736032aa"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:35:34.877Z",
+          "tool": "wait_agent",
+          "call_id": "call_dbcfed3e53494f8e8e693493",
+          "args": {
+            "timeout_ms": 120000
+          },
+          "receipt_sha256": "538da90f95d2f578100f05b024a93470befe2bae38c17815860bdac779194731"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:35:58.366Z",
+          "tool": "send_input",
+          "call_id": "call_f6692937a7004585b5658164",
+          "args": {
+            "target": "01a10fec-a88c-7823-902b-1a8f8daef84b"
+          },
+          "receipt_sha256": "64052a1995237cddef2a6727bac4688eb7d3dc061f367c98cd9d1523cfb45e2a"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:36:04.122Z",
+          "tool": "wait_agent",
+          "call_id": "call_85659d8ccdb64b27bc0f8d28",
+          "args": {
+            "timeout_ms": 120000
+          },
+          "receipt_sha256": "a1bf6c82f95df689d610dfdb3b72c6aba138a207285d2672de5afbfb965410d2"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:36:29.561Z",
+          "tool": "spawn_agent",
+          "call_id": "call_54f3ce0513ec4c57b7d2baf4",
+          "args": {
+            "agent_type": "ric_devflow_reviewer",
+            "fork_context": false
+          },
+          "receipt_sha256": "eb49e28d2c88c2f190ac27b6aa91596879d977cfed6a5c4e53359b4fd945a48b",
+          "observed_error": "agent thread limit reached"
+        },
+        {
+          "ordinal": 1,
+          "time": "2026-10-06T06:42:22.773Z",
+          "tool": "wait_agent",
+          "call_id": "call_7daa8dab10cf4955ad367b9c",
+          "args": {
+            "timeout_ms": 10000
+          },
+          "receipt_sha256": "a9ce72b77b267c42696e76d27c4619ff3a19020229d01f1f72f9dcc8bc8e242b"
+        },
+        {
+          "ordinal": 1,
+          "time": "2026-10-06T06:42:27.515Z",
+          "tool": "resume_agent",
+          "call_id": "call_460c7f6b989d4723b97f5357",
+          "args": {
+            "id": "01a10feb-b35a-7db0-a236-02476683d665"
+          },
+          "receipt_sha256": "d297dd42886e51b1310cc0bbf235bd62cbe0e3d60cfa511ec25b75cfc9ccc493"
+        },
+        {
+          "ordinal": 1,
+          "time": "2026-10-06T06:42:33.778Z",
+          "tool": "wait_agent",
+          "call_id": "call_1c55f3251136488380ca4efd",
+          "args": {
+            "timeout_ms": 10000
+          },
+          "receipt_sha256": "dded7a327c4b2eb988579651aecebb931b4ebd669e430912c8ed3ace0ff57996"
+        },
+        {
+          "ordinal": 1,
+          "time": "2026-10-06T06:42:49.710Z",
+          "tool": "wait_agent",
+          "call_id": "call_84a1636fd28c430f9a25c9ec",
+          "args": {
+            "timeout_ms": 30000
+          },
+          "receipt_sha256": "dded7a327c4b2eb988579651aecebb931b4ebd669e430912c8ed3ace0ff57996"
+        },
+        {
+          "ordinal": 1,
+          "time": "2026-10-06T06:43:24.954Z",
+          "tool": "close_agent",
+          "call_id": "call_e66c5e2d80de4025971cfe4b",
+          "args": {
+            "target": "01a10feb-b35a-7db0-a236-02476683d665"
+          },
+          "receipt_sha256": "3f137beb7dd2f568d6088ce9ebbd01f88f9a83106a9bc1a91947231503307a97"
+        },
+        {
+          "ordinal": 1,
+          "time": "2026-10-06T06:43:36.105Z",
+          "tool": "spawn_agent",
+          "call_id": "call_36bc37aafdb94c3ab040805d",
+          "args": {
+            "agent_type": "ric_devflow_reviewer",
+            "fork_context": false
+          },
+          "receipt_sha256": "e00165419cf82d2c3deae36efb1cf0b52553e284a0a00df04df006fc0c08defe"
+        },
+        {
+          "ordinal": 1,
+          "time": "2026-10-06T06:43:42.420Z",
+          "tool": "wait_agent",
+          "call_id": "call_96b2c4c3c6cc45f9b44e1ef3",
+          "args": {
+            "timeout_ms": 120000
+          },
+          "receipt_sha256": "46034994b4b29ea30ddf2540e4dc1db16184ba984441a4fefcec49915d1a7ce3"
+        },
+        {
+          "ordinal": 1,
+          "time": "2026-10-06T06:45:04.844Z",
+          "tool": "send_input",
+          "call_id": "call_e3c3e31ed51b4509a2890a87",
+          "args": {
+            "target": "01a10ff4-1240-7a72-9f0a-1e43d05478f0"
+          },
+          "receipt_sha256": "374eca5e634b88583b392442f6ecc12008fe9e2e1c982fe33381bd4eabfb9fb3"
+        },
+        {
+          "ordinal": 1,
+          "time": "2026-10-06T06:45:13.062Z",
+          "tool": "wait_agent",
+          "call_id": "call_d648f8364c0b40eeb14286d9",
+          "args": {
+            "timeout_ms": 120000
+          },
+          "receipt_sha256": "1dba44f8fe35d99f1bf6ffd34437de2b92947c6a8e037c2255aed8c8dc48fb42"
+        }
+      ],
+      "fixture_commands": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:36:34.412Z",
+          "call_id": "call_bbb72558f4bb4b428d05b191",
+          "command": "printf '%s\\n' '-- status after native actions --' && git status --short --branch && printf '%s\\n' '-- fixture HEAD --' && git rev-parse HEAD && printf '%s\\n' '-- sample bytes --' && python3 -c 'from pathlib import Path; print(repr(Path(\"sample.txt\").read_bytes()))'",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-q2",
+          "receipt_sha256": "6d3b99d4422cfcfcce02a86b1366e160455e2ddc2af91f66760079751b874562",
+          "exit_code": 0,
+          "output_sha256": "6d3b99d4422cfcfcce02a86b1366e160455e2ddc2af91f66760079751b874562"
+        },
+        {
+          "ordinal": 1,
+          "time": "2026-10-06T06:42:09.382Z",
+          "call_id": "call_17117810017f45dfb73968ab",
+          "command": "printf '%s\\n' '-- fixture verification --' && git status --short --branch && git rev-parse HEAD && python3 -c 'from pathlib import Path; print(repr(Path(\"sample.txt\").read_bytes()))' && printf '%s\\n' '-- lifecycle references --' && rg -n -i \"quota|容量|回收|替换|恢复|关闭|completed|已完成\" .agents/skills/ric-devflow/references .agents/skills/ric-devflow-reviewer/SKILL.md | head -120",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-q2",
+          "receipt_sha256": "92587f408137e4f25a2ad43208af658feb41f8b79549675382061f45745ed478",
+          "exit_code": 0,
+          "output_sha256": "92587f408137e4f25a2ad43208af658feb41f8b79549675382061f45745ed478"
+        },
+        {
+          "ordinal": 1,
+          "time": "2026-10-06T06:45:24.068Z",
+          "call_id": "call_afa52086c0c348db895dd89f",
+          "command": "printf '%s\\n' '-- final fixture verification --' && git status --short --branch && git rev-parse HEAD && python3 -c 'from pathlib import Path; print(repr(Path(\"sample.txt\").read_bytes()))'",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-q2",
+          "receipt_sha256": "6d2fcc61a1a611ac9dfd3aa9ab859491b2d8a685b925489aa631682e0077cc38",
+          "exit_code": 0,
+          "output_sha256": "6d2fcc61a1a611ac9dfd3aa9ab859491b2d8a685b925489aa631682e0077cc38"
+        }
+      ],
+      "completed_turns": [
+        {
+          "ordinal": 0,
+          "turn_id": "01a10fea-ccaa-7f11-94ac-18de46f4d4f2",
+          "started_at": 1791268421,
+          "completed_at": 1791268627,
+          "duration_ms": 205725
+        },
+        {
+          "ordinal": 1,
+          "turn_id": "01a10ff2-74bf-7fe1-879a-32aee6088af3",
+          "started_at": 1791268910,
+          "completed_at": 1791269143,
+          "duration_ms": 232538
+        }
+      ],
+      "own_test_rollout_found": true
+    },
+    "01a10feb-b35a-7db0-a236-02476683d665": {
+      "contexts": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:34:30.572Z",
+          "turn_id": "01a10feb-b73a-79c2-9141-1c94fefc678c",
+          "root_turn_id": "01a10fea-ccaa-7f11-94ac-18de46f4d4f2",
+          "model": "zcode/GLM-5.3",
+          "effort": "max",
+          "multi_agent_version": "v1"
+        },
+        {
+          "ordinal": 1,
+          "time": "2026-10-06T06:35:02.593Z",
+          "turn_id": "01a10fec-3935-7a40-82a4-b5519e2e07d2",
+          "root_turn_id": "01a10fea-ccaa-7f11-94ac-18de46f4d4f2",
+          "model": "zcode/GLM-5.3",
+          "effort": "max",
+          "multi_agent_version": "v1"
+        }
+      ],
+      "lifecycle_calls": [],
+      "fixture_commands": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:34:44.956Z",
+          "call_id": "call_0ffb1d39941848daa02a9eac",
+          "command": "python3 -c 'import subprocess,sys; sha=\"d1afe6c821dcfba11c75eda19360e373545dcfb4\"; expected=b\"lifecycle-fixture\\n\"; actual=subprocess.check_output([\"git\",\"show\",f\"{sha}:sample.txt\"]); print(f\"actual={actual!r}\"); sys.exit(0 if actual == expected else 1)'",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-q2",
+          "receipt_sha256": "31bbdfc56cd82078d62d3d296bbf702955e346b22299f0bbb7e1005e0ae6ea26",
+          "exit_code": 0,
+          "output_sha256": "31bbdfc56cd82078d62d3d296bbf702955e346b22299f0bbb7e1005e0ae6ea26"
+        },
+        {
+          "ordinal": 1,
+          "time": "2026-10-06T06:35:11.114Z",
+          "call_id": "call_5f95734c7e3d4e74a829c461",
+          "command": "python3 -c 'import subprocess,sys; sha=\"d1afe6c821dcfba11c75eda19360e373545dcfb4\"; data=subprocess.check_output([\"git\",\"show\",f\"{sha}:sample.txt\"]); print(f\"line_count={data.count(chr(10).encode())}\"); sys.exit(0 if data.count(chr(10).encode()) == 1 else 1)'",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-q2",
+          "receipt_sha256": "7412ca91e998586988d9190d0cf837f479218ad81fc903aeec7e79c39a1d02f0",
+          "exit_code": 0,
+          "output_sha256": "7412ca91e998586988d9190d0cf837f479218ad81fc903aeec7e79c39a1d02f0"
+        }
+      ],
+      "completed_turns": [
+        {
+          "ordinal": 0,
+          "turn_id": "01a10feb-b73a-79c2-9141-1c94fefc678c",
+          "started_at": 1791268469,
+          "completed_at": 1791268493,
+          "duration_ms": 24610
+        },
+        {
+          "ordinal": 1,
+          "turn_id": "01a10fec-3935-7a40-82a4-b5519e2e07d2",
+          "started_at": 1791268502,
+          "completed_at": 1791268516,
+          "duration_ms": 14396
+        }
+      ],
+      "own_test_rollout_found": true
+    },
+    "01a10fec-a88c-7823-902b-1a8f8daef84b": {
+      "contexts": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:35:33.172Z",
+          "turn_id": "01a10fec-a9e3-7312-815c-f52dc4bd4350",
+          "root_turn_id": "01a10fea-ccaa-7f11-94ac-18de46f4d4f2",
+          "model": "zcode/GLM-5.3",
+          "effort": "max",
+          "multi_agent_version": "v1"
+        },
+        {
+          "ordinal": 1,
+          "time": "2026-10-06T06:35:59.093Z",
+          "turn_id": "01a10fed-163d-73a1-ba2a-182aab8cd7d7",
+          "root_turn_id": "01a10fea-ccaa-7f11-94ac-18de46f4d4f2",
+          "model": "zcode/GLM-5.3",
+          "effort": "max",
+          "multi_agent_version": "v1"
+        }
+      ],
+      "lifecycle_calls": [],
+      "fixture_commands": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:35:44.272Z",
+          "call_id": "call_8769d59f32ad455599ee8eab",
+          "command": "python3 -c 'import subprocess,sys; sha=\"d1afe6c821dcfba11c75eda19360e373545dcfb4\"; expected=b\"lifecycle-fixture\\n\"; actual=subprocess.check_output([\"git\",\"show\",f\"{sha}:sample.txt\"]); print(f\"actual={actual!r} requirement_satisfied={actual == expected} edits_necessary={actual != expected}\"); sys.exit(0 if actual == expected else 1)'",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-q2",
+          "receipt_sha256": "4ba776e4ab8100eaf72129b094f2d6eae348a7642151ec97ba0fa8af262d7dec",
+          "exit_code": 0,
+          "output_sha256": "4ba776e4ab8100eaf72129b094f2d6eae348a7642151ec97ba0fa8af262d7dec"
+        },
+        {
+          "ordinal": 1,
+          "time": "2026-10-06T06:36:06.260Z",
+          "call_id": "call_a3118b14e4fe4abdaeb5d895",
+          "command": "python3 -c 'import subprocess,sys; sha=\"d1afe6c821dcfba11c75eda19360e373545dcfb4\"; data=subprocess.check_output([\"git\",\"show\",f\"{sha}:sample.txt\"]); ok=data.endswith(b\"\\n\") and b\"\\r\" not in data; print(f\"ends_with_lf={data.endswith(chr(10).encode())} contains_cr={chr(13).encode() in data}\"); sys.exit(0 if ok else 1)'",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-q2",
+          "receipt_sha256": "d06e3499da8f98d2f5903d3f215d9a25ac337dd22c1e2ed7d60477ff8e625f68",
+          "exit_code": 0,
+          "output_sha256": "d06e3499da8f98d2f5903d3f215d9a25ac337dd22c1e2ed7d60477ff8e625f68"
+        }
+      ],
+      "completed_turns": [
+        {
+          "ordinal": 0,
+          "turn_id": "01a10fec-a9e3-7312-815c-f52dc4bd4350",
+          "started_at": 1791268530,
+          "completed_at": 1791268551,
+          "duration_ms": 20470
+        },
+        {
+          "ordinal": 1,
+          "turn_id": "01a10fed-163d-73a1-ba2a-182aab8cd7d7",
+          "started_at": 1791268558,
+          "completed_at": 1791268571,
+          "duration_ms": 13047
+        }
+      ],
+      "own_test_rollout_found": true
+    },
+    "01a10ff4-0ede-7dd0-a005-d01215f83350": {
+      "contexts": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:43:54.368Z",
+          "turn_id": "01a10ff4-447a-79b1-958f-cf9b0c1bfb8c",
+          "root_turn_id": "01a10ff4-447a-79b1-958f-cf9b0c1bfb8c",
+          "model": "zcode/GLM-5.3",
+          "effort": "max",
+          "multi_agent_version": "v1"
+        }
+      ],
+      "lifecycle_calls": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:45:05.625Z",
+          "tool": "spawn_agent",
+          "call_id": "call_0b829a7725924332ab6bf5ee",
+          "args": {
+            "agent_type": "ric_devflow_implementer"
+          },
+          "receipt_sha256": "8081c91fbe734cb9dbe1a82c800749caa7a95807a210cac7a50c2b4d8453df78"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:45:09.007Z",
+          "tool": "spawn_agent",
+          "call_id": "call_4002d54de3254658bcfecde9",
+          "args": {
+            "agent_type": "ric_devflow_implementer"
+          },
+          "receipt_sha256": "a2c4782e7707f46ac0aac8c527e2275f1f5112e8ff24d5f9c3189b3ed9585b7a"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:45:23.161Z",
+          "tool": "wait_agent",
+          "call_id": "call_efe39318e8c64a9188a86d1e",
+          "args": {
+            "timeout_ms": 600000
+          },
+          "receipt_sha256": "3c5e73e143a948f795108e98c1ab8f59455a1d42a444352e3babd3d61c68b8fe"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:46:50.580Z",
+          "tool": "wait_agent",
+          "call_id": "call_d4197c68d2c7414283718176",
+          "args": {
+            "timeout_ms": 600000
+          },
+          "receipt_sha256": "4124166b557a75d93db877c89fe7503b0883d336dc2023afae5c9a08b52a3ca8"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:47:39.943Z",
+          "tool": "close_agent",
+          "call_id": "call_a36b87b38b2c4ef99f03099b",
+          "args": {
+            "target": "01a10ff5-7d23-74b1-af2f-dd062d7e729d"
+          },
+          "receipt_sha256": "f9092b9c0896069027b090dbdf509b9d2cb3954ffaef9e62544a31686c057a90"
+        }
+      ],
+      "fixture_commands": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:44:36.667Z",
+          "call_id": "call_1437a0fbd7134d3eb5de8017",
+          "command": "cat .codex/agents/ric-devflow-implementer.toml && printf '\\n--- object identity precheck (main only) ---\\n' && git cat-file -t 79f839ea81c12e4b4cd5c3d71e9557e84260d039 && git ls-tree 79f839ea81c12e4b4cd5c3d71e9557e84260d039 alpha.txt beta.txt",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-parallel",
+          "receipt_sha256": "6de0db13c80bb3cd56932601bc1e1b4ea1984c3f01d97ef01623a8c9bf777a6d",
+          "exit_code": 0,
+          "output_sha256": "6de0db13c80bb3cd56932601bc1e1b4ea1984c3f01d97ef01623a8c9bf777a6d"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:47:45.025Z",
+          "call_id": "call_a7f609fa940245eca9c085c5",
+          "command": "set -Eeuo pipefail\nprintf '%s\\n' '--- timestamps ---'\ndate -u +%Y-%m-%dT%H:%M:%S.%3NZ\ndate +%Y-%m-%dT%H:%M:%S.%3N%:z\nprintf '%s\\n' '--- repository diff/status ---'\ngit diff --exit-code -- alpha.txt beta.txt\ngit diff --cached --exit-code -- alpha.txt beta.txt\ngit status --short --branch\nprintf '%s\\n' '--- per-worktree final status/object identity ---'\nfor spec in alpha:alpha.txt beta:beta.txt; do\n  d=\".worktrees/${spec%%:*}\"\n  p=\"${spec#*:}\"\n  printf '\\n[%s/%s]\\n' \"$d\" \"$p\"\n  printf 'HEAD='; git -C \"$d\" rev-parse HEAD\n  printf 'tree='; git -C \"$d\" rev-parse 'HEAD^{tree}'\n  printf 'blob='; git -C \"$d\" rev-parse \"HEAD:$p\"\n  printf 'worktree_blob='; git -C \"$d\" hash-object \"$p\"\n  git -C \"$d\" diff --exit-code -- \"$p\"\n  git -C \"$d\" diff --cached --exit-code -- \"$p\"\n  git -C \"$d\" status --short --branch\ndone",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-parallel",
+          "receipt_sha256": "d4fac761e18407d51ba9496f419c7122726c462595fb283f83e98e5e1d8f2a1b",
+          "exit_code": 0,
+          "output_sha256": "d4fac761e18407d51ba9496f419c7122726c462595fb283f83e98e5e1d8f2a1b"
+        }
+      ],
+      "completed_turns": [
+        {
+          "ordinal": 0,
+          "turn_id": "01a10ff4-447a-79b1-958f-cf9b0c1bfb8c",
+          "started_at": 1791269032,
+          "completed_at": 1791269369,
+          "duration_ms": 337175
+        }
+      ],
+      "own_test_rollout_found": true
+    },
+    "01a10ff4-1240-7a72-9f0a-1e43d05478f0": {
+      "contexts": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:43:39.198Z",
+          "turn_id": "01a10ff4-1488-7682-8ef6-d7f4130a14c1",
+          "root_turn_id": "01a10ff2-74bf-7fe1-879a-32aee6088af3",
+          "model": "zcode/GLM-5.3",
+          "effort": "max",
+          "multi_agent_version": "v1"
+        },
+        {
+          "ordinal": 1,
+          "time": "2026-10-06T06:45:05.752Z",
+          "turn_id": "01a10ff5-6cdb-7ab0-a381-507111044961",
+          "root_turn_id": "01a10ff2-74bf-7fe1-879a-32aee6088af3",
+          "model": "zcode/GLM-5.3",
+          "effort": "max",
+          "multi_agent_version": "v1"
+        }
+      ],
+      "lifecycle_calls": [],
+      "fixture_commands": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:44:40.429Z",
+          "call_id": "call_a4e1fe6c53484881af99403a",
+          "command": "python3 -c 'import subprocess,sys; sha=\"d1afe6c821dcfba11c75eda19360e373545dcfb4\"; expected=b\"lifecycle-fixture\\n\"; actual=subprocess.check_output([\"git\",\"show\",f\"{sha}:sample.txt\"]); print(f\"actual={actual!r} matches={actual == expected}\"); sys.exit(0 if actual == expected else 1)'",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-q2",
+          "receipt_sha256": "5fa0a4fc563b0371a45cd8b94ae5edd3cfbfdfcb105b90173b70c3ee42e7c276",
+          "exit_code": 0,
+          "output_sha256": "5fa0a4fc563b0371a45cd8b94ae5edd3cfbfdfcb105b90173b70c3ee42e7c276"
+        },
+        {
+          "ordinal": 1,
+          "time": "2026-10-06T06:45:13.107Z",
+          "call_id": "call_3cd95d7a7991427d8cebe95d",
+          "command": "python3 -c 'import subprocess,sys; sha=\"d1afe6c821dcfba11c75eda19360e373545dcfb4\"; data=subprocess.check_output([\"git\",\"show\",f\"{sha}:sample.txt\"]); ok=data.endswith(b\"\\n\"); print(f\"ends_with_lf={data.endswith(chr(10).encode())}\"); sys.exit(0 if ok else 1)'",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-q2",
+          "receipt_sha256": "53502c22d90c2dc5f82c175a5b85cb095bb088ed6d5e70c7d255b9d33900befd",
+          "exit_code": 0,
+          "output_sha256": "53502c22d90c2dc5f82c175a5b85cb095bb088ed6d5e70c7d255b9d33900befd"
+        }
+      ],
+      "completed_turns": [
+        {
+          "ordinal": 0,
+          "turn_id": "01a10ff4-1488-7682-8ef6-d7f4130a14c1",
+          "started_at": 1791269017,
+          "completed_at": 1791269096,
+          "duration_ms": 78926
+        },
+        {
+          "ordinal": 1,
+          "turn_id": "01a10ff5-6cdb-7ab0-a381-507111044961",
+          "started_at": 1791269105,
+          "completed_at": 1791269117,
+          "duration_ms": 12321
+        }
+      ],
+      "own_test_rollout_found": true
+    },
+    "01a10ff5-6fe7-7121-9e17-76f71537c3f4": {
+      "contexts": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:45:08.876Z",
+          "turn_id": "01a10ff5-722a-7d73-85f4-e658097e6bf0",
+          "root_turn_id": "01a10ff4-447a-79b1-958f-cf9b0c1bfb8c",
+          "model": "zcode/GLM-5.3",
+          "effort": "max",
+          "multi_agent_version": "v1"
+        }
+      ],
+      "lifecycle_calls": [],
+      "fixture_commands": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:46:13.113Z",
+          "call_id": "call_8d740b99a3a44c19b78946c8",
+          "command": "set -u\ntarget='.worktrees/alpha'\nexpected_head='79f839ea81c12e4b4cd5c3d71e9557e84260d039'\nexpected_bytes='alpha-lifecycle\\n'\nrun() {\n  printf '$ %s\\n' \"$*\"\n  \"$@\"\n  local rc=$?\n  printf '[exit %d]\\n' \"$rc\"\n  return \"$rc\"\n}\nrun test -d \"$target\"\nrun test -f \"$target/alpha.txt\"\nrun git -C \"$target\" rev-parse --verify HEAD\nrun git -C \"$target\" rev-parse HEAD^{tree}\nrun git -C \"$target\" ls-tree HEAD -- alpha.txt\nrun git -C \"$target\" cat-file -s \"$(git -C \"$target\" rev-parse HEAD:alpha.txt)\"\nprintf '$ git -C %s show %%s:alpha.txt | od -An -tx1\\n' \"$target\"\ngit -C \"$target\" show \"$(git -C \"$target\" rev-parse HEAD:alpha.txt)\" | od -An -tx1\nprintf '[exit %d]\\n' \"$?\"\nactual_head=\"$(git -C \"$target\" rev-parse HEAD 2>/dev/null)\"\nactual_bytes=\"$(git -C \"$target\" show HEAD:alpha.txt 2>/dev/null; printf x)\"\nactual_bytes=\"${actual_bytes%x}\"\nif [ \"$actual_head\" = \"$expected_head\" ] && [ \"$actual_bytes\" = \"$expected_bytes\" ]; then\n  printf '[exact-byte-and-head-check exit 0]\\n'\nelse\n  printf '[exact-byte-and-head-check exit 1]\\n'\nfi\nrun git -C \"$target\" status --short --branch\n",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-parallel",
+          "receipt_sha256": "9c7c8ebfed5a2682f2de90c6d658a981b326357d7ec4609a357747742feb7634",
+          "exit_code": 0,
+          "output_sha256": "9c7c8ebfed5a2682f2de90c6d658a981b326357d7ec4609a357747742feb7634"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:46:35.548Z",
+          "call_id": "call_2285d1d250414f78b2ccc726",
+          "command": "set -Eeuo pipefail\ntarget='.worktrees/alpha'\nobject='cda5681d8ea2baaf6c5ee2d6090f779291d22583'\nprintf '$ git -C %s cat-file blob %s | cmp -s - <(printf %%s '\\''alpha-lifecycle\\\\n'\\'')\\n' \"$target\" \"$object\"\nif git -C \"$target\" cat-file blob \"$object\" | cmp -s - <(printf '%s' 'alpha-lifecycle\n'); then\n  printf '[exit 0]\\n'\nelse\n  rc=$?\n  printf '[exit %d]\\n' \"$rc\"\n  exit \"$rc\"\nfi\nprintf '$ git -C %s diff --quiet -- alpha.txt && git -C %s diff --cached --quiet -- alpha.txt\\n' \"$target\" \"$target\"\ngit -C \"$target\" diff --quiet -- alpha.txt\ngit -C \"$target\" diff --cached --quiet -- alpha.txt\nprintf '[exit %d]\\n' \"$?\"\nprintf '$ cmp -s %s/alpha.txt <(printf %%s '\\''alpha-lifecycle\\\\n'\\'')\\n' \"$target\"\nif cmp -s \"$target/alpha.txt\" <(printf '%s' 'alpha-lifecycle\n'); then\n  printf '[exit 0]\\n'\nelse\n  rc=$?\n  printf '[exit %d]\\n' \"$rc\"\n  exit \"$rc\"\nfi\nprintf '$ git -C %s status --short --branch\\n' \"$target\"\ngit -C \"$target\" status --short --branch\nprintf '[exit %d]\\n' \"$?\"",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-parallel",
+          "receipt_sha256": "4be4470de7ff47abaab2a025819a1e72668773c7d64e4782342e957bc2cf8f48",
+          "exit_code": 0,
+          "output_sha256": "4be4470de7ff47abaab2a025819a1e72668773c7d64e4782342e957bc2cf8f48"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:46:54.890Z",
+          "call_id": "call_47401b310b5a4efa9a78cc58",
+          "command": "set -Eeuo pipefail\nprintf '$ git -C .worktrees/alpha hash-object alpha.txt\\n'\ngit -C .worktrees/alpha hash-object alpha.txt\nprintf '[exit %d]\\n' \"$?\"\nprintf '$ git -C .worktrees/alpha cat-file -t cda5681d8ea2baaf6c5ee2d6090f779291d22583\\n'\ngit -C .worktrees/alpha cat-file -t cda5681d8ea2baaf6c5ee2d6090f779291d22583\nprintf '[exit %d]\\n' \"$?\"",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-parallel",
+          "receipt_sha256": "ee5d762dae4315d0f54c9685b8488c6e7b78e41b07ac47ce2a0d8989daf42c66",
+          "exit_code": 0,
+          "output_sha256": "ee5d762dae4315d0f54c9685b8488c6e7b78e41b07ac47ce2a0d8989daf42c66"
+        }
+      ],
+      "completed_turns": [
+        {
+          "ordinal": 0,
+          "turn_id": "01a10ff5-722a-7d73-85f4-e658097e6bf0",
+          "started_at": 1791269106,
+          "completed_at": 1791269254,
+          "duration_ms": 148164
+        }
+      ],
+      "own_test_rollout_found": true
+    },
+    "01a10ff5-7d23-74b1-af2f-dd062d7e729d": {
+      "contexts": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:45:11.883Z",
+          "turn_id": "01a10ff5-7ebd-72e1-aeef-a01b59559cd5",
+          "root_turn_id": "01a10ff4-447a-79b1-958f-cf9b0c1bfb8c",
+          "model": "zcode/GLM-5.3",
+          "effort": "max",
+          "multi_agent_version": "v1"
+        }
+      ],
+      "lifecycle_calls": [],
+      "fixture_commands": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:46:12.248Z",
+          "call_id": "call_adcccb8bff2a4141b17d4b5e",
+          "command": "set -Eeuo pipefail\nexport GIT_OPTIONAL_LOCKS=0\nprintf '%s\\n' '--- beta worktree identity ---'\npwd\ngit rev-parse --show-toplevel\nprintf '[exit=%s]\\n' \"$?\"\nprintf 'HEAD='\ngit rev-parse HEAD\nprintf '[exit=%s]\\n' \"$?\"\nprintf 'HEAD_TREE='\ngit rev-parse 'HEAD^{tree}'\nprintf '[exit=%s]\\n' \"$?\"\nprintf 'HEAD_BETA_BLOB='\nhead_blob=$(git rev-parse 'HEAD:beta.txt')\nprintf '%s\\n' \"$head_blob\"\nprintf '[exit=%s]\\n' \"$?\"\nprintf 'HEAD_BETA_TYPE='\ngit cat-file -t \"$head_blob\"\nprintf '[exit=%s]\\n' \"$?\"\nprintf 'HEAD_BLOB_SIZE_BYTES='\ngit cat-file -s \"$head_blob\"\nprintf '[exit=%s]\\n' \"$?\"\nprintf 'WORKTREE_BETA_BLOB='\nwork_blob=$(git hash-object beta.txt)\nprintf '%s\\n' \"$work_blob\"\nprintf '[exit=%s]\\n' \"$?\"\nprintf 'WORKTREE_BETA_SIZE_BYTES='\nwc -c < beta.txt\nprintf '[exit=%s]\\n' \"$?\"\nprintf 'WORKTREE_BETA_HEX='\nwork_hex=$(od -An -v -tx1 beta.txt | tr -d ' \\n')\nprintf '%s\\n' \"$work_hex\"\nprintf '[exit=%s]\\n' \"$?\"\nprintf 'HEAD_BETA_HEX='\nhead_hex=$(git cat-file -p \"$head_blob\" | od -An -v -tx1 | tr -d ' \\n')\nprintf '%s\\n' \"$head_hex\"\nprintf '[exit=%s]\\n' \"$?\"\nexpected_hex=$(printf 'beta-lifecycle\\n' | od -An -v -tx1 | tr -d ' \\n')\nif [[ \"$head_blob\" == \"$work_blob\" && \"$head_hex\" == \"$expected_hex\" && \"$work_hex\" == \"$expected_hex\" ]]; then\n  printf 'EXACT_BYTE_ORACLE=PASS bytes=%s hex=%s\\n' \"$(git cat-file -s \"$head_blob\")\" \"$expected_hex\"\nelse\n  printf 'EXACT_BYTE_ORACLE=FAIL\\n'\n  exit 1\nfi\nprintf '[exit=%s]\\n' \"$?\"\nprintf '%s\\n' '--- final worktree status ---'\ngit status --short --branch\nprintf '[exit=%s]\\n' \"$?\"\nprintf 'ZERO_FILE_CHANGES=PASS\\n'",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-parallel/.worktrees/beta",
+          "receipt_sha256": "0b166e307af2831955d0f5f11720f8e2627e7b124e5b54feb07eeb0b91df80ef",
+          "exit_code": 0,
+          "output_sha256": "0b166e307af2831955d0f5f11720f8e2627e7b124e5b54feb07eeb0b91df80ef"
+        }
+      ],
+      "completed_turns": [
+        {
+          "ordinal": 0,
+          "turn_id": "01a10ff5-7ebd-72e1-aeef-a01b59559cd5",
+          "started_at": 1791269109,
+          "completed_at": 1791269207,
+          "duration_ms": 97755
+        }
+      ],
+      "own_test_rollout_found": true
+    },
+    "01a10ff9-1c94-7713-a218-29f1f01c607b": {
+      "contexts": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:49:23.576Z",
+          "turn_id": "01a10ff9-255b-7a02-af3a-d6c810ecca4f",
+          "root_turn_id": "01a10ff9-255b-7a02-af3a-d6c810ecca4f",
+          "model": "zcode/GLM-5.3",
+          "effort": "max",
+          "multi_agent_version": "v1"
+        }
+      ],
+      "lifecycle_calls": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:50:15.131Z",
+          "tool": "spawn_agent",
+          "call_id": "call_de03583dfca2490e901e895f",
+          "args": {
+            "agent_type": "ric_devflow_tester",
+            "fork_context": false
+          },
+          "receipt_sha256": "e46ac14fa35471258963294092627d838d0afb4838255d4907a9a5daadcfe4c4"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:50:19.628Z",
+          "tool": "wait_agent",
+          "call_id": "call_0c2433a34e384b2fa5054fea",
+          "args": {
+            "timeout_ms": 30000
+          },
+          "receipt_sha256": "dded7a327c4b2eb988579651aecebb931b4ebd669e430912c8ed3ace0ff57996"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:50:53.704Z",
+          "tool": "wait_agent",
+          "call_id": "call_798ce5d9ea5f4783b527ac16",
+          "args": {
+            "timeout_ms": 30000
+          },
+          "receipt_sha256": "dded7a327c4b2eb988579651aecebb931b4ebd669e430912c8ed3ace0ff57996"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:51:27.364Z",
+          "tool": "wait_agent",
+          "call_id": "call_43e63219c4324bdaa6abe7b7",
+          "args": {
+            "timeout_ms": 60000
+          },
+          "receipt_sha256": "4973c08603bb17d14d74ada23a4f4ec47b9cb4a7d26ab19fd3bbcd45eb380e7f"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:51:36.473Z",
+          "tool": "close_agent",
+          "call_id": "call_d661c46dc06146efbbe180d4",
+          "args": {
+            "target": "01a10ffa-28ec-72e0-9385-2db01ec937fb"
+          },
+          "receipt_sha256": "65628dcf92011265441fb391446deea26f5b8602cb15286d908a636f4ed9ac1a"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:51:44.381Z",
+          "tool": "spawn_agent",
+          "call_id": "call_6c27a059f7174dfcb2c84478",
+          "args": {
+            "agent_type": "ric_devflow_implementer",
+            "fork_context": false
+          },
+          "receipt_sha256": "2248a46c2eb66ea4a9ac047ba6dfc1d76ceb2679f3ca082a91e7fa8c319fd407"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:51:48.854Z",
+          "tool": "wait_agent",
+          "call_id": "call_c6bf098ff3b74b94b7df59e3",
+          "args": {
+            "timeout_ms": 60000
+          },
+          "receipt_sha256": "dded7a327c4b2eb988579651aecebb931b4ebd669e430912c8ed3ace0ff57996"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:52:52.824Z",
+          "tool": "wait_agent",
+          "call_id": "call_ccfc52922e5646fb80eff81b",
+          "args": {
+            "timeout_ms": 60000
+          },
+          "receipt_sha256": "618bdb7a4ea701dde2815ac29a3d713da811a8c9fba1a67cb9514dd657c85ec6"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:53:06.900Z",
+          "tool": "close_agent",
+          "call_id": "call_35c3c6598d6140b384c69d8a",
+          "args": {
+            "target": "01a10ffb-8593-73b1-9978-a2559f44503c"
+          },
+          "receipt_sha256": "f11053b360870e82e97e689528b95716a10258a064597651724dfae4c19e8868"
+        }
+      ],
+      "fixture_commands": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:49:49.423Z",
+          "call_id": "call_373cc396c8dd4058a14271a1",
+          "command": "set -Eeuo pipefile 2>/dev/null || true\nset -Eeuo pipefail\nprintf '%s\\n' '--- candidate files ---'\nfind .codex/agents .agents/skills/ric-devflow -maxdepth 5 -type f -print | sort\nprintf '%s\\n' '--- tester definition ---'\ncat .codex/agents/ric_devflow_tester.json\nprintf '%s\\n' '--- implementer definition ---'\ncat .codex/agents/ric_devflow_implementer.json\nprintf '%s\\n' '--- tester skill ---'\ncat .agents/skills/ric-devflow-tester/SKILL.md\nprintf '%s\\n' '--- implementer skill ---'\ncat .agents/skills/ric-devflow-implementer/SKILL.md\nprintf '%s\\n' '--- protected fixture evidence ---'\ngit ls-files --stage sample.txt\ngit cat-file -s d1afe6c821dcfba11c75eda19360e373545dcfb4:sample.txt\nPYTHONUTF8=1 PYTHONIOENCODING=utf-8 python3 - <<'PY'\nfrom pathlib import Path\np = Path('sample.txt')\nb = p.read_bytes()\nprint({'path': str(p), 'bytes': repr(b), 'hex': b.hex(), 'length': len(b)})\nPY\nprintf '%s\\n' '--- git diff/status ---'\ngit diff --exit-code\ngit diff --check\ngit status --short",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-q2",
+          "receipt_sha256": "3ab610a52700a3a8c5a7f128dd772f94497080b42c19f104e4e9493aeee8ab01",
+          "exit_code": 1,
+          "output_sha256": "3ab610a52700a3a8c5a7f128dd772f94497080b42c19f104e4e9493aeee8ab01"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:49:55.327Z",
+          "call_id": "call_630e513fc89948e9bcefc3ae",
+          "command": "set -Eeuo pipefail\nprintf '%s\\n' '--- tester definition ---'\ncat .codex/agents/ric-devflow-tester.toml\nprintf '%s\\n' '--- implementer definition ---'\ncat .codex/agents/ric-devflow-implementer.toml\nprintf '%s\\n' '--- tester skill ---'\ncat .agents/skills/ric-devflow-tester/SKILL.md\nprintf '%s\\n' '--- implementer skill ---'\ncat .agents/skills/ric-devflow-implementer/SKILL.md\nprintf '%s\\n' '--- protected fixture evidence ---'\ngit ls-files --stage sample.txt\nprintf 'blob-size='; git cat-file -s d1afe6c821dcfba11c75eda19360e373545dcfb4:sample.txt\nPYTHONUTF8=1 PYTHONIOENCODING=utf-8 python3 - <<'PY'\nfrom pathlib import Path\nb = Path('sample.txt').read_bytes()\nprint({'path': 'sample.txt', 'bytes': repr(b), 'hex': b.hex(), 'length': len(b)})\nPY\nprintf '%s\\n' '--- git diff/status ---'\ngit diff --exit-code\ngit diff --check\ngit status --short",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-q2",
+          "receipt_sha256": "f1dd3ad7eb93f965a4a7cf176d533ad75dc1a63b8e8aae580d6d671ed3c8ecec",
+          "exit_code": 0,
+          "output_sha256": "f1dd3ad7eb93f965a4a7cf176d533ad75dc1a63b8e8aae580d6d671ed3c8ecec"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:53:15.212Z",
+          "call_id": "call_608e500e48354f4d9490ccb1",
+          "command": "set -Eeuo pipefail\nprintf 'head='; git rev-parse HEAD\nprintf 'status:\\n'; git status --short --branch\nprintf 'diff-check='; git diff --check && echo 0\nprintf 'diff-exit='; if git diff --exit-code >/dev/null; then echo 0; else echo $?; fi\nPYTHONUTF8=1 PYTHONIOENCODING=utf-8 python3 - <<'PY'\nfrom pathlib import Path\nb = Path('sample.txt').read_bytes()\nprint(f\"sample_exact={b == b'lifecycle-fixture\\\\n'} length={len(b)} hex={b.hex()}\")\nPY",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-q2",
+          "receipt_sha256": "6e295810334f057d6b55411df28f6f3b748b6ec0f1523f69b181bffb937d71e2",
+          "exit_code": 0,
+          "output_sha256": "6e295810334f057d6b55411df28f6f3b748b6ec0f1523f69b181bffb937d71e2"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:53:25.738Z",
+          "call_id": "call_cd5af7fcdf7e4694908b8283",
+          "command": "set -Eeuo pipefail\nPYTHONUTF8=1 PYTHONIOENCODING=utf-8 python3 - <<'PY'\nfrom pathlib import Path\nb = Path('sample.txt').read_bytes()\nexpected = bytes.fromhex('6c6966656379636c652d666978747572650a')\nprint(f\"sample_exact={b == expected} expected_literal={expected == b'lifecycle-fixture' + b'\\n'} length={len(b)} hex={b.hex()}\")\nassert b == expected\nPY",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-q2",
+          "receipt_sha256": "470e5359d4287b94ec3209c61cddabd63d232c6b668e4b6fdeaba3dc4dd2a657",
+          "exit_code": 0,
+          "output_sha256": "470e5359d4287b94ec3209c61cddabd63d232c6b668e4b6fdeaba3dc4dd2a657"
+        }
+      ],
+      "completed_turns": [
+        {
+          "ordinal": 0,
+          "turn_id": "01a10ff9-255b-7a02-af3a-d6c810ecca4f",
+          "started_at": 1791269362,
+          "completed_at": 1791269653,
+          "duration_ms": 290704
+        }
+      ],
+      "own_test_rollout_found": true
+    },
+    "01a10ffa-28ec-72e0-9385-2db01ec937fb": {
+      "contexts": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:50:17.932Z",
+          "turn_id": "01a10ffa-2a4b-7810-a731-7f2ba27dfdd0",
+          "root_turn_id": "01a10ff9-255b-7a02-af3a-d6c810ecca4f",
+          "model": "zcode/GLM-5.3",
+          "effort": "max",
+          "multi_agent_version": "v1"
+        }
+      ],
+      "lifecycle_calls": [],
+      "fixture_commands": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:51:07.170Z",
+          "call_id": "call_3898f958815b45078c989c74",
+          "command": "PYTHONUTF8=1 PYTHONIOENCODING=utf-8 python3 - <<'PY'\nfrom pathlib import Path\nimport hashlib\nimport sys\n\npath = Path(\"sample.txt\")\nexpected = b\"lifecycle-fixture\\n\"\nactual = path.read_bytes()\nchecks = {\n    \"path\": str(path),\n    \"sha256\": hashlib.sha256(actual).hexdigest(),\n    \"length\": len(actual),\n    \"actual_hex\": actual.hex(),\n    \"expected_hex\": expected.hex(),\n    \"exact_equal\": actual == expected,\n}\nfor key, value in checks.items():\n    print(f\"{key}={value}\")\nif actual != expected or len(actual) != 18 or actual.hex() != \"6c6966656379636c652d666978747572650a\":\n    sys.exit(1)\nPY",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-q2",
+          "receipt_sha256": "65dd0b59ffd6b49c99400a12de1256207372b8685e0721ac7a5e615f36b1177d",
+          "exit_code": 0,
+          "output_sha256": "65dd0b59ffd6b49c99400a12de1256207372b8685e0721ac7a5e615f36b1177d"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:51:13.524Z",
+          "call_id": "call_1524634d9794497491becc79",
+          "command": "printf '%s\\n' '--- final status ---'; git status --short --branch; printf '%s\\n' '--- final diff ---'; git diff --exit-code -- sample.txt; rc=$?; printf 'git_diff_exit=%s\\n' \"$rc\"; exit \"$rc\"",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-q2",
+          "receipt_sha256": "6465c6d2d3c77d28893f3716fda66fc5ea8315266513b85f92b6b6be98e4c634",
+          "exit_code": 0,
+          "output_sha256": "6465c6d2d3c77d28893f3716fda66fc5ea8315266513b85f92b6b6be98e4c634"
+        }
+      ],
+      "completed_turns": [
+        {
+          "ordinal": 0,
+          "turn_id": "01a10ffa-2a4b-7810-a731-7f2ba27dfdd0",
+          "started_at": 1791269415,
+          "completed_at": 1791269491,
+          "duration_ms": 75857
+        }
+      ],
+      "own_test_rollout_found": true
+    },
+    "01a10ffb-8593-73b1-9978-a2559f44503c": {
+      "contexts": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:51:47.175Z",
+          "turn_id": "01a10ffb-8729-7b12-9b4a-c84b5e47b384",
+          "root_turn_id": "01a10ff9-255b-7a02-af3a-d6c810ecca4f",
+          "model": "zcode/GLM-5.3",
+          "effort": "max",
+          "multi_agent_version": "v1"
+        }
+      ],
+      "lifecycle_calls": [],
+      "fixture_commands": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:52:42.645Z",
+          "call_id": "call_ddcb9091b8734da2b6143e07",
+          "command": "set -u\nprintf '%s\\n' '--- cwd ---'\npwd -P\nprintf 'PWD_EXIT=%d\\n' \"$?\"\n\nprintf '%s\\n' '--- git top-level ---'\nGIT_OPTIONAL_LOCKS=0 git rev-parse --show-toplevel\nprintf 'TOPLEVEL_EXIT=%d\\n' \"$?\"\n\nprintf '%s\\n' '--- HEAD SHA ---'\nGIT_OPTIONAL_LOCKS=0 git rev-parse HEAD\nprintf 'REV_PARSE_EXIT=%d\\n' \"$?\"\n\nprintf '%s\\n' '--- sample.txt bytes ---'\nPYTHONUTF8=1 PYTHONIOENCODING=utf-8 python3 - <<'PY'\nfrom pathlib import Path\np = Path(\"sample.txt\")\ndata = p.read_bytes()\nexpected = b\"lifecycle-fixture\\n\"\nprint(f\"bytes={data!r}\")\nprint(f\"length={len(data)}\")\nprint(f\"hex={data.hex()}\")\nprint(f\"match_expected={data == expected}\")\nPY\nprintf 'PYTHON_EXIT=%d\\n' \"$?\"\n\nprintf '%s\\n' '--- sample.txt status ---'\nstatus_output=$(GIT_OPTIONAL_LOCKS=0 git status --porcelain -- sample.txt)\nstatus_rc=$?\nprintf 'STATUS_OUTPUT=[%s]\\n' \"$status_output\"\nprintf 'STATUS_EXIT=%d\\n' \"$status_rc\"\n\nprintf '%s\\n' '--- sample.txt worktree diff ---'\nGIT_OPTIONAL_LOCKS=0 git diff --quiet -- sample.txt\nprintf 'WORKTREE_DIFF_EXIT=%d\\n' \"$?\"\n\nprintf '%s\\n' '--- sample.txt staged diff ---'\nGIT_OPTIONAL_LOCKS=0 git diff --cached --quiet -- sample.txt\nprintf 'STAGED_DIFF_EXIT=%d\\n' \"$?\"",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-q2",
+          "receipt_sha256": "2020cc9e437e360d08fad1938ee4952de4176689f1a838ab50cd476be97337d4",
+          "exit_code": 0,
+          "output_sha256": "2020cc9e437e360d08fad1938ee4952de4176689f1a838ab50cd476be97337d4"
+        }
+      ],
+      "completed_turns": [
+        {
+          "ordinal": 0,
+          "turn_id": "01a10ffb-8729-7b12-9b4a-c84b5e47b384",
+          "started_at": 1791269505,
+          "completed_at": 1791269583,
+          "duration_ms": 78155
+        }
+      ],
+      "own_test_rollout_found": true
+    },
+    "01a11002-84b2-7210-9b07-11a528e3a767": {
+      "contexts": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T06:59:40.796Z",
+          "turn_id": "01a11002-8d4a-7773-88ab-1fb294d03156",
+          "root_turn_id": "01a11002-8d4a-7773-88ab-1fb294d03156",
+          "model": "zcode/GLM-5.3",
+          "effort": "max",
+          "multi_agent_version": "v1"
+        }
+      ],
+      "lifecycle_calls": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T07:00:37.723Z",
+          "tool": "spawn_agent",
+          "call_id": "call_93ccaee0a47c4f0bb24cbdc6",
+          "args": {
+            "agent_type": "default",
+            "fork_context": false
+          },
+          "receipt_sha256": "3866216cf7ca0a253755e6dd7591c93af23db37b09336560f4fa7f1a31fe825d"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T07:00:43.443Z",
+          "tool": "wait_agent",
+          "call_id": "call_e82014b90d964119ae1e3e1d",
+          "args": {
+            "timeout_ms": 120000
+          },
+          "receipt_sha256": "9ef9512c1c9413d664ad2755e68ff782ffa0bcd1877c0c3e42b20ccc21c37dc4"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T07:00:54.627Z",
+          "tool": "spawn_agent",
+          "call_id": "call_10a0891c0b4c4ed5830903dd",
+          "args": {
+            "agent_type": "ric_devflow_tester",
+            "fork_context": false
+          },
+          "receipt_sha256": "f015c3104fe51a28157bbd90bea70375330c685212b154f077deb055678fdffb"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T07:00:59.655Z",
+          "tool": "wait_agent",
+          "call_id": "call_070aa370018443ed8ff3f243",
+          "args": {
+            "timeout_ms": 120000
+          },
+          "receipt_sha256": "f0d5b948df54c61c712a09d8184c3a3b6126d036e251f4a6f9d7cb265faee20d"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T07:01:43.874Z",
+          "tool": "close_agent",
+          "call_id": "call_ec5d0d3f925d40b4affa3fb5",
+          "args": {
+            "target": "01a11003-eaf7-7e30-94cb-b1bc07af1b0e"
+          },
+          "receipt_sha256": "8058091bc200e54dfac456be8d85cb006e706cb21dbeadc17a6ed20709ac48cd"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T07:01:51.121Z",
+          "tool": "spawn_agent",
+          "call_id": "call_26d8732ae59a4daea813fc97",
+          "args": {
+            "agent_type": "ric_devflow_implementer",
+            "fork_context": false
+          },
+          "receipt_sha256": "eb2a5d8f907bde92b7c1cedee296663cc56f8dd47e431565b2355a6530bbe638"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T07:01:57.329Z",
+          "tool": "wait_agent",
+          "call_id": "call_1e74ad612775477b8fcd11c6",
+          "args": {
+            "timeout_ms": 120000
+          },
+          "receipt_sha256": "dc4a7a770e984a794a66a712ee7b18331001b90be07f4a5d5742129f13943b8d"
+        },
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T07:02:49.878Z",
+          "tool": "close_agent",
+          "call_id": "call_d78ef2ea6b454b89a9bc553f",
+          "args": {
+            "target": "01a11004-c7a3-7fd3-b6f8-fa792e99f8ff"
+          },
+          "receipt_sha256": "2511ed0e31b8fe64b34962e143a53ba635d2d264dcc43a22bc479ff7a6bc33db"
+        }
+      ],
+      "fixture_commands": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T07:02:59.658Z",
+          "call_id": "call_a58ea282221341358e45ffca",
+          "command": "set -Eeuo pipefail\nprintf 'status:\\n'\ngit status --short --branch\nprintf 'sample_bytes='\nPYTHONUTF8=1 PYTHONIOENCODING=utf-8 python3 -c 'from pathlib import Path; print(repr(Path(\"sample.txt\").read_bytes()))'\nprintf 'diff_check_exit='\nif git diff --check; then printf '0\\n'; else printf '%s\\n' \"$?\"; exit \"$?\"; fi\nprintf 'head='\ngit rev-parse HEAD",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-occupied",
+          "receipt_sha256": "fd3a1cf1a25afa522875d514f1c67b4549aa1b3cdad1f63360d1bb251a18608c",
+          "exit_code": 0,
+          "output_sha256": "fd3a1cf1a25afa522875d514f1c67b4549aa1b3cdad1f63360d1bb251a18608c"
+        }
+      ],
+      "completed_turns": [
+        {
+          "ordinal": 0,
+          "turn_id": "01a11002-8d4a-7773-88ab-1fb294d03156",
+          "started_at": 1791269979,
+          "completed_at": 1791270213,
+          "duration_ms": 234103
+        }
+      ],
+      "own_test_rollout_found": true
+    },
+    "01a11003-a8ec-7ba0-9755-99ea904913b9": {
+      "contexts": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T07:00:40.593Z",
+          "turn_id": "01a11003-aa6c-7d50-9410-98afe753209e",
+          "root_turn_id": "01a11002-8d4a-7773-88ab-1fb294d03156",
+          "model": "zcode/GLM-5.3",
+          "effort": "max",
+          "multi_agent_version": "v1"
+        }
+      ],
+      "lifecycle_calls": [],
+      "fixture_commands": [],
+      "completed_turns": [
+        {
+          "ordinal": 0,
+          "turn_id": "01a11003-aa6c-7d50-9410-98afe753209e",
+          "started_at": 1791270038,
+          "completed_at": 1791270044,
+          "duration_ms": 6266
+        }
+      ],
+      "own_test_rollout_found": true
+    },
+    "01a11003-eaf7-7e30-94cb-b1bc07af1b0e": {
+      "contexts": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T07:00:57.524Z",
+          "turn_id": "01a11003-ecb2-7de1-8cf0-71abb0a07788",
+          "root_turn_id": "01a11002-8d4a-7773-88ab-1fb294d03156",
+          "model": "zcode/GLM-5.3",
+          "effort": "max",
+          "multi_agent_version": "v1"
+        }
+      ],
+      "lifecycle_calls": [],
+      "fixture_commands": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T07:01:26.331Z",
+          "call_id": "call_91592031af2b404ca8ffc2ff",
+          "command": "PYTHONUTF8=1 PYTHONIOENCODING=utf-8 python3 -c 'from pathlib import Path; data=Path(\"sample.txt\").read_bytes(); expected=b\"lifecycle-fixture\\n\"; print(f\"actual={data!r}\"); print(f\"expected={expected!r}\"); print(f\"match={data == expected}\")'; rc=$?; printf 'exit_code=%d\\n' \"$rc\"; exit \"$rc\"",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-occupied",
+          "receipt_sha256": "ea9f32008d650bfe24e258d1610fbea2abe9701c45b5ea7a0894ae4d75590f2d",
+          "exit_code": 0,
+          "output_sha256": "ea9f32008d650bfe24e258d1610fbea2abe9701c45b5ea7a0894ae4d75590f2d"
+        }
+      ],
+      "completed_turns": [
+        {
+          "ordinal": 0,
+          "turn_id": "01a11003-ecb2-7de1-8cf0-71abb0a07788",
+          "started_at": 1791270055,
+          "completed_at": 1791270097,
+          "duration_ms": 42222
+        }
+      ],
+      "own_test_rollout_found": true
+    },
+    "01a11004-c7a3-7fd3-b6f8-fa792e99f8ff": {
+      "contexts": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T07:01:54.048Z",
+          "turn_id": "01a11004-cb4b-7913-bf88-ae05f52c822a",
+          "root_turn_id": "01a11002-8d4a-7773-88ab-1fb294d03156",
+          "model": "zcode/GLM-5.3",
+          "effort": "max",
+          "multi_agent_version": "v1"
+        }
+      ],
+      "lifecycle_calls": [],
+      "fixture_commands": [
+        {
+          "ordinal": 0,
+          "time": "2026-10-06T07:02:40.500Z",
+          "call_id": "call_e5c25d33365842e289e477d9",
+          "command": "set -u\nprintf '%s\\n' '--- git identity ---'\ngit rev-parse --show-toplevel\ngit rev-parse HEAD\ngit branch --show-current || true\nprintf '%s\\n' '--- status ---'\ngit status --short --branch\nprintf 'porcelain_entries=%s\\n' \"$(git status --porcelain=v1 | wc -l | tr -d ' ')\"\nprintf '%s\\n' '--- clean diff checks ---'\nif git diff --quiet; then printf 'git_diff_worktree=CLEAN\\n'; else printf 'git_diff_worktree=DIRTY\\n'; fi\nif git diff --cached --quiet; then printf 'git_diff_index=CLEAN\\n'; else printf 'git_diff_index=DIRTY\\n'; fi\nprintf '%s\\n' '--- sample.txt exact bytes ---'\nprintf 'size_worktree=%s\\n' \"$(wc -c < sample.txt | tr -d ' ')\"\nprintf 'bytes_worktree='; od -An -tx1 -v sample.txt | tr -d ' \\n'; printf '\\n'\nprintf 'content_worktree='; cat sample.txt\nprintf 'blob_hash_worktree=%s\\n' \"$(git hash-object sample.txt)\"\nprintf 'blob_hash_head=%s\\n' \"$(git rev-parse HEAD:sample.txt)\"\nprintf 'size_head=%s\\n' \"$(git cat-file -s HEAD:sample.txt)\"\nprintf 'bytes_head='; git cat-file blob HEAD:sample.txt | od -An -tx1 -v | tr -d ' \\n'; printf '\\n'",
+          "cwd": "<repo>/.devflow-validation-lifecycle-jgf8r488/native-fixture-occupied",
+          "receipt_sha256": "fd7454b0240c4c40891c5046deeaa347462666d373c4a679eb6afec2f605e147",
+          "exit_code": 0,
+          "output_sha256": "fd7454b0240c4c40891c5046deeaa347462666d373c4a679eb6afec2f605e147"
+        }
+      ],
+      "completed_turns": [
+        {
+          "ordinal": 0,
+          "turn_id": "01a11004-cb4b-7913-bf88-ae05f52c822a",
+          "started_at": 1791270112,
+          "completed_at": 1791270166,
+          "duration_ms": 54119
+        }
+      ],
+      "own_test_rollout_found": true
+    }
+  },
+  "reproduction_inputs": {
+    "native-quota1": "This is the explicitly authorized isolated Codex native lifecycle test, quota=1. It is not a business Root or a G gate. Read fixture AGENTS.md and the relevant candidate lifecycle instructions in .agents/skills/ric-devflow/references/shared/agent-lifecycle.md. This is a standalone native role diagnostic: all work is read-only synthetic fixture work, and the concrete actions below are authorized to observe this host, not to assert that a full workflow can fit the quota. Do not install anything, edit user settings, read credentials, invoke another CLI or use generic agents as substitutes. Preserve current configured model and valid inherited reasoning; do not change provider/model.\n\nUse the actual native role selector agent_type only if it exists. Candidate source for each role is its absolute path beneath the current fixture .agents/skills. Shared root is .agents/skills/ric-devflow. All native roles and skills are the copied candidate, fixture Git SHA d99f2821750c9ac789ec9caa90bf4995205f213d; this is test data, not a product SHA.\n\n1. Make one real native ric_devflow_reviewer perform a standalone BASELINE_REVIEW of sample.txt at the fixture SHA. Read only sample.txt and necessary role rules; scope is whether the synthetic one-line file contains lifecycle-fixture followed by newline. Return a concise complete role result with exact object identity, role and finding count; do not create files or formal Root state. Save the actual agent ID and full result in your parent context.\n2. After it has really completed, continue THE SAME actual Reviewer ID using the real follow-up interface. The new independent review action is to verify the same file is exactly one line (a new named action REVIEW-LINES). Do not repeat action 1 or spawn a new Reviewer for this step. Wait for the full result, preserve it, and observe list_agents/lifecycle if available.\n3. The next standalone action is an explicitly approved Tester baseline check of the same synthetic file: read and assert exact bytes b'lifecycle-fixture\\n' at SHA d99f2821750c9ac789ec9caa90bf4995205f213d; no production edits, no business Root, no invented approvals or gates. The old Reviewer actions are completed and their results are saved. Observe actual capacity and available safe release tools. If the host states a hard occupied-thread limit and provides no release, stop BEFORE a known-failing creation and report the concrete unsupported path. If this host's schema/context instead admits the completed instance no longer occupies the relevant concurrency slot, perform one real native ric_devflow_tester dispatch to test that observable interpretation. If denied by quota, keep the error, do not repeat, raise limits, interrupt the completed Reviewer to pretend it was released, or replace it via a generic agent.\n4. Only if the Tester really ran, reuse that same Tester ID once for a second concrete baseline check (the file ends with exactly one newline). If this succeeds and quota observations show admission is possible, perform one approved native Implementer diagnostic: inspect whether a change is needed to satisfy the exact-byte requirement already present, report no change if satisfied, and do not manufacture an edit. Only one approved task, same SHA, allowed write paths empty, protected paths all fixture files; no commits or merges. If this role requires missing material, report the real blocker rather than fake completion.\n\nReturn a concise machine-readable report: actual custom role selectors used, IDs, call/follow-up counts, completion/result preservation, capacity feedback, whether each concrete action executed exactly once, and PASS/FAIL/BLOCKED/not_run separately for every slice. Include evidence from actual tools, not just your intended decisions. Do not claim closing/releasing threads if no such API ran. Do not test other scenarios or produce a performance claim.",
+    "native-quota2": "Explicitly authorized isolated Codex native lifecycle test, quota=2. This is standalone fixture acceptance, not a business Root or product Gate. Read fixture AGENTS.md and necessary candidate rules only. Keep existing model/auth/permissions. Do not install anything, edit global config, read secrets, invoke other CLI clients, or use generic agents as native role substitutes. The fixture files and approvals below are synthetic test data, and every requested read-only test action is expressly authorized. Fixture SHA is d1afe6c821dcfba11c75eda19360e373545dcfb4, sample.txt is exactly b'lifecycle-fixture\\n'. Candidate roles are .codex/agents and candidate Skill roots .agents/skills. Use real agent_type selectors and minimal fork context if the actual schema supports them.\n\nThis test requests actual bounded role operations, not merely advice or simulated decisions:\n1. Spawn ric_devflow_tester with a standalone baseline action to verify exact sample.txt bytes at the given fixture SHA, using a real read/assertion and reporting its exact command/exit/result. No test or production file changes; the supplied exact-byte oracle is approved for this fixture test. Wait for the real complete result and retain it.\n2. Use the SAME Tester ID via the actual follow-up interface for a second independently named check: verify the line count is 1, with real command/exit/result. Do not rerun the first action or spawn a second Tester.\n3. After that completion, request native ric_devflow_implementer for one explicitly approved no-change diagnostic Task IMP-INSPECT: inspect sample.txt at the same SHA and confirm whether edits are necessary for the exact-byte requirement already satisfied. Allowed write paths are empty, all fixture paths protected; do not invent an edit, commit, worktree or merge. Scope/AC/test oracle/authorization are as given and this is a standalone maintenance test, not permission to skip production workflow gates. Report missing mandatory evidence honestly if this is not enough to perform the native action. The next separately approved action IMP-INSPECT-SECOND is to inspect newline encoding only; continue the SAME Implementer ID for it once, preserving no-write scope.\n4. Inspect actual lifecycle states and quota feedback. We have no evidence that a completed instance releases an opened-thread quota. If two retained instances prevent another role and no close interface exists, report the concrete limit and stop; never interrupt a completed thread just to claim release, raise quota or repeat a failed creation.\n5. If the actual host admits completed IDs no longer use the relevant slot, a single final native ric_devflow_reviewer may perform a BASELINE_REVIEW on the same file and fixture SHA, with full earlier role results already retained. Otherwise mark this optional role slice not_run/BLOCKED, not PASS. A new unrelated ordinary parent thread is not authorized.\n\nReturn compact JSON with actual selected roles/IDs, creation and follow-up counts, results and retained evidence for each unique action, lifecycle/capacity observations, real rejection reasons and PASS/FAIL/BLOCKED/not_run for each slice. No simulation can stand in for a tool invocation. Do not claim close/unload or proof of automatic release without observed host evidence. Stop after the requested actions; do not run extra scenarios.",
+    "native-quota2-recovery": "Continue the SAME isolated quota=2 lifecycle test session. The preceding output and all original native receipts must remain intact: Tester 01a10feb-b35a-7db0-a236-02476683d665 completed two checks, Implementer 01a10fec-a88c-7823-902b-1a8f8daef84b completed two no-write actions, and the single Reviewer creation was rejected with agent thread limit reached. This new user turn expressly authorizes ONE quota-recovery round and ONE re-dispatch for that not-started Reviewer action. Do not redo any finished Tester/Implementer work, change quota/model/auth/permissions, touch user history, or close unknown/other instances. The Implementer is a protected non-reclamation target for this slice; only the named completed Tester is eligible.\n\nRead the candidate lifecycle quota/replacement sections if necessary. First inspect the current actual native Schema and lifecycle of those existing IDs; resuming the parent process may affect live resources, so do not assume old occupied state or that the same close interface exists. Preserve the full earlier results via their existing exact records, and verify the fixture remains unchanged at d1afe6c821dcfba11c75eda19360e373545dcfb4.\n\nIf the named Tester is still open and its complete earlier results are present, call the REAL available close/unload interface for exactly that ID and verify its return/current capacity. Do not call interrupt as a substitute or delete history. If it is already closed/released, report the actual evidence and do not close a different instance. If its lifecycle/result source cannot be established, stop and report the gap.\n\nOnly after there is reliable room, perform the single pending native ric_devflow_reviewer BASELINE_REVIEW of sample.txt at the stated SHA, exact bytes b'lifecycle-fixture\\n', readonly, no formal Root/Gate. Candidate reviewer Skill is the absolute .agents/skills/ric-devflow-reviewer/SKILL.md under this fixture; pass precise current identity and no-write boundary. Use actual native selection, never a generic stand-in. Wait for the real full result and retain it. If the actual Reviewer is then completed and recoverable, one separately approved new action REVIEW-NEWLINE may continue the SAME Reviewer ID to check one final LF, readonly; this is a new named action, not a rerun of the baseline.\n\nReport exact current interfaces, IDs, close/release evidence, whether the pending action executed exactly once, preserved/untouched Implementer ID, and actual PASS/FAIL/BLOCKED/not_run for close/release, quota recovery, Reviewer invocation and same-ID continuation. Preserve the initial quota rejection rather than replacing it with success. If the resumed host lacks the needed release/lookup interface, stop affected work without guesses. No further retry, no other scenarios.",
+    "native-parallel": "Explicitly authorized isolated native Codex limited-expansion acceptance, quota=2. Read fixture AGENTS.md and only necessary candidate lifecycle sections. Do not create a business Root or claim a production Gate. This fixture has two independent, already-authorized diagnostic Tasks with a frozen two-node DAG and no edge: A and B. They use separate detached worktrees at real fixture SHA 79f839ea81c12e4b4cd5c3d71e9557e84260d039, separate read paths and outputs, no shared mutable contract/data/build/port/fixture/snapshot, and no writes are allowed. The native model calls can proceed independently; dispatching B before waiting for A avoids serial waiting on its independent model work. Do not claim a measured speedup or add sleeps to manufacture overlap.\n\nA: Use native ric_devflow_implementer, default instance, to inspect alpha.txt at 79f839ea81c12e4b4cd5c3d71e9557e84260d039 in the absolute .worktrees/alpha path under this fixture. Approved exact-byte AC and oracle: b'alpha-lifecycle\\n'. Determine whether a change is needed; because it is already satisfied, report no edit with actual command/exit and object identity. Allowed write paths empty; all paths protected. This is a standalone maintenance diagnostic, not permission to bypass production Task prerequisites. If the native role needs more mandatory evidence, return that real gap rather than pretend success.\nB: One temporary additional native ric_devflow_implementer for independent Task B in .worktrees/beta, AC/oracle b'beta-lifecycle\\n', same no-write boundary. Use a distinct actual task name if needed by Schema and record its returned ID. This is the only temporary instance; do not spawn Tester, Reviewer, Planner, generic substitutes or nested agents.\n\nUse actual native selectors, current configured model and valid inherited reasoning. If the host supports the two-role capacity, dispatch A then B before waiting for either, record real tool events and both full results. If a slot is unavailable or actual Schema prevents this, keep the real refusal and serialize only once the first action genuinely completes; do not raise limits or repeat unknown work. All Python calls must set PYTHONUTF8=1 PYTHONIOENCODING=utf-8 in the actual command.\n\nAfter both tasks really complete, preserve full results. No follow-up task remains for temporary B. If the current actual Schema provides safe close/unload, close ONLY B's confirmed-completed ID and verify the receipt; do not interrupt to pretend release or delete history. Keep A as the reusable default. If close is absent, retain and report the known occupancy and mark reclamation not_run/BLOCKED, not PASS.\n\nReturn compact JSON with actual tools/types/IDs, dispatch timestamps or event IDs, completion and result evidence, whether real overlap was observable, peak open and temporary counts, per-worktree final git status, zero file-change result, B reclamation evidence, and separate PASS/FAIL/BLOCKED/not_run for native selection, bounded expansion, isolation and cleanup. No simulation, performance claim or extra scenario.",
+    "native-rotate-q1": "Explicitly authorized isolated native Codex quota=1 SAME-PROCESS resource-rotation test. Use this fixture's candidate native role definitions and .agents/skills/ric-devflow/references/shared/agent-lifecycle.md. This is standalone maintenance acceptance with synthetic fixture data, not a business Root or Gate. Do not change model/auth/permissions/quota, install anything, read secrets, invoke other clients, or use generic agents. All Python commands must explicitly set PYTHONUTF8=1 PYTHONIOENCODING=utf-8. Current fixture SHA is d1afe6c821dcfba11c75eda19360e373545dcfb4 and sample.txt is exactly b'lifecycle-fixture\\n'; no writes are authorized.\n\nFIRST inspect the actual current tool Schema and startup capacity. The intended whole sequence needs two distinct roles while opened-thread quota is one. If no safe close/unload interface or verified automatic release path exists in THIS session, report the missing minimum capability before spawning anything; do not import capabilities from another session. This is the expected safe handling of an unavailable interface, not permission to fabricate a passed rotation.\n\nIf this session has a real release interface, execute one bounded sequence entirely in this process:\n1. Spawn actual ric_devflow_tester. Give an explicitly approved standalone baseline check of exact sample.txt bytes at the stated SHA; allowed write paths empty, no Root creation, return actual read/assertion command, exit and complete result. Pass the exact candidate Tester Skill path and shared root. Wait for real completion and retain the full result.\n2. Once the action is confirmed finished, close/unload exactly its own ID using the actual release API. Preserve evidence/history, do not interrupt to claim release, and verify the real closure result. Do not close other IDs. A pending or failed close is a stop condition.\n3. Only after closure confirmation, spawn actual ric_devflow_implementer for one explicitly approved no-change diagnostic Task ROTATE-INSPECT: inspect the same protected sample.txt at the same SHA, with exact-byte AC already satisfied, and report whether edits are needed. It must not invent an edit, commit, worktree, merge, approval or Gate. Return real command/exit and concise complete role result. If prerequisites are missing, return the actual blocker rather than faking successful implementation.\n4. Wait for completion and retain the result. If safe, close this final owned completed test instance to release fixture resources. Do not delete any history or fixture files. No further child creation or retries.\n\nReturn compact JSON with the actual schema/version if visible, current quota, ordered create/complete/preserve/close/create evidence, exact selected role types and IDs, closure receipts, commands/results/file changes, maximum open-child count and whether the second role was admitted in the SAME process without raising quota. Distinguish source-policy decision, actual native call, actual command, and unavailable slices. Preserve all actual failures; stop on unknown lifecycle or incomplete evidence.",
+    "native-occupied": "Explicitly authorized isolated native quota=2 test WITH ANOTHER TEST JOB occupying one real child slot. This is not a production Root and all data is synthetic. Read fixture AGENTS.md and the candidate lifecycle quota/ownership sections. Keep current model/auth/permissions, do not install, read secrets, change quota or invoke another CLI. No file writes or business Gates. Python commands must set PYTHONUTF8=1 PYTHONIOENCODING=utf-8. Fixture SHA 915c0ed1c4c8bf759d792a50aefcc1072465880e; sample.txt exact bytes b'lifecycle-fixture\\n'. Use only current actual APIs; if safe resource rotation cannot be established, stop before filling capacity and report the minimum missing capability.\n\nOne ordinary non-DevFlow test agent E is expressly authorized as AMBIENT TEST SETUP, not as a substitute for any DevFlow role. It belongs to another named test job OUTSIDE the current workflow W and must stay protected throughout W. Create E with a real allowed general-purpose selector (only if the native Schema exposes it), tell it only to return AMBIENT-READY without tools/edits/spawning. Wait for actual completion and retain its ID/result; keep the thread open. Do not label a generic agent as Reviewer/Tester/Implementer. If this setup cannot be performed, mark this slice not_run rather than fake an occupied slot.\n\nNow for workflow W:\n1. Create actual ric_devflow_tester T for one approved standalone baseline exact-byte check of sample.txt at 915c0ed1c4c8bf759d792a50aefcc1072465880e; no writes, current candidate Tester Skill, actual command/exit/full result. Wait for completion and preserve it. E and T now represent two real retained threads if that matches host semantics.\n2. W has one next approved native ric_devflow_implementer no-change diagnostic: inspect whether the already-satisfied exact-byte AC needs an edit, with empty allowed-write paths and all files protected. Before creation, use the lifecycle rules with quota=2 and the E ownership boundary. If E/T still occupy the limit and close is available, close exactly W-owned completed T after preserving its full result; NEVER close, interrupt, resume or message E to obtain capacity. Verify T's close then create native Implementer I. If admission/release fails, preserve the error, stop after the permitted bounded recovery, and do not touch E.\n3. Wait for I's real result, retain it; no invented edits, commits or merges. Safely close W-owned I if the actual interface supports it. End W with E still retained and never targeted by a close/interrupt operation. E cleanup belongs to the outer test owner after this scenario, not W, and is not authorized to you here.\n\nReturn compact JSON with actual type selectors, IDs, E ambient setup success, chronological T/I creation/results/release events, actual peak occupied threads and explicit quota-counter limitations, exact close targets, E untouched status, actual command/exit/no-write evidence, and per-slice PASS/FAIL/BLOCKED/not_run. No fabricated quota/close APIs, simulated occupancy or performance claims. Stop after this case."
+  }
+}
