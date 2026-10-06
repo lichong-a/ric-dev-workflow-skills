@@ -32,6 +32,7 @@ root = Path(os.environ.get('DEVFLOW_CHECK_ROOT', str(origin))).resolve()
 base = 'a72592ec1cb7ac5c67ec5454233d673a30000be5'
 report_name = 'docs/DEVFLOW_SKILLS_VALIDATION.md'
 roles = ('planner', 'reviewer', 'tester', 'implementer')
+child_roles = ('reviewer', 'tester', 'implementer')
 names = {'ric-devflow', *('ric-devflow-' + r for r in roles)}
 commands = []
 def run(argv):
@@ -108,6 +109,8 @@ manifest, fronts, edges = [], {}, {}
 historical = git_bytes(report_name)
 assert len(historical) == 63575
 assert (root / report_name).read_bytes().startswith(historical), 'historical report prefix changed'
+previous_report = subprocess.check_output(['git', 'show', '52d4dd6957db9be503d7f1ade80fd1261ed7ebfb:' + report_name], cwd=origin)
+assert (root / report_name).read_bytes().startswith(previous_report), 'previous published report changed'
 
 for name in paths:
     path = root / name
@@ -175,10 +178,20 @@ for role in roles:
             todo.extend(edges.get(current, []))
     assert all(p.split('/')[1] in ('ric-devflow', 'ric-devflow-' + role) for p in seen), (role, 'unrelated role dependency')
     closures[role] = sorted(seen)
+
+# Four business Skills, but only three native child roles. Planner runs in the main session.
+agent_root = root / 'skills/ric-devflow/assets/agents'
+for host, suffix in (('codex', '.toml'), ('claude-code', '.md'), ('zcode', '.md')):
+    expected = {'ric-devflow-' + r + suffix for r in child_roles}
+    if host == 'codex':
+        expected.add('config.toml')
+    assert {p.name for p in (agent_root / host).iterdir()} == expected, (host, 'native role set')
+for role in child_roles:
     config = tomllib.loads((root / 'skills/ric-devflow/assets/agents/codex' / ('ric-devflow-' + role + '.toml')).read_text())
     old = tomllib.loads(git_bytes('.codex/agents/devflow-' + role + '.toml').decode())
     assert config['name'] == 'ric_devflow_' + role
-    for key in ('model', 'model_reasoning_effort', 'sandbox_mode'):
+    assert 'model_reasoning_effort' not in config, (role, 'fixed reasoning effort')
+    for key in ('model', 'sandbox_mode'):
         assert config.get(key) == old.get(key), (role, key)
     for host, oldhost in (('claude-code', '.claude'), ('zcode', '.zcode')):
         p = 'skills/ric-devflow/assets/agents/' + host + '/ric-devflow-' + role + '.md'
@@ -280,7 +293,7 @@ with tempfile.TemporaryDirectory(prefix='.devflow-validation-', dir=root) as loc
     tracked = set(filter(None, subprocess.check_output(['git', 'ls-files', '-z']).decode().split('\0')))
     extras = set(filter(None, subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard', '-z']).decode().split('\0')))
     paths = sorted(p for p in tracked | {p for p in extras if p.startswith(('skills/', 'docs/'))} if (root / p).is_file())
-    for case in ('control', 'duplicate-yaml', 'broken-toml', 'extra-skill', 'bad-link', 'bad-anchor', 'history-prefix', 'bad-frontmatter', 'validator-failure'):
+    for case in ('control', 'duplicate-yaml', 'broken-toml', 'extra-skill', 'bad-link', 'bad-anchor', 'history-prefix', 'bad-frontmatter', 'validator-failure', 'planner-native', 'fixed-effort'):
         fixture = temp / case
         for name in paths:
             dst = fixture / name
@@ -308,6 +321,12 @@ with tempfile.TemporaryDirectory(prefix='.devflow-validation-', dir=root) as loc
         elif case == 'validator-failure':
             p = fixture / 'skills/ric-devflow/SKILL.md'
             p.write_text(re.sub(r'^description:.*\n', '', p.read_text(), count=1, flags=re.M))
+        elif case == 'planner-native':
+            p = fixture / 'skills/ric-devflow/assets/agents/codex/ric-devflow-planner.toml'
+            p.write_text('name = "ric_devflow_planner"\n')
+        elif case == 'fixed-effort':
+            p = fixture / 'skills/ric-devflow/assets/agents/codex/ric-devflow-tester.toml'
+            p.write_text('model_reasoning_effort = "xhigh"\n' + p.read_text())
         env = dict(os.environ, DEVFLOW_CHECK_ROOT=str(fixture), PYTHONUTF8='1', PYTHONIOENCODING='utf-8')
         observed = run([sys.executable, '-B', '-c', check_source], env)
         assert (observed.returncode == 0) == (case == 'control'), (case, observed.stdout, observed.stderr)
@@ -322,7 +341,7 @@ PY
 
 ## 独立 Agent 的三批原始场景与增量复验
 
-每批由 Root Planner 直接派发独立执行者，不传本节的判定说明；Tester 事后审核。先固定候选文件集与真实存在的隔离 Git 对象，原始输入和输出随报告保存。临时 Git 仅作测试数据，使用命令级合成作者，不提交源码仓库或修改用户 Git 配置。生成 fixture 时先留初始清单，真正处理请求的动作另记。
+维护者评测只传原始情境与候选指令，不传判定；事后逐项核对动作轨迹与结果。若在完整 DevFlow 内执行，由主会话 Planner 复用固定 Tester，不为每批另建执行者；独立 Skill 维护评测与原生工作流调用分列，不能拿通用评测代理冒充已加载角色。先固定候选文件集与真实存在的隔离 Git 对象，原始输入和输出随报告保存。临时 Git 仅作测试数据，使用命令级合成作者，不提交源码仓库或修改用户 Git 配置。生成 fixture 时先留初始清单，真正处理请求的动作另记。
 
 | 批次 | 给执行者的原始事实/请求 | 事后观察维度 |
 |---|---|---|
@@ -331,6 +350,7 @@ PY
 | C 决定 | 开发/修复/续作/解释/建议/独立审核测试/文档/显式四角色；三宿主/未知/冲突身份；平级交接；文件/加载/调用/重载；无工具/权限；v1/v2、未提交测试、Oracle变化、冻结Task、VERIFIED/DONE各证据组合 | 真实选择与交接、权限/批准界限、唯一状态作者、保留历史、完整SHA绑定；不比对措辞 |
 | 守卫 Delta | 入口存在但bootstrap缺失：正常、来源未知、现存入口字节冲突；四个单角色分别缺入口：正常、同名原生定义冲突、必需能力禁用 | 写前完整预检、真实缺件恢复、冲突/禁用时文件结果；新旧输入身份分别固定 |
 | 加载与恢复 Delta | WF-51–57 的原始输入：三宿主项目/用户补装、复用零写入、后续角色切换、无清单/无工具、批准不足、独立角色/子角色、分类故障、重启后成功/仍失败 | 按需真实交接或决定级下一动作、明确重启提示及恢复信息、错误归因、停止受影响动作、无重复安装/业务动作/探测、单角色证据范围；决定级与实机分列 |
+| 固定角色与参数 Delta | WF-58–67：同主会话连续交接/跨 Root、忙碌/未知/取消/丢缓存/单实例失效/无恢复接口、旧 Planner 迁移、宿主与协议能力、参数拒绝和其他失败 | 主会话唯一 Planner，三个实际 ID 的创建/继续/替换及读取轨迹；有效模型/参数、重试次数、完整载荷和文件结果；模拟动作与原生运行分别记录 |
 
 实际文件子例不能只输出“将复制”。独立执行者可根据其决定执行逐文件复制，但不得另写通用 bootstrap 实现来替代被测指令。中断恢复区分预置的部分状态和本次真实故障：收集代码发生 KeyError 等错误必须保留原命令/退出码，修收集器后重新核对文件再恢复，不改候选或 Oracle。
 
@@ -535,7 +555,7 @@ PY
 |---|---|---|
 | PREP | 两臂分别提供完整且预置匹配的源码/逻辑发现位置、宿主身份、范围、可信来源身份；原请求仅核验测试者准备状态。首次新鲜原生会话执行，随后同会话同输入再次执行 | COLD 与 WARM 分别记录；不因 miss 自动授权安装/联网/建 Root；完整性检查字节与正文读取字节区分 |
 | GATES | 小型合成 Git 仓库、一条 stdlib unittest、固定 Spec/plan/数据、最后一个 Task 的给定前序证据；请求真实增量并处理完整验证。命令例：`python3 -m unittest discover -s tests -p 'test_*.py'` | 记录真实派发数、命令数及两份原模板报告。两臂收到相同请求，旧版可能已有有效复用；不能预设 B 更快。失败或身份变化另测，不混入正常性能样本 |
-| WAVE | 三个 READY Task 各自拥有独立 AC 和 `alpha`/`beta`/`gamma` 路径，在私有 detached worktree 将对应 `expected.txt` 原字节写入 `actual.txt` 并实际断言相同。无共享契约/构建/数据库/端口/输出 | 一个调用只做一个 Task；记录三次真实调用及起止。由受测规则决定调度，不在输入中泄露判定；新建第二会话仅为实际独立并行 writer。未观察到执行重叠时如实报告 |
+| WAVE | 三个 READY Task 各自拥有独立 AC 和 `alpha`/`beta`/`gamma` 路径，在私有 detached worktree 将对应 `expected.txt` 原字节写入 `actual.txt` 并实际断言相同。无共享契约/构建/数据库/端口/输出 | 一个调用只做一个 Task；记录三次真实调用及起止。由受测规则决定调度，不在输入中泄露判定；旧 A 按固定历史规则观察，新 B 固定三个实际角色 ID，同角色动作排队，只有不同角色且隔离成立才交错并行；不为同角色第二位 writer 扩容。记录实例复用轨迹，未观察到执行重叠时如实报告 |
 
 fixture 预置过程、实际角色动作与最终验证分别记录。角色不能把给定的历史批准或预置产物声称为本次已真实完成。所有实际命令都采集退出码；取消只结束本样本子进程并等待退出，不触碰用户服务。源码/fixture 清单改变使相关样本失效，不能将不同 B 的结果拼为同一候选。
 

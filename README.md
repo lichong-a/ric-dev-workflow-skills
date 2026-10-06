@@ -167,9 +167,9 @@ Skill 按“入口分类 → 选中角色 → 当前动作参考 → 必要模�
 
 角色交接只传 Root Issue、动作、精确产物路径/版本、适用 SHA、当前 Finding/Defect、允许与保护路径、输出和停止条件；续作只补 Delta。原作者报告首次完整传输，Planner 逐字持久化后改用稳定指针；首次指针只适用于宿主已提供完整、稳定、可校验的原始结果。截断重传原件，状态写入失败只修复索引，不重跑工作。平台支持时默认使用最小上下文继承，例如 `fork_turns: "none"`。
 
-完整开发通常由 Root Planner 加实现、测试、审核各一个可复用会话按阶段工作；优先复用空闲同角色，不按文件、用例、维度、修复轮次或报告章节新增代理。首次 G2 前识别有独立 AC/所有权的波次，默认同时最多两个 READY Task、两个 Tester 进程组，服从更严格资源限制。工作区、数据、构建、端口、fixture、输出和快照必须隔离，同 Task 串行交接，按 DAG 逐个集成并验证每个新 SHA。复杂行为盲评仍需说明独立上下文的必要性；不为提速拆分冻结 DAG，也不另派报告写作代理。完整规则见[按需派发与会话复用](skills/ric-devflow/references/shared/orchestration.md#按需派发与会话复用)。
+三个平台统一由主会话担任 Planner，同一主会话固定复用 Reviewer、Tester、Implementer 三个子代理；首次有工作才创建，后续按实际 agent ID 继续，跨 Task、返修和新 Root 均复用，忙碌排队。Root 关闭或上下文压缩不自动重建；用户取消不自动恢复，状态未知先核验，确实不可恢复或不满足权限/独立性时才在旧实例停止后替换。不同角色可在隔离条件满足时交错推进，默认最多两个 READY Task、两个 Tester 命令进程组；不为第二位同角色作者或盲评扩容。每个新集成 SHA 仍逐一验证，冻结 DAG 与职责分离保持。完整规则见[按需派发与会话复用](skills/ric-devflow/references/shared/orchestration.md#按需派发与会话复用)。
 
-交接首行、首条进度和返回结果会注明“职责：实现者｜Skill布局”等中文职责与工作。原生角色 ID 保持稳定；工具支持时，调用任务名采用 `ric_implementer_skill_layout` 等可读名称。Skill UI 展示名与平台子代理昵称不同，修改展示名不会保证旧会话改名；当前没有重命名接口时用职责自述说明，不为换名新开代理。临时 ID 映射仅留 `.local`，正式证据仍使用业务 ID 与真实作者。见[职责命名与可读交接](skills/ric-devflow/references/shared/orchestration.md#职责命名与可读交接)。
+交接首行、首条进度和返回结果会注明“职责：实现者｜Skill布局”等中文职责与工作。原生角色 ID 保持稳定；工具支持时，首次调用任务名采用 `ric_implementer` 等稳定角色名，已有实例保留原名字。Skill UI 展示名与平台子代理昵称不同，修改展示名不会保证旧会话改名；当前没有重命名接口时用职责自述说明，不为换名新开代理。临时 ID 映射保存在主会话上下文，已有 Root 的 `.local` 仅缓存相关投影，Root 关闭不清空槽位，正式证据仍使用业务 ID 与真实作者。见[职责命名与可读交接](skills/ric-devflow/references/shared/orchestration.md#职责命名与可读交接)。
 
 ### 6. Reviewer 循环可收敛
 
@@ -255,21 +255,21 @@ Windows 可在确认全部目标缺失后，通过文件管理器普通复制这
 
 ### 准备当前平台原生角色
 
-入口只读取当前平台一份参考：[Codex](skills/ric-devflow/references/platforms/codex.md)、[Claude Code](skills/ric-devflow/references/platforms/claude-code.md)、[ZCode](skills/ric-devflow/references/platforms/zcode.md)。原生源在入口 `assets/agents/<platform>/`；完整开发核验四角色，独立角色只核验所需定义和闭包。
+入口只读取当前平台一份参考：[Codex](skills/ric-devflow/references/platforms/codex.md)、[Claude Code](skills/ric-devflow/references/platforms/claude-code.md)、[ZCode](skills/ric-devflow/references/platforms/zcode.md)。原生源在入口 `assets/agents/<platform>/`；完整开发核验五 Skill 与三个原生子角色，独立角色只核验所需定义和闭包，Planner 不要求原生定义。
 
-Codex ID 为 `ric_devflow_<role>`；Claude/ZCode 为 `ric-devflow-<role>`。保持模型继承、Codex Planner `max` / Reviewer `high` / Tester与Implementer `xhigh`；Reviewer 只读意图与其他角色受限写入意图不变。Codex Agent 默认启用，无需为了准备写入整段 config；显式禁用不反转，既有并发数、模型、权限及其他 Agent 设置保留。
+三个原生子角色的 Codex ID 为 `ric_devflow_<role>`，Claude/ZCode 为 `ric-devflow-<role>`；Planner Skill 由主会话直接执行，不再分发 Planner 子代理模板。模型保持继承，模板不固定思考等级；Reviewer 偏好 high、Tester/Implementer 偏好 xhigh，由主会话按实际能力协商，不换模型。首次确定参数、能力变化或明确不兼容时才读取[思考兼容](skills/ric-devflow/references/shared/reasoning-compatibility.md)，例如接入层已确认支持 max 而拒绝 xhigh 时才映射。Reviewer 只读及其他子角色受限写入意图不变，不改用户全局并发、模型、权限或禁用设置。
 
-Claude/ZCode Reviewer 仅 Read/Grep/Glob，其他三角色加 Bash/Edit/Write；工具白名单不是文件路径沙箱。原生模板从交接中已确认绝对 Skill 路径读取规则，不绑定某项目路径。主会话依唯一 Planner 决定进行平级转发，四子角色不派生；Codex 保持 Root Planner 直接调度。具体流程只在[编排](skills/ric-devflow/references/shared/orchestration.md#原生平级调用)维护。
+Claude/ZCode Reviewer 仅 Read/Grep/Glob，Tester/Implementer 加 Bash/Edit/Write；工具白名单不是文件路径沙箱。原生模板从已确认 Skill 路径读取规则；主会话直接规划、派发并原样保存报告，三个子角色均不派生。既有安装中的旧 Planner 定义保留但不调用，旧工作流先确认其停止并交接证据，再由主会话接管。具体流程见[编排](skills/ric-devflow/references/shared/orchestration.md#原生平级调用)。
 
 ### 安装、加载与调用分开
 
-文件补装或复用后都须确认实际发现路径、同源版本、配置与启用状态，再核对宿主提供的可用角色信息，以已获授权的下一次必要交接确认调用；不额外启动四个探测代理。没有角色清单接口时通过原生调用确认，不虚构查询命令；一个角色成功不代表其他角色也可调用。Claude 已有 agents 目录通常会监视变化，首次创建目录等情况需重启；ZCode agents 在下一运行加载，定义变更需新会话；Codex Skill 自动发现不能证明子代理已加载。不能凭等待几秒或目录存在断言加载成功。
+文件补装或复用后都须确认实际发现路径、同源版本、配置与启用状态，再核对宿主提供的可用角色信息，以已获授权的下一次必要交接确认调用；不额外启动探测代理。没有角色清单接口时通过原生调用确认，不虚构查询命令；一个角色成功不代表其他角色也可调用。Claude 已有 agents 目录通常会监视变化，首次创建目录等情况需重启；ZCode agents 在下一运行加载，定义变更需新会话；Codex Skill 自动发现不能证明子代理已加载。不能凭等待几秒或目录存在断言加载成功。
 
 文件与配置正确但当前会话缺少目标角色或调用能力时，入口会明确提醒“请重启当前 Agent，并在同一项目重新调用 Skill”，列出宿主、受影响角色、已核验路径和原反馈，停止依赖该角色的动作。只有工具缺失且原因未知时，说明重启后仍需验证；配置错误、禁用、权限、来源冲突、并发、网络及角色启动后的业务失败分别处理，不统一归因为需重启。已可调用时直接继续，不强制重启。
 
 恢复说明保留原任务与约束/批准、仓库、安装范围、固定源 SHA、已完成阶段和下一动作；无 Root 时提供可复制说明，已有 Root 沿用原恢复机制。重启后重新核验当前会话，复用正确文件，不重复安装或已完成动作；仍失败则报告新的具体缺口，不循环要求重启。不自动关闭客户端、不用通用 Agent 冒充、不反转禁用设置、不借脚本绕过。完整规则见[加载与调用核验](skills/ric-devflow/references/bootstrap.md#文件加载调用分别核验)。
 
-本轮官方资料核验日为 2026-09-12；配置与文档验证不等于原生实机运行。依据见入口平台参考；实际执行与未运行项见[验证报告](docs/DEVFLOW_SKILLS_VALIDATION.md)。
+模型兼容与会话复用资料核验日为 2026-10-06；配置与文档验证不等于原生实机运行。依据见入口平台参考；实际执行与未运行项见[验证报告](docs/DEVFLOW_SKILLS_VALIDATION.md)。
 
 ## 怎么用
 

@@ -11,7 +11,7 @@
 - 各角色入口应保持聚焦；特定模式的流程、Schema 和检查清单应放入入口链接的参考文件。
 - Skill 正文按当前角色和动作渐进加载，不设首次进入整组契约必读；安装闭包完整性核验与正文阅读分开，未触发的引用不递归展开。
 - 同会话能力提示须绑定宿主/会话、来源/范围、固定 SHA、必要闭包及配置/加载状态；可信变更信号或批量类型/模式/内容核验后复用。miss 不授权安装、联网或建 Root；无 Root 只留会话，不为 warm 检查重读整个 bootstrap。
-- 三平台四角色原生模板随入口 `assets/agents/` 分发；Codex ID 为 `ric_devflow_<role>`，Claude/ZCode 为 `ric-devflow-<role>`，不依赖源码外围平台目录。
+- 三平台仅 Reviewer、Tester、Implementer 三个原生子角色模板随入口 `assets/agents/` 分发；Planner Skill 由主会话直接执行。Codex ID 为 `ric_devflow_<role>`，Claude/ZCode 为 `ric-devflow-<role>`，不依赖源码外围平台目录。
 - 准备按真实宿主、逻辑发现位置和已确认安装范围进行；只补同源固定 SHA 的缺件，保留定制、禁用及未知冲突。ZCode 项目安装仅原生角色定义有用户级目录例外，不能把文件存在当作加载或调用证据。
 
 ## 不可妥协的角色边界
@@ -35,7 +35,7 @@
 - Tester 的代码交付复用原 Implementation Report Schema 并如实署名，在原 Task 内串行交接、独立审核和集成；G5 后测试修正仍重新绑定 SHA，不伪装成实现类 Defect。
 - 每 Root 默认只有一个功能分支兼作集成分支，复用已确认分支；无命名规范时用 `feature/<REQ-ID>`。Task 按需使用独立 detached worktree，同 Task 的实现/测试/返修复用并串行交接，不默认创建 Task 分支。复用换基线或回收前保全全部已发布候选，精确 SHA 与门禁保持不变。
 - 独立 READY 波次在首次 G2 前按实际 AC/所有权识别，不为性能改写冻结 DAG。默认最多两个 Task、两个 Tester 进程组，服从更严格限制；共享契约/数据/构建/端口/fixture/输出/快照冲突则串行，采集全部退出码并清理自有进程，每个新集成 SHA 都做 G6。
-- Codex 保持 Root Planner 原调度、模型继承、推理档位与权限意图；五份 agents/openai.yaml 仅入口允许隐式调用。Claude/ZCode 四角色为平级子代理：唯一 Planner 决策和写状态，主会话只转发；四子代理均不派生代理。适配仅在已确认宿主/会话身份下生效。
+- 三平台统一主会话 Planner；同一主会话跨 Task/Root 固定复用 Reviewer、Tester、Implementer 三个实际实例，忙碌排队、状态未知先核验，只有已停止且确实不可恢复或不再满足权限/独立性的实例才替换；用户取消不得自动重建。角色模板保持模型继承和权限意图，不固定思考等级，由主会话按实际能力有限协商，不换模型、不改用户配置。五份 agents/openai.yaml 仅入口允许隐式调用，三个子角色均不派生代理；适配仅在已确认宿主/会话身份下生效。
 - 范围内开发入口与已批准角色交接应主动实际派发，不等待用户提醒 subagent；不扩大触发范围、权限或嵌套层级，不把文案宣布当调用证据。
 - 新平台 Reviewer 仅 Read/Grep/Glob，历史阅读缓存由 Planner 从精确 Git 对象提取并核验；正式来源不依赖 .local。其他角色的 Bash/编辑白名单不是文件路径沙箱，不得夸大隔离保证。
 - 画像复用仍刷新 HEAD、dirty/worktree、环境与权限；影响测试以精确 Delta、AC 和消费者为依据，选择器不可靠或为空时扩展相关完整集合。依赖缓存/服务租约绑定实际输入，失效走原准备流程，不改用户服务。

@@ -9,19 +9,19 @@ description: 仅在用户显式调用或入口准备完成后精确路由时，�
 
 先确认实际宿主（Codex、Claude Code 或 ZCode）、主/子会话身份及逻辑发现位置；配置目录存在或读到本文件不算角色已启动。身份未知/冲突时保留原任务并返回精确缺口。
 
-先检查同级 `ric-devflow/SKILL.md`、入口内 `references/bootstrap.md` 及当前动作必要文件可读，再追踪外部链接。已确认同源、安装完整且角色可用时直接进入正文，不重读安装流程。已启动的 `planner` 子角色遇缺件只回交宿主，不安装、不派生。
+先检查同级 `ric-devflow/SKILL.md`、入口内 `references/bootstrap.md` 及当前动作必要文件可读，再追踪外部链接。已确认同源、安装完整且角色可用时直接进入正文，不重读安装流程。旧 `planner` 子角色只返回恢复信息，由主会话核对停止与交接后接管；不安装、不派生、不新增业务写入。
 
 能力提示须绑定宿主/会话、逻辑来源/范围、固定源 SHA、当前角色/动作闭包、配置及启用/加载状态；以可信变更信号或一批清单/类型/模式/内容核验确认未变后复用，不重读 bootstrap。miss 本身不联网、安装或创建 Root；无 Root 仅存会话，已有 Root 仅用 .local，旧调用不证明本次已调用。需要建立提示或补查失效依据时只读[同会话能力提示](../ric-devflow/references/bootstrap.md#同会话能力提示)，来源或必要输入变化只重验受影响范围。
 
 **仅主会话缺件时恢复**：分开确认逻辑 `discovered_path`、可信 `source_root` 和 `install_scope`；不能用 symlink realpath 推断写入范围。确认发布源 `https://github.com/lichong-a/ric-dev-workflow-skills`，优先可信完整本地 checkout 或安装记录的完整 SHA；无记录只从已确认源取一次候选并固定 SHA，不猜历史、不执行下载代码。按候选完整清单逐字核对本角色及已有入口的全部包文件与类型；源/范围不明、候选不完整、定制/异版本、未知文件或断链时保持目标零写入。离线仅在可信本地源完整匹配时可继续。
 
-匹配后先从可信候选源只读 `skills/ric-devflow/references/bootstrap.md` 和当前平台一份参考；在复制任何缺件之前预检全部所需 Skill、原生定义/配置、父目录的冲突、禁用和权限。通过后只排他创建缺项，写前复核、写后逐字读回；保留定制、禁用与无关配置，中断后重新核对，不绕过拒绝。详细恢复只在此路径读取[准备与恢复](../ric-devflow/references/bootstrap.md)。独立角色不要求无关角色，完整开发仍检查五 Skill 与当前宿主四原生角色；安装完整性核验不等于加载全部正文。
+匹配后先从可信候选源只读 `skills/ric-devflow/references/bootstrap.md` 和当前平台一份参考；在复制任何缺件之前预检全部所需 Skill、原生定义/配置、父目录的冲突、禁用和权限。通过后只排他创建缺项，写前复核、写后逐字读回；保留定制、禁用与无关配置，中断后重新核对，不绕过拒绝。详细恢复只在此路径读取[准备与恢复](../ric-devflow/references/bootstrap.md)。独立角色不要求无关角色，完整开发仍检查五 Skill 与当前宿主三个原生子角色；安装完整性核验不等于加载全部正文。
 
-文件安装、宿主加载、实际调用分别核验；补装或复用后均在需要委派时按需验证。文件与配置正确但当前会话未加载目标或无调用能力时，主会话按[加载与调用核验](../ric-devflow/references/bootstrap.md#文件加载调用分别核验)及时提醒重启 Agent 并给出恢复说明，其他故障按原原因处理。Codex 主会话执行本角色；Claude/ZCode 主会话仅在需要转交时读取[原生平级调用](../ric-devflow/references/shared/orchestration.md#原生平级调用)，交给同名原生角色。已启动子角色直接执行正文，遇缺口只回交宿主，不再次委派自身或探测其他角色。准备成功不代表业务批准或 SHA 有效。
+文件安装、宿主加载、实际调用分别核验；补装或复用后均在需要委派时按需验证。文件与配置正确但当前会话未加载目标或无调用能力时，主会话按[加载与调用核验](../ric-devflow/references/bootstrap.md#文件加载调用分别核验)及时提醒重启 Agent 并给出恢复说明，其他故障按原原因处理。三平台均由主会话直接执行本角色，不创建 Planner 子代理。旧 Planner 子代理的停止与主会话接管只在需要时读取[原生平级调用](../ric-devflow/references/shared/orchestration.md#原生平级调用)；已误入旧子角色只返回恢复信息，不写新业务状态或再次派发。准备成功不代表业务批准或 SHA 有效。
 
 负责一个软件交付 Root Issue 从需求接收到合并后验证的全过程。你是唯一的全局状态写入者和流程协调者。不得编写生产代码、审核自己创建的产物，也不得取代独立的 Reviewer 和 Tester。
 
-仅由本 Planner 做单层调度；不为 Task 再启动 Planner，也不允许执行角色递归派生研发流程。默认一个完整交付 Task，内部步骤交给实现者分步完成。初始 DAG 经 G2 通过后冻结；新增节点/改边只走[冻结例外](../ric-devflow/references/shared/task-decomposition.md)。
+仅由主会话 Planner 做单层调度，同一主会话跨 Root 保留三个子角色槽位；首次派发、续作或替换时按[会话复用](../ric-devflow/references/shared/orchestration.md#按需派发与会话复用)核对实际 ID 与生命周期。首次思考参数协商或兼容失败时才读[思考兼容](../ric-devflow/references/shared/reasoning-compatibility.md)。不为 Task 再启动 Planner，也不允许执行角色递归派生研发流程。默认一个完整交付 Task，内部步骤交给实现者分步完成。初始 DAG 经 G2 通过后冻结；新增节点/改边只走[冻结例外](../ric-devflow/references/shared/task-decomposition.md)。
 
 ## 使用范围与角色边界
 

@@ -1436,3 +1436,3316 @@ A/B/C结果始终绑定runtime1 `58072f014063919e5cb62cf9c7a6213986488826ac6f1e7
 ~~~
 
 </details>
+
+
+## 2026-10-06 — 主会话 Planner、固定子代理与思考兼容
+
+本轮为已获用户批准的 Skill 源码维护。三平台统一主会话 Planner，同一主会话跨 Root 复用三个实际子角色；模板不再固定思考等级，由主会话依据宿主/接入层能力在原模型内协商。五 Skill、模型继承与权限意图、报告 Schema、Gate 和 v1/v2 兼容边界保持。
+
+本记录只证明下述源码、隔离文件检查和独立决定级行为结果；当前候选未提交，不将基线 HEAD、集合摘要或合成 SHA 当作产品 tested_sha，也不声称三平台原生运行或业务 Gate 通过。此前报告全部 135031 字节逐字保留。
+
+### 受检对象与结果
+
+```json
+{
+  "record": "MAINT-20261006-MODEL-REUSE",
+  "kind": "source_and_independent_decision_diagnostic",
+  "verdict": "PASS",
+  "base_sha": "52d4dd6957db9be503d7f1ade80fd1261ed7ebfb",
+  "source_candidate_sha256": "0819f3996b51a8a6983cc53012cb4afd664788aa6185f71402ba11d57f6c2f46",
+  "tested_sha": null,
+  "native_runtime": false,
+  "previous_report_bytes": 135031,
+  "previous_report_sha256": "f5b84a4b34a6f8fe5d683c6b0222a1d4c38ed530946a55655e1afceef5a6ad22",
+  "python": "3.14.4",
+  "pyyaml": "6.0.3",
+  "guide1_exit": 0,
+  "guide2_exit": 0,
+  "counts": {
+    "yaml": 13,
+    "toml": 4,
+    "frontmatter": 14,
+    "markdown": 89,
+    "current_links": 257,
+    "historical_links": 3
+  },
+  "v1_templates_byte_identical": 16,
+  "compact_templates_compatible": 4,
+  "behavior_cases": 36,
+  "native_agent_calls_in_simulations": 0,
+  "provider_calls_in_simulations": 0,
+  "business_writes_in_simulations": 0,
+  "independent_result_sha256": "51ab88730f65639b24947043a8f8c4587d17acc21b2e17161549326242bc7d6f",
+  "original_input_file_sha256": "a352618964a2a5d7ea69bf74388c1e24000ff91b97a2f7ddb0c326cbf5aa12e1",
+  "corrected_input_file_sha256": "3351071fc76c0fa181df9fafa03325dc1f54dd32f43878c8577449aa630bb8b2"
+}
+```
+
+集合摘要沿验证指南第一块的算法：按路径排序保存受检文件的模式与 SHA-256，再对规范 JSON 摘要；报告自身排除以避免自引用。最终隔离 control 的集合摘要与上方源码候选一致。五次 bundled Skill validator 均 exit 0；13 YAML、4 TOML、14 frontmatter、89 Markdown、257 当前链接及 3 历史链接通过，四个独立角色的必要闭包不依赖无关角色。九份原生定义保持三个子角色及原模型/工具/沙箱边界；新负控验证额外 Planner 定义和固定 effort 会被拒绝。
+
+### 实际命令与隔离检查
+
+- 实际执行 `docs/DEVFLOW_SKILLS_VALIDATION_GUIDE.md` 第一、第二个完整 Bash 块，均 exit 0；子进程调用使用 `PYTHONUTF8=1 PYTHONIOENCODING=utf-8 python3 -B`，`DEVFLOW_VALIDATOR_PATH` 仅在本次命令指向宿主 bundled 验证器。两个块的内容即复跑命令，不增加产品脚本。
+- `git diff --check` 与 `git diff --cached --check` 均 exit 0。
+- 第一块同时验证旧报告完整前缀、16 份 v1 模板原字节及 4 份 Compact 模板兼容性。第二块实际执行 16 个隔离子进程，14 组观察如下；负控的 exit 1 是预期拒绝，不是被隐藏的失败。所有该块自建临时目录已清理。
+
+```json
+[
+  {
+    "case": "copy-five",
+    "first_exit": 0,
+    "repeat_exit": 1,
+    "files": 99
+  },
+  {
+    "case": "copy-entry",
+    "first_exit": 0,
+    "repeat_exit": 1,
+    "files": 76
+  },
+  {
+    "case": "copy-conflict",
+    "exit_code": 1,
+    "no_partial_write": true
+  },
+  {
+    "case": "control",
+    "exit_code": 0
+  },
+  {
+    "case": "duplicate-yaml",
+    "exit_code": 1
+  },
+  {
+    "case": "broken-toml",
+    "exit_code": 1
+  },
+  {
+    "case": "extra-skill",
+    "exit_code": 1
+  },
+  {
+    "case": "bad-link",
+    "exit_code": 1
+  },
+  {
+    "case": "bad-anchor",
+    "exit_code": 1
+  },
+  {
+    "case": "history-prefix",
+    "exit_code": 1
+  },
+  {
+    "case": "bad-frontmatter",
+    "exit_code": 1
+  },
+  {
+    "case": "validator-failure",
+    "exit_code": 1
+  },
+  {
+    "case": "planner-native",
+    "exit_code": 1
+  },
+  {
+    "case": "fixed-effort",
+    "exit_code": 1
+  }
+]
+```
+
+### 独立行为评测与复核
+
+复用一个独立维护者评测会话执行 36 个原始场景，不提供 Oracle。逐项核对模拟工具目标、实际实例 ID、有效参数、纠正次数、停止条件及最终槽位；并校验每个输入的规范 JSON SHA-256、13 份实际已读候选文件的最终字节摘要、无重复/缺失场景和零业务写入。结果全部符合当前规则。这里的“调用轨迹”均为决定级模拟，真实原生角色调用、真实供应商调用与业务写入均为 0。
+
+- LIFE-01 首次创建 R1/I1/T1 后，同 Task 返修、复审及新 Root 继续使用原 ID，总共三个创建；其余忙碌、状态未知、压缩丢映射、取消及无恢复接口场景没有扩容。
+- 参数场景保留已支持等级、遵从接入层别名、按已知集合进行 xhigh/max/high 适配；thinking/预算/默认路径不传工具未支持的字段。EFF-12 仅记录初次失败和两次纠正，无第四次试错。权限/认证/网络/额度/加载/业务错误各自分流。
+- 未返回句柄的场景只记录创建意图，不编造实例 ID；网络未知保留未知创建数。缓存失效保留旧实例，实际模型/生效配置不明时先核验。
+- EFF-05 初始 fixture 错把 Reviewer 请求写为 Tester；评测者首先识别并停止该项。维护者只修正原始请求与返回 ID 后复验，候选指令未为此改变。下方保留原始冲突项、修正后的全部输入与作者完整结果。
+- 另一个独立只读维护审查发现 WAVE 说明允许第二 writer 会话（P2）与 README 将映射限于 .local（P3）；修正后在同一审查会话窄复核，两项均关闭，未发现新的可证实问题。此维护复核不是业务 APPROVE/Gate。
+
+### 原始输入与作者结果保全
+
+下方场景保留输入的业务字段 JSON 值；只从采集信封中提取 cases，避免持久化本机候选绝对路径。每项输入摘要采用 UTF-8 的 `json.dumps(case, ensure_ascii=False, sort_keys=True, separators=(',', ':'))`。作者 results.json 的原 UTF-8 字节完整保存在最后的 JSON 块，可按上方摘要核验；结果中的临时采集路径仅是来源定位，此处原文才是持久来源。未复制临时原始命令日志中的本机定位。
+
+<details>
+<summary>EFF-05 初始冲突输入</summary>
+
+```json
+{
+  "id": "EFF-05",
+  "model": "current-model",
+  "source": "verified-current-candidate",
+  "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+  "host": "Codex",
+  "role": "reviewer",
+  "slots": {},
+  "tools": {
+    "create": "spawn(role,reasoning_effort?) -> T1",
+    "continue": "followup_task"
+  },
+  "effective_custom_config": "no fixed reasoning override; model remains current-model",
+  "requested_effort": "high",
+  "request": "Perform the next already-approved tester handoff.",
+  "capabilities": {
+    "efforts": [
+      "high",
+      "xhigh",
+      "max"
+    ]
+  }
+}
+```
+
+</details>
+
+<details>
+<summary>36 个修正后的原始场景</summary>
+
+```json
+[
+  {
+    "id": "TOPO-Codex",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "request": "Start the approved workflow and dispatch its now-ready SPEC_REVIEW.",
+    "loaded_roles": [
+      "reviewer",
+      "tester",
+      "implementer"
+    ],
+    "planner_skill": "readable",
+    "native_planner_definition": "absent",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role, effort?) -> R1 for reviewer",
+      "continue": "continue(id,prompt)"
+    },
+    "capabilities": {
+      "efforts": [
+        "high",
+        "max"
+      ]
+    }
+  },
+  {
+    "id": "TOPO-Claude",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Claude Code",
+    "request": "Start the approved workflow and dispatch its now-ready SPEC_REVIEW.",
+    "loaded_roles": [
+      "reviewer",
+      "tester",
+      "implementer"
+    ],
+    "planner_skill": "readable",
+    "native_planner_definition": "absent",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role, effort?) -> R1 for reviewer",
+      "continue": "continue(id,prompt)"
+    },
+    "capabilities": {
+      "efforts": [
+        "high",
+        "max"
+      ]
+    }
+  },
+  {
+    "id": "TOPO-ZCode",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "ZCode",
+    "request": "Start the approved workflow and dispatch its now-ready SPEC_REVIEW.",
+    "loaded_roles": [
+      "reviewer",
+      "tester",
+      "implementer"
+    ],
+    "planner_skill": "readable",
+    "native_planner_definition": "absent",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role, effort?) -> R1 for reviewer",
+      "continue": "continue(id,prompt)"
+    },
+    "capabilities": {
+      "efforts": [
+        "high",
+        "max"
+      ]
+    }
+  },
+  {
+    "id": "LIFE-01",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "tools": {
+      "create": "spawn(role, effort?)",
+      "continue": "followup_task(target,message)",
+      "status": "list_agents"
+    },
+    "slots": {},
+    "events": [
+      "reviewer action ready; creation returns R1; completes",
+      "implementer action ready; creation returns I1; completes",
+      "tester action ready; creation returns T1; completes",
+      "same Task implementer rework ready",
+      "I1 completes; reviewer delta review ready",
+      "R1 completes; Root-A closed; Root-B in another repository has approved implementer action ready"
+    ],
+    "capabilities": {
+      "efforts": [
+        "high",
+        "xhigh"
+      ]
+    },
+    "new_root": {
+      "repository": "repo-B",
+      "worktree": "work-B",
+      "permissions": "new allowlist supplied",
+      "base_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "request": "Provide ordered dispatch trace and the final role instance map."
+  },
+  {
+    "id": "LIFE-02",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "slots": {
+      "implementer": {
+        "id": "I1",
+        "status": "running",
+        "task": "TASK-A"
+      }
+    },
+    "tools": {
+      "create": "spawn",
+      "continue": "followup_task",
+      "status": "list_agents"
+    },
+    "request": "TASK-B is independent and READY and needs the Implementer now. TASK-A has not completed."
+  },
+  {
+    "id": "LIFE-03",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "slots": {
+      "implementer": {
+        "id": "I1",
+        "status": "unknown"
+      }
+    },
+    "last_feedback": "network timeout, acceptance/start unknown",
+    "tools": {
+      "create": "spawn",
+      "continue": "followup_task",
+      "status": "list_agents"
+    },
+    "request": "Continue the original handoff."
+  },
+  {
+    "id": "LIFE-04",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "slots": "cache lost after compaction",
+    "host_instances": [
+      {
+        "role": "reviewer",
+        "id": "R1",
+        "status": "completed",
+        "source": "verified-current-candidate",
+        "parent": "same-main-session"
+      }
+    ],
+    "tools": {
+      "create": "spawn",
+      "continue": "followup_task",
+      "status": "list_agents"
+    },
+    "request": "Run the approved next delta review; role and permissions match."
+  },
+  {
+    "id": "LIFE-05",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Claude Code",
+    "slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "terminated-unrecoverable"
+      },
+      "tester": {
+        "id": "T1",
+        "status": "completed"
+      },
+      "implementer": {
+        "id": "I1",
+        "status": "completed"
+      }
+    },
+    "tools": {
+      "create": "Agent -> R2 for reviewer",
+      "continue": "SendMessage(to,message)"
+    },
+    "facts": "Only R1 is invalid; host recovery works for other instances. R1 fully stopped, original complete review lineage available.",
+    "request": "Continue the approved review."
+  },
+  {
+    "id": "LIFE-06",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Claude Code",
+    "slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "cancelled-by-user"
+      }
+    },
+    "tools": {
+      "create": "Agent",
+      "continue": "SendMessage"
+    },
+    "request": "Previously queued next review remains ready. User has not requested resume."
+  },
+  {
+    "id": "LIFE-07",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "ZCode",
+    "slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "completed"
+      }
+    },
+    "tools": {
+      "create": "Agent(role,prompt)"
+    },
+    "facts": "Host explicitly exposes no way to continue/resume existing instances.",
+    "request": "Continue the review."
+  },
+  {
+    "id": "LIFE-08",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "ZCode",
+    "slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "running",
+        "independence": "confirmed conflict"
+      }
+    },
+    "tools": {
+      "create": "Agent",
+      "continue": "continue",
+      "status": "status",
+      "stop": "stop"
+    },
+    "request": "Obtain an independent review; no stop confirmation yet."
+  },
+  {
+    "id": "MIG-01",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "ZCode",
+    "legacy_planner": {
+      "id": "P-old",
+      "status": "unknown"
+    },
+    "planner_skill": "readable",
+    "legacy_file": "exists",
+    "request": "Resume this existing workflow from its current state."
+  },
+  {
+    "id": "MIG-02",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Claude Code",
+    "legacy_planner": {
+      "id": "P-old",
+      "status": "confirmed-stopped",
+      "evidence": "complete handoff and persistent records verified"
+    },
+    "legacy_file": "exists",
+    "request": "Resume the existing Root; next ready action is SPEC_REVIEW, R1 already exists and is completed.",
+    "slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "completed"
+      }
+    },
+    "tools": {
+      "create": "Agent",
+      "continue": "SendMessage(to,message)"
+    }
+  },
+  {
+    "id": "EFF-01",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "role": "tester",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role,reasoning_effort?) -> T1",
+      "continue": "followup_task"
+    },
+    "effective_custom_config": "no fixed reasoning override; model remains current-model",
+    "requested_effort": "xhigh",
+    "request": "Perform the next already-approved tester handoff.",
+    "capabilities": {
+      "efforts": [
+        "high",
+        "xhigh",
+        "max"
+      ]
+    }
+  },
+  {
+    "id": "EFF-02",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "role": "tester",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role,reasoning_effort?) -> T1",
+      "continue": "followup_task"
+    },
+    "effective_custom_config": "no fixed reasoning override; model remains current-model",
+    "requested_effort": "xhigh",
+    "request": "Perform the next already-approved tester handoff.",
+    "provider": "GLM",
+    "first_attempt": {
+      "effort": "xhigh",
+      "error": "unsupported reasoning_effort; supported low, high, max",
+      "task_started": false,
+      "instance_id": null
+    },
+    "capabilities": {
+      "efforts": [
+        "low",
+        "high",
+        "max"
+      ]
+    },
+    "retry_response": "success"
+  },
+  {
+    "id": "EFF-03",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "role": "tester",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role,reasoning_effort?) -> T1",
+      "continue": "followup_task"
+    },
+    "effective_custom_config": "no fixed reasoning override; model remains current-model",
+    "requested_effort": "xhigh",
+    "request": "Perform the next already-approved tester handoff.",
+    "provider": "DeepSeek-compatible",
+    "capabilities": {
+      "efforts": [
+        "high",
+        "max"
+      ],
+      "accepted_aliases": {
+        "xhigh": "high"
+      }
+    },
+    "first_attempt": "not yet submitted"
+  },
+  {
+    "id": "EFF-04",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "role": "tester",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role,reasoning_effort?) -> T1",
+      "continue": "followup_task"
+    },
+    "effective_custom_config": "no fixed reasoning override; model remains current-model",
+    "requested_effort": "xhigh",
+    "request": "Perform the next already-approved tester handoff.",
+    "capabilities": {
+      "efforts": [
+        "high"
+      ]
+    }
+  },
+  {
+    "id": "EFF-05",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "role": "reviewer",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role,reasoning_effort?) -> R1",
+      "continue": "followup_task"
+    },
+    "effective_custom_config": "no fixed reasoning override; model remains current-model",
+    "requested_effort": "high",
+    "request": "Perform the next already-approved reviewer handoff.",
+    "capabilities": {
+      "efforts": [
+        "high",
+        "xhigh",
+        "max"
+      ]
+    }
+  },
+  {
+    "id": "EFF-06",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "role": "tester",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role,reasoning_effort?) -> T1",
+      "continue": "followup_task"
+    },
+    "effective_custom_config": "no fixed reasoning override; model remains current-model",
+    "requested_effort": "max",
+    "request": "Perform the next already-approved tester handoff.",
+    "capabilities": {
+      "efforts": [
+        "high",
+        "xhigh"
+      ]
+    }
+  },
+  {
+    "id": "EFF-07",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "role": "tester",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role) with no thinking parameters"
+    },
+    "effective_custom_config": "No erroneous override, inherited configuration verified usable",
+    "requested_effort": "xhigh",
+    "request": "Perform the next already-approved tester handoff.",
+    "provider": "Google",
+    "capabilities": {
+      "thinking_budget": "verified existing dynamic default, inherited by child",
+      "efforts": []
+    }
+  },
+  {
+    "id": "EFF-08",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "role": "tester",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role)"
+    },
+    "effective_custom_config": "No erroneous override, inherited configuration verified usable",
+    "requested_effort": "xhigh",
+    "request": "Perform the next already-approved tester handoff.",
+    "provider": "GLM",
+    "capabilities": {
+      "thinking": "verified enabled and inherited",
+      "efforts": []
+    }
+  },
+  {
+    "id": "EFF-09",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "role": "tester",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role,reasoning_effort?) -> T1",
+      "continue": "followup_task"
+    },
+    "effective_custom_config": "unknown",
+    "requested_effort": "xhigh",
+    "request": "Perform the next already-approved tester handoff.",
+    "provider": "unknown",
+    "capabilities": {
+      "model_ids": [
+        "current-model"
+      ]
+    },
+    "first_attempt": {
+      "error": "unsupported effort",
+      "task_started": false
+    }
+  },
+  {
+    "id": "EFF-10",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "role": "tester",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role,reasoning_effort?) -> T1",
+      "continue": "followup_task"
+    },
+    "effective_custom_config": "Existing installed Codex role file forces xhigh and overrides spawn parameters. Do not modify installed config.",
+    "requested_effort": "xhigh",
+    "request": "Perform the next already-approved tester handoff.",
+    "capabilities": {
+      "efforts": [
+        "high",
+        "max"
+      ]
+    },
+    "first_attempt": {
+      "error": "unsupported xhigh",
+      "task_started": false
+    }
+  },
+  {
+    "id": "EFF-11",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "role": "tester",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role)"
+    },
+    "effective_custom_config": "no fixed reasoning override; model remains current-model",
+    "requested_effort": "xhigh",
+    "request": "Perform the next already-approved tester handoff.",
+    "capabilities": {
+      "efforts": [],
+      "default": "verified usable inherited default; no bad override"
+    }
+  },
+  {
+    "id": "EFF-12",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "role": "tester",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role,reasoning_effort?) -> T1",
+      "continue": "followup_task"
+    },
+    "effective_custom_config": "no fixed reasoning override; model remains current-model",
+    "requested_effort": "xhigh",
+    "request": "Continue until a supported tester handoff or precise stopping condition. Record all attempts including first failure.",
+    "first_attempt": {
+      "effort": "xhigh",
+      "error": "unsupported; allows max",
+      "task_started": false
+    },
+    "responses_in_order": [
+      {
+        "on_retry": "max",
+        "error": "unsupported; updated allowed value high",
+        "task_started": false
+      },
+      {
+        "on_retry": "high",
+        "error": "unsupported; now allows medium",
+        "task_started": false
+      }
+    ]
+  },
+  {
+    "id": "EFF-13",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "role": "tester",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role,reasoning_effort?) -> T1",
+      "continue": "followup_task"
+    },
+    "effective_custom_config": "no fixed reasoning override; model remains current-model",
+    "requested_effort": "xhigh",
+    "request": "Perform the next already-approved tester handoff.",
+    "first_attempt": {
+      "error": "permission_denied",
+      "task_started": false
+    },
+    "capabilities": {
+      "efforts": [
+        "high",
+        "max"
+      ]
+    }
+  },
+  {
+    "id": "EFF-14",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "role": "tester",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role,reasoning_effort?) -> T1",
+      "continue": "followup_task"
+    },
+    "effective_custom_config": "no fixed reasoning override; model remains current-model",
+    "requested_effort": "xhigh",
+    "request": "Perform the next already-approved tester handoff.",
+    "first_attempt": {
+      "error": "authentication_failed",
+      "task_started": false
+    },
+    "capabilities": {
+      "efforts": [
+        "high",
+        "max"
+      ]
+    }
+  },
+  {
+    "id": "EFF-15",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "role": "tester",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role,reasoning_effort?) -> T1",
+      "continue": "followup_task"
+    },
+    "effective_custom_config": "no fixed reasoning override; model remains current-model",
+    "requested_effort": "xhigh",
+    "request": "Perform the next already-approved tester handoff.",
+    "first_attempt": {
+      "error": "network_timeout",
+      "task_started": "unknown"
+    },
+    "capabilities": {
+      "efforts": [
+        "high",
+        "max"
+      ]
+    }
+  },
+  {
+    "id": "EFF-16",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "role": "tester",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role,reasoning_effort?) -> T1",
+      "continue": "followup_task"
+    },
+    "effective_custom_config": "no fixed reasoning override; model remains current-model",
+    "requested_effort": "xhigh",
+    "request": "Perform the next already-approved tester handoff.",
+    "first_attempt": {
+      "error": "concurrency_limit",
+      "task_started": false
+    },
+    "capabilities": {
+      "efforts": [
+        "high",
+        "max"
+      ]
+    }
+  },
+  {
+    "id": "EFF-17",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "role": "tester",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role,reasoning_effort?) -> T1",
+      "continue": "followup_task"
+    },
+    "effective_custom_config": "no fixed reasoning override; model remains current-model",
+    "requested_effort": "xhigh",
+    "request": "Perform the next already-approved tester handoff.",
+    "first_attempt": {
+      "error": "business_FAIL",
+      "task_started": true
+    },
+    "capabilities": {
+      "efforts": [
+        "high",
+        "max"
+      ]
+    }
+  },
+  {
+    "id": "EFF-18",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "role": "tester",
+    "slots": {},
+    "tools": {
+      "create": "spawn(role,reasoning_effort?) -> T1",
+      "continue": "followup_task"
+    },
+    "effective_custom_config": "no fixed reasoning override; model remains current-model",
+    "requested_effort": "xhigh",
+    "request": "Perform the next already-approved tester handoff.",
+    "first_attempt": {
+      "error": "unknown_role; files/config/enabled/source verified",
+      "task_started": false
+    },
+    "capabilities": {
+      "efforts": [
+        "high",
+        "max"
+      ]
+    }
+  },
+  {
+    "id": "CACHE-01",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "role": "tester",
+    "slots": {
+      "tester": {
+        "id": "T1",
+        "status": "completed",
+        "model": "current-model",
+        "effort": "high"
+      }
+    },
+    "tools": {
+      "create": "spawn",
+      "continue": "followup_task",
+      "effort_update": "not supported"
+    },
+    "effective_custom_config": "no fixed reasoning override; model remains current-model",
+    "requested_effort": "xhigh",
+    "request": "Continue the existing tester for the next approved Task.",
+    "capabilities": {
+      "efforts": [
+        "high",
+        "xhigh"
+      ]
+    }
+  },
+  {
+    "id": "CACHE-02",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "role": "tester",
+    "slots": {
+      "tester": {
+        "id": "T1",
+        "status": "completed"
+      }
+    },
+    "tools": {
+      "create": "spawn(role,reasoning_effort?) -> T1",
+      "continue": "followup_task"
+    },
+    "effective_custom_config": "no fixed reasoning override; model remains current-model",
+    "requested_effort": "xhigh",
+    "request": "Host configuration changed. Decide how to handle the old negotiation cache and instance, without assuming how an existing instance updates.",
+    "cache": {
+      "model": "old-model",
+      "effort": "max"
+    },
+    "capabilities": {
+      "model": "current-model",
+      "efforts": [
+        "high"
+      ]
+    }
+  },
+  {
+    "id": "HOST-01",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Codex",
+    "slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "completed"
+      }
+    },
+    "tools": {
+      "create": "spawn",
+      "continue": "followup_task(target,message)",
+      "message": "send_message(target,message) only queues and cannot wake idle"
+    },
+    "request": "Continue the existing review."
+  },
+  {
+    "id": "HOST-02",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "Claude Code",
+    "slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "completed"
+      }
+    },
+    "tools": {
+      "create": "Agent(role,prompt) creates new ID",
+      "continue": "SendMessage(to,message) wakes existing ID"
+    },
+    "request": "Continue the existing review."
+  },
+  {
+    "id": "HOST-03",
+    "model": "current-model",
+    "source": "verified-current-candidate",
+    "required_business_inputs": "All required approvals, allowed/protected paths and exact synthetic object identities are supplied; no real business writes permitted.",
+    "host": "ZCode",
+    "slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "completed"
+      }
+    },
+    "tools": {
+      "create": "Agent(role,prompt)",
+      "continue": "ContinueAgent(agentId,input)"
+    },
+    "request": "Continue the existing review."
+  }
+]
+```
+
+</details>
+
+<details>
+<summary>独立评测作者完整 results.json 原文</summary>
+
+```json
+[
+  {
+    "id": "TOPO-Codex",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "主会话直接执行 Planner；仅首次真正需要 Reviewer，因此用本场景的 spawn Schema 选择原生角色。high 可用，保持 Reviewer 偏好。",
+        "role": "ric_devflow_reviewer",
+        "parameters": {
+          "role": "ric_devflow_reviewer",
+          "effort": "high"
+        },
+        "reasoning_effort": "high",
+        "returns": {
+          "id": "R1"
+        },
+        "handoff_context": "职责：审核者｜SPEC_REVIEW\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。保持只读；核对独立性、单一审核模式、当前精确对象及适用 SHA；返回完整原始审核载荷，不修改受审对象。"
+      }
+    ],
+    "new_instances": 1,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "awaiting_review_result"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "派发 R1 后等待当前 SPEC_REVIEW 完整结果；未给结果，不声称 APPROVE 或任何业务 Gate 已通过。无 Planner 原生定义不触发安装或阻塞。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-reviewer/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md",
+      "skills/ric-devflow-reviewer/references/spec-review.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "9de7f6575fdba44207406fdb97503a01239557c0c8241cb10d6d33db56f61794",
+    "requested_effort": "high",
+    "effective_effort": "high",
+    "planner_subagents_created": 0,
+    "untouched_slots": [
+      "tester",
+      "implementer"
+    ],
+    "schema_notes": [
+      "本场景即使宿主名为 Claude Code/ZCode，也明确提供 spawn；采用输入 Schema，不擅自改成 Agent。",
+      "spawn 只列 role/effort，交接上下文单列，不把 prompt、task_name、model 或 fork_turns 臆加为该工具参数。"
+    ],
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-reviewer/SKILL.md": "f12cca96389a985f6802ed24239d13f389f5a317283ef8d56f05b98492d31757",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56",
+      "skills/ric-devflow-reviewer/references/spec-review.md": "f3bb3becb79df958dd7c3dbb82cb653da28115b17c08e45eb5092081317d819d"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "TOPO-Claude",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "主会话直接执行 Planner；仅首次真正需要 Reviewer，因此用本场景的 spawn Schema 选择原生角色。high 可用，保持 Reviewer 偏好。",
+        "role": "ric-devflow-reviewer",
+        "parameters": {
+          "role": "ric-devflow-reviewer",
+          "effort": "high"
+        },
+        "reasoning_effort": "high",
+        "returns": {
+          "id": "R1"
+        },
+        "handoff_context": "职责：审核者｜SPEC_REVIEW\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。保持只读；核对独立性、单一审核模式、当前精确对象及适用 SHA；返回完整原始审核载荷，不修改受审对象。"
+      }
+    ],
+    "new_instances": 1,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "awaiting_review_result"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "派发 R1 后等待当前 SPEC_REVIEW 完整结果；未给结果，不声称 APPROVE 或任何业务 Gate 已通过。无 Planner 原生定义不触发安装或阻塞。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/claude-code.md",
+      "skills/ric-devflow-reviewer/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md",
+      "skills/ric-devflow-reviewer/references/spec-review.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "8634257e3af644ac91d47d1b3de6f7b2b23b33114ff0545ad97685f70e7af126",
+    "requested_effort": "high",
+    "effective_effort": "high",
+    "planner_subagents_created": 0,
+    "untouched_slots": [
+      "tester",
+      "implementer"
+    ],
+    "schema_notes": [
+      "本场景即使宿主名为 Claude Code/ZCode，也明确提供 spawn；采用输入 Schema，不擅自改成 Agent。",
+      "spawn 只列 role/effort，交接上下文单列，不把 prompt、task_name、model 或 fork_turns 臆加为该工具参数。"
+    ],
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/claude-code.md": "741d0e53fac486c20fb72584dbd9988bdf579d551ecc1f6a0b6377c4288db06d",
+      "skills/ric-devflow-reviewer/SKILL.md": "f12cca96389a985f6802ed24239d13f389f5a317283ef8d56f05b98492d31757",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56",
+      "skills/ric-devflow-reviewer/references/spec-review.md": "f3bb3becb79df958dd7c3dbb82cb653da28115b17c08e45eb5092081317d819d"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "TOPO-ZCode",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "主会话直接执行 Planner；仅首次真正需要 Reviewer，因此用本场景的 spawn Schema 选择原生角色。high 可用，保持 Reviewer 偏好。",
+        "role": "ric-devflow-reviewer",
+        "parameters": {
+          "role": "ric-devflow-reviewer",
+          "effort": "high"
+        },
+        "reasoning_effort": "high",
+        "returns": {
+          "id": "R1"
+        },
+        "handoff_context": "职责：审核者｜SPEC_REVIEW\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。保持只读；核对独立性、单一审核模式、当前精确对象及适用 SHA；返回完整原始审核载荷，不修改受审对象。"
+      }
+    ],
+    "new_instances": 1,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "awaiting_review_result"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "派发 R1 后等待当前 SPEC_REVIEW 完整结果；未给结果，不声称 APPROVE 或任何业务 Gate 已通过。无 Planner 原生定义不触发安装或阻塞。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/zcode.md",
+      "skills/ric-devflow-reviewer/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md",
+      "skills/ric-devflow-reviewer/references/spec-review.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "067c240b235ebd516b80258328eb6beb60de7980c744596588e5a816e4ec3c78",
+    "requested_effort": "high",
+    "effective_effort": "high",
+    "planner_subagents_created": 0,
+    "untouched_slots": [
+      "tester",
+      "implementer"
+    ],
+    "schema_notes": [
+      "本场景即使宿主名为 Claude Code/ZCode，也明确提供 spawn；采用输入 Schema，不擅自改成 Agent。",
+      "spawn 只列 role/effort，交接上下文单列，不把 prompt、task_name、model 或 fork_turns 臆加为该工具参数。"
+    ],
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/zcode.md": "55bc3232fc2fefc2d0ef7a949690a1411f58a3df745335813ee4c475ab8da3ba",
+      "skills/ric-devflow-reviewer/SKILL.md": "f12cca96389a985f6802ed24239d13f389f5a317283ef8d56f05b98492d31757",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56",
+      "skills/ric-devflow-reviewer/references/spec-review.md": "f3bb3becb79df958dd7c3dbb82cb653da28115b17c08e45eb5092081317d819d"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "LIFE-01",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "对应角色首次 READY；只创建该槽位。前序完成状态取自场景事件，保留 current-model。",
+        "role": "ric_devflow_reviewer",
+        "parameters": {
+          "role": "ric_devflow_reviewer",
+          "effort": "high"
+        },
+        "reasoning_effort": "high",
+        "returns": {
+          "id": "R1",
+          "completion": "supplied_by_case_event"
+        },
+        "handoff_context": "职责：审核者｜Root-A 当前已批准动作\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。保持只读；核对独立性、单一审核模式、当前精确对象及适用 SHA；返回完整原始审核载荷，不修改受审对象。"
+      },
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "对应角色首次 READY；只创建该槽位。前序完成状态取自场景事件，保留 current-model。",
+        "role": "ric_devflow_implementer",
+        "parameters": {
+          "role": "ric_devflow_implementer",
+          "effort": "xhigh"
+        },
+        "reasoning_effort": "xhigh",
+        "returns": {
+          "id": "I1",
+          "completion": "supplied_by_case_event"
+        },
+        "handoff_context": "职责：实现者｜Root-A 当前已批准动作\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。只处理当前单个已批准 Task/实现类 Defect，核对 base/head、工作区、允许/保护路径和写入窗口；不得合并、改需求或派生代理。"
+      },
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "对应角色首次 READY；只创建该槽位。前序完成状态取自场景事件，保留 current-model。",
+        "role": "ric_devflow_tester",
+        "parameters": {
+          "role": "ric_devflow_tester",
+          "effort": "xhigh"
+        },
+        "reasoning_effort": "xhigh",
+        "returns": {
+          "id": "T1",
+          "completion": "supplied_by_case_event"
+        },
+        "handoff_context": "职责：测试者｜Root-A 当前已批准动作\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。只执行当前批准的单一测试动作，核对计划、环境和精确 SHA；生产路径受保护；返回完整测试或 Defect 原载荷。"
+      },
+      {
+        "tool": "followup_task",
+        "execution": "simulated_only",
+        "reason": "同 Task 的实现返修继续原 I1；不新建 Implementer，也不为返修改模型或另建工作区。",
+        "role": "ric_devflow_implementer",
+        "target": "I1",
+        "parameters": {
+          "target": "I1",
+          "message": "职责：实现者｜原 Task 返修；引用已有候选 head、Finding 和精确 Delta\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。只处理当前单个已批准 Task/实现类 Defect，核对 base/head、工作区、允许/保护路径和写入窗口；不得合并、改需求或派生代理。"
+        },
+        "after": "T1 已完成，I1 空闲"
+      },
+      {
+        "tool": "followup_task",
+        "execution": "simulated_only",
+        "reason": "I1 完成后让独立的原 R1 做 Delta 复审；保留审核谱系和未关闭 Finding。",
+        "role": "ric_devflow_reviewer",
+        "target": "R1",
+        "parameters": {
+          "target": "R1",
+          "message": "职责：审核者｜Delta 复审；引用上一 Review、supersedes 对象、Finding、Delta 与邻域\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。保持只读；核对独立性、单一审核模式、当前精确对象及适用 SHA；返回完整原始审核载荷，不修改受审对象。"
+        },
+        "after": "I1 返修完成"
+      },
+      {
+        "tool": "followup_task",
+        "execution": "simulated_only",
+        "reason": "Root-A 关闭不会清空主会话槽位；核对上一动作结束及 Root-B 的新权限和身份后，跨仓库复用 I1。",
+        "role": "ric_devflow_implementer",
+        "target": "I1",
+        "parameters": {
+          "target": "I1",
+          "message": "职责：实现者｜Root-B 已批准 Task；repository=repo-B，worktree=work-B，base_sha=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb；只采用新允许路径与批准\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。只处理当前单个已批准 Task/实现类 Defect，核对 base/head、工作区、允许/保护路径和写入窗口；不得合并、改需求或派生代理。"
+        },
+        "after": "R1 已完成，Root-A 已关闭；I1 仍空闲",
+        "refreshed_binding": {
+          "repository": "repo-B",
+          "worktree": "work-B",
+          "base_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "permissions": "new allowlist supplied"
+        }
+      }
+    ],
+    "new_instances": 3,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "completed"
+      },
+      "tester": {
+        "id": "T1",
+        "status": "completed"
+      },
+      "implementer": {
+        "id": "I1",
+        "status": "continued_pending_result",
+        "root": "Root-B",
+        "repository": "repo-B",
+        "worktree": "work-B"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "最后一次 I1 续作后等待当前 Root-B 动作结果；各次交接遇身份/权限/工作区不符即停该动作。不得把 Root-A 结论带到 Root-B。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-reviewer/SKILL.md",
+      "skills/ric-devflow-tester/SKILL.md",
+      "skills/ric-devflow-implementer/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "9b15d9d8806a3ee804112657d977109a97b350321ebca8523a01336775fe328f",
+    "requested_effort": {
+      "reviewer": "high",
+      "tester": "xhigh",
+      "implementer": "xhigh"
+    },
+    "effective_effort": {
+      "reviewer": "high",
+      "tester": "xhigh",
+      "implementer": "xhigh"
+    },
+    "lifecycle_evidence": "输入的完成事件足以核对状态，不额外轮询已经给出的完成事实。",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-reviewer/SKILL.md": "f12cca96389a985f6802ed24239d13f389f5a317283ef8d56f05b98492d31757",
+      "skills/ric-devflow-tester/SKILL.md": "a4c79b3c8a372a37856a9b372869e4a162b9a3c458d9513e2119dfda41bf9bae",
+      "skills/ric-devflow-implementer/SKILL.md": "ae711d105d9d14f2831dbe6ddaf06ffbf42832a17e3fd7af19f7069b0150e439",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "LIFE-02",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "list_agents",
+        "execution": "simulated_only",
+        "reason": "用可用状态工具核对 I1/TASK-A 的活动状态；不要把 TASK-B 塞给仍运行的 I1。",
+        "target": "I1",
+        "parameters": {},
+        "expected_check": "I1 仍 running，TASK-A 未结束"
+      }
+    ],
+    "new_instances": 0,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "implementer": {
+        "id": "I1",
+        "status": "running",
+        "task": "TASK-A"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "TASK-B 留在主会话队列，等待 I1 的 TASK-A 完成与写入窗口结束；没有完成事件时不调用 followup_task 或 spawn。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-implementer/SKILL.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "7dc7fcdc84746ab97d6a1081b0a23f134a0d3480a26b29ecad58567c357bb23e",
+    "queued_actions": [
+      {
+        "role": "implementer",
+        "task": "TASK-B"
+      }
+    ],
+    "next_dispatch_if_completed": {
+      "tool": "followup_task",
+      "target": "I1",
+      "condition": "重新核对 TASK-B 身份/权限后才续作"
+    },
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-implementer/SKILL.md": "ae711d105d9d14f2831dbe6ddaf06ffbf42832a17e3fd7af19f7069b0150e439"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "LIFE-03",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "list_agents",
+        "execution": "simulated_only",
+        "reason": "超时且是否接受/启动未知，先查询原 I1；不能把网络超时当作实例不存在。",
+        "target": "I1",
+        "parameters": {}
+      }
+    ],
+    "new_instances": 0,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "implementer": {
+        "id": "I1",
+        "status": "unknown_pending_host_query"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "查询返回尚未给出，停止重发业务交接。运行中等原动作；完成则消费原结果；仅确认未接受且原实例可恢复时才在 I1 上续接。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-implementer/SKILL.md",
+      "skills/ric-devflow/references/bootstrap.md#文件、加载、调用分别核验"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "227d86216be266dda4a51d02b8f34a246db0cd0596d44455849729a6429faa20",
+    "conditional_recovery": [
+      "若宿主确认原动作已启动，等待/恢复原动作而不重新提交。",
+      "若确认 I1 完成且结果丢失，取回原结果，不重复实现。",
+      "生命周期仍未知时保留映射并报告缺口，不创建替代者。"
+    ],
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-implementer/SKILL.md": "ae711d105d9d14f2831dbe6ddaf06ffbf42832a17e3fd7af19f7069b0150e439",
+      "skills/ric-devflow/references/bootstrap.md": "00f3c0a43bc022fe2d26d4d5cf8dc65c1a58599befbfb0d4295184fcd225d6cf"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "LIFE-04",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "list_agents",
+        "execution": "simulated_only",
+        "reason": "压缩丢失的是会话缓存；先由宿主记录恢复真实绑定。",
+        "parameters": {},
+        "supplied_result": {
+          "role": "reviewer",
+          "id": "R1",
+          "status": "completed",
+          "source": "verified-current-candidate",
+          "parent": "same-main-session"
+        }
+      },
+      {
+        "tool": "followup_task",
+        "execution": "simulated_only",
+        "reason": "来源、主会话、职责和权限匹配后恢复原 R1，交接批准的下一 Delta 复审。",
+        "role": "ric_devflow_reviewer",
+        "target": "R1",
+        "handoff_context": "职责：审核者｜下一 Delta 复审\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。保持只读；核对独立性、单一审核模式、当前精确对象及适用 SHA；返回完整原始审核载荷，不修改受审对象。"
+      }
+    ],
+    "new_instances": 0,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "continued_pending_result"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "等待 R1 返回本次精确对象的复审载荷；不因 compaction 重新 spawn。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-reviewer/SKILL.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "e9b1ce66a9f0450e5e200d4dbf3ae5b24c122c6853cd14ad8d59981ac6abf47f",
+    "schema_notes": [
+      "该项只列 followup_task 工具名，已明确记录实际目标和交接正文；未声称输入提供完整参数 Schema。"
+    ],
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-reviewer/SKILL.md": "f12cca96389a985f6802ed24239d13f389f5a317283ef8d56f05b98492d31757"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "LIFE-05",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "Agent",
+        "execution": "simulated_only",
+        "reason": "只有 R1 已确认彻底停止且不可恢复；保全旧审核谱系、关闭旧窗口并解除旧映射后替换该槽位，要求新 Reviewer 完整复审。",
+        "role": "ric-devflow-reviewer",
+        "returns": {
+          "id": "R2"
+        },
+        "handoff_context": "职责：审核者｜继承原审核谱系并执行对应对象的完整复审\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。保持只读；核对独立性、单一审核模式、当前精确对象及适用 SHA；返回完整原始审核载荷，不修改受审对象。"
+      }
+    ],
+    "new_instances": 1,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "reviewer": {
+        "id": "R2",
+        "status": "awaiting_full_review"
+      },
+      "tester": {
+        "id": "T1",
+        "status": "completed"
+      },
+      "implementer": {
+        "id": "I1",
+        "status": "completed"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "等待 R2 的独立完整复审；保持 T1/I1。普通 Delta 摘要不足以代替替换 Reviewer 所需的完整复审。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/claude-code.md",
+      "skills/ric-devflow-reviewer/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "63f21e8445727eb2feb6d63022f53a355b7d579a74c527f8be083dcf467b22f1",
+    "replaced_slot": {
+      "role": "reviewer",
+      "old_id": "R1",
+      "new_id": "R2",
+      "reason": "terminated-unrecoverable; fully stopped; complete lineage supplied"
+    },
+    "effective_effort": "未给出枚举等级；保留当前已选模型和可用继承设置，不声明高于宿主证据的等级",
+    "schema_notes": [
+      "输入只命名 Agent，未给 effort 或完整形参；不擅加 reasoning_effort/API 字段。若实际继承配置无法确认为可用，则在创建前按思考兼容第 4 项停止。"
+    ],
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/claude-code.md": "741d0e53fac486c20fb72584dbd9988bdf579d551ecc1f6a0b6377c4288db06d",
+      "skills/ric-devflow-reviewer/SKILL.md": "f12cca96389a985f6802ed24239d13f389f5a317283ef8d56f05b98492d31757",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "LIFE-06",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [],
+    "new_instances": 0,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "cancelled-by-user"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "保持用户取消；只有用户明确恢复后才能续作。队列中的 ready 状态不构成恢复授权；不 Agent、不 SendMessage。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/claude-code.md",
+      "skills/ric-devflow-reviewer/SKILL.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "9dd80d72d76f8abefab4a9aad3a1b4c933cb0f98ed5e5cee460b30bdf2278a49",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/claude-code.md": "741d0e53fac486c20fb72584dbd9988bdf579d551ecc1f6a0b6377c4288db06d",
+      "skills/ric-devflow-reviewer/SKILL.md": "f12cca96389a985f6802ed24239d13f389f5a317283ef8d56f05b98492d31757"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "LIFE-07",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [],
+    "new_instances": 0,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "completed"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "宿主明确没有继续/恢复接口，停止该交接并报告能力缺口。不能再次 Agent、假造 resume/SendMessage/ContinueAgent，或改由主会话审核。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/zcode.md",
+      "skills/ric-devflow-reviewer/SKILL.md",
+      "skills/ric-devflow/references/bootstrap.md#文件、加载、调用分别核验"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "ad472984e0e840914c0b677cb03c5920870ba8acecdf6cd0ce5611c2e780e96c",
+    "gap": "host_has_creation_but_no_resume_capability",
+    "restart_claim": "不将明确不支持恢复的能力缺口描述为重启即可解决。",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/zcode.md": "55bc3232fc2fefc2d0ef7a949690a1411f58a3df745335813ee4c475ab8da3ba",
+      "skills/ric-devflow-reviewer/SKILL.md": "f12cca96389a985f6802ed24239d13f389f5a317283ef8d56f05b98492d31757",
+      "skills/ric-devflow/references/bootstrap.md": "00f3c0a43bc022fe2d26d4d5cf8dc65c1a58599befbfb0d4295184fcd225d6cf"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "LIFE-08",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "stop",
+        "execution": "simulated_only",
+        "reason": "R1 已确认存在独立性冲突，先终止旧动作；发出 stop 不等于已经停止。",
+        "role": "ric-devflow-reviewer",
+        "target": "R1"
+      },
+      {
+        "tool": "status",
+        "execution": "simulated_only",
+        "reason": "确认 stop 是否完成；输入未给出停止确认，不能创建替代 Reviewer。",
+        "target": "R1"
+      }
+    ],
+    "new_instances": 0,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "awaiting_stop_confirmation",
+        "independence": "confirmed conflict",
+        "eligible_for_new_review": false
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "等待 R1 真实停止；之后保全审核谱系、结束旧窗口并解除映射，才允许新 Agent 做完整复审。本场景终点没有停止确认，故不创建。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/zcode.md",
+      "skills/ric-devflow-reviewer/SKILL.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "11fca6aa5ffb111b9cb565f678af5639d2ef4770fc4b280feadbf0a3e86de6b3",
+    "conditional_next_action": {
+      "tool": "Agent",
+      "role": "ric-devflow-reviewer",
+      "condition": "R1 stopped confirmed and old mapping/window retired; new reviewer identity bound; full review required"
+    },
+    "schema_notes": [
+      "stop/status 的参数字段未展开，target=R1 记录语义目标，不编造 agentId/id 的线级参数名。"
+    ],
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/zcode.md": "55bc3232fc2fefc2d0ef7a949690a1411f58a3df745335813ee4c475ab8da3ba",
+      "skills/ric-devflow-reviewer/SKILL.md": "f12cca96389a985f6802ed24239d13f389f5a317283ef8d56f05b98492d31757"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "MIG-01",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [],
+    "new_instances": 0,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {},
+    "planner_actor": "main-session-takeover-not-yet-authorized-by-lifecycle-evidence",
+    "stop_condition": "P-old 生命周期未知且没有提供查询/停止工具：不接管全局写入、不发新业务交接；先取得停止及完整规划、状态、证据、未完成交接的可信确认。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/zcode.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "d0a23d95d5c31c6c3d70718d1a7e39223ea4bff4de58be066ff27c508f82a70c",
+    "legacy_planner": {
+      "id": "P-old",
+      "status": "unknown",
+      "definition_action": "keep_without_calling"
+    },
+    "gap": "legacy_planner_stop_and_handoff_unverified",
+    "operator_notice": "保留同一 Root 与旧定义，不补装新 Planner 模板，不制造第二个 Planner 写入者。",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/zcode.md": "55bc3232fc2fefc2d0ef7a949690a1411f58a3df745335813ee4c475ab8da3ba"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "MIG-02",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "SendMessage",
+        "execution": "simulated_only",
+        "reason": "P-old 已确认停止、完整交接和持久记录已核验，主会话接管原 Root；用既有 R1 执行已准备的 SPEC_REVIEW。",
+        "role": "ric-devflow-reviewer",
+        "target": "R1",
+        "parameters": {
+          "to": "R1",
+          "message": "职责：审核者｜原 Root 的 SPEC_REVIEW\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。保持只读；核对独立性、单一审核模式、当前精确对象及适用 SHA；返回完整原始审核载荷，不修改受审对象。"
+        }
+      }
+    ],
+    "new_instances": 0,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "continued_pending_result"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "等待 R1 本次审核结果；旧 Planner 定义继续保留且不调用，不改写历史作者或新建 Root。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/claude-code.md",
+      "skills/ric-devflow-reviewer/SKILL.md",
+      "skills/ric-devflow-reviewer/references/spec-review.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "a70e9f5d2c25c95a1df0bbffd903afc7f3f3de7d9a52bf5725957092bd357061",
+    "legacy_planner": {
+      "id": "P-old",
+      "status": "confirmed-stopped",
+      "definition_action": "keep_without_calling",
+      "handoff": "verified"
+    },
+    "non_tool_state_transition": "主会话核对旧写入窗口结束，采用同一 Root 的原状态和未完成交接，成为唯一 Planner。",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/claude-code.md": "741d0e53fac486c20fb72584dbd9988bdf579d551ecc1f6a0b6377c4288db06d",
+      "skills/ric-devflow-reviewer/SKILL.md": "f12cca96389a985f6802ed24239d13f389f5a317283ef8d56f05b98492d31757",
+      "skills/ric-devflow-reviewer/references/spec-review.md": "f3bb3becb79df958dd7c3dbb82cb653da28115b17c08e45eb5092081317d819d"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "EFF-01",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "当前 Schema 与能力显式支持原请求 xhigh，且无固定覆盖；保留原值和 current-model。",
+        "role": "ric_devflow_tester",
+        "parameters": {
+          "role": "ric_devflow_tester",
+          "reasoning_effort": "xhigh"
+        },
+        "reasoning_effort": "xhigh",
+        "handoff_context": "职责：测试者｜当前已批准单一测试动作\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。只执行当前批准的单一测试动作，核对计划、环境和精确 SHA；生产路径受保护；返回完整测试或 Defect 原载荷。",
+        "returns": {
+          "id": "T1"
+        }
+      }
+    ],
+    "new_instances": 1,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "tester": {
+        "id": "T1",
+        "status": "awaiting_business_result"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "等待 T1 返回；没有测试报告时不标 PASS。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-tester/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "da57db5e7bd88402ed1eef8bcceda352cd767b554f28a79fccb0c543d7eb5420",
+    "requested_effort": "xhigh",
+    "effective_effort": "xhigh",
+    "correction_retries": 0,
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-tester/SKILL.md": "a4c79b3c8a372a37856a9b372869e4a162b9a3c458d9513e2119dfda41bf9bae",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "EFF-02",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "记录输入已经发生的首次参数失败；此历史尝试不是现在再发一次。",
+        "role": "ric_devflow_tester",
+        "parameters": {
+          "role": "ric_devflow_tester",
+          "reasoning_effort": "xhigh"
+        },
+        "reasoning_effort": "xhigh",
+        "handoff_context": "职责：测试者｜当前已批准单一测试动作\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。只执行当前批准的单一测试动作，核对计划、环境和精确 SHA；生产路径受保护；返回完整测试或 Defect 原载荷。",
+        "supplied_feedback": {
+          "error": "unsupported reasoning_effort; supported low, high, max",
+          "task_started": false,
+          "instance_id": null
+        },
+        "trace_phase": "supplied_prior_attempt"
+      },
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "明确未启动且新的允许集合包含 max，不含 xhigh；按通用回退仅纠正一次，不由 GLM 名称猜参数。",
+        "role": "ric_devflow_tester",
+        "parameters": {
+          "role": "ric_devflow_tester",
+          "reasoning_effort": "max"
+        },
+        "reasoning_effort": "max",
+        "handoff_context": "职责：测试者｜当前已批准单一测试动作\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。只执行当前批准的单一测试动作，核对计划、环境和精确 SHA；生产路径受保护；返回完整测试或 Defect 原载荷。",
+        "returns": {
+          "id": "T1"
+        },
+        "supplied_feedback": {
+          "retry_response": "success"
+        }
+      }
+    ],
+    "new_instances": 1,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "tester": {
+        "id": "T1",
+        "status": "awaiting_business_result"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "纠正成功后等待 T1 业务结果；不再试 high，不改变模型或用户配置。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-tester/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "873fa59292e2a22ff8819a04acc54ea95d37132a251ee4b72747ef422d0ba8c4",
+    "requested_effort": "xhigh",
+    "effective_effort": "max",
+    "correction_retries": 1,
+    "attempts": 2,
+    "adjustment": "xhigh -> max; 不宣称不同档位或厂商效果等同",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-tester/SKILL.md": "a4c79b3c8a372a37856a9b372869e4a162b9a3c458d9513e2119dfda41bf9bae",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "EFF-03",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "接入层明确接受 xhigh 并映射为 high；保留被接受的原参数，显式别名优先于 xhigh -> max 通用回退。",
+        "role": "ric_devflow_tester",
+        "parameters": {
+          "role": "ric_devflow_tester",
+          "reasoning_effort": "xhigh"
+        },
+        "reasoning_effort": "xhigh",
+        "handoff_context": "职责：测试者｜当前已批准单一测试动作\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。只执行当前批准的单一测试动作，核对计划、环境和精确 SHA；生产路径受保护；返回完整测试或 Defect 原载荷。",
+        "returns": {
+          "id": "T1"
+        }
+      }
+    ],
+    "new_instances": 1,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "tester": {
+        "id": "T1",
+        "status": "awaiting_business_result"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "等待 T1 业务结果，不追加探测调用。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-tester/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "d57ce4fff00c579abd8b1b25c3f0e1c9ad0096f6eb755c724daff73e5264a100",
+    "requested_effort": "xhigh",
+    "effective_effort": "high",
+    "transmitted_effort": "xhigh",
+    "mapping_evidence": {
+      "accepted_aliases": {
+        "xhigh": "high"
+      }
+    },
+    "correction_retries": 0,
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-tester/SKILL.md": "a4c79b3c8a372a37856a9b372869e4a162b9a3c458d9513e2119dfda41bf9bae",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "EFF-04",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "当前仅 high 可用，xhigh/max 均不可用；选择已确认集合里的 high。",
+        "role": "ric_devflow_tester",
+        "parameters": {
+          "role": "ric_devflow_tester",
+          "reasoning_effort": "high"
+        },
+        "reasoning_effort": "high",
+        "handoff_context": "职责：测试者｜当前已批准单一测试动作\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。只执行当前批准的单一测试动作，核对计划、环境和精确 SHA；生产路径受保护；返回完整测试或 Defect 原载荷。",
+        "returns": {
+          "id": "T1"
+        }
+      }
+    ],
+    "new_instances": 1,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "tester": {
+        "id": "T1",
+        "status": "awaiting_business_result"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "等待 T1 业务结果。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-tester/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "1022d8b49dedf32df907e505fee7f808c21c91faf0efcc662e28e7c5ffd8ebe5",
+    "requested_effort": "xhigh",
+    "effective_effort": "high",
+    "correction_retries": 0,
+    "adjustment": "xhigh -> high",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-tester/SKILL.md": "a4c79b3c8a372a37856a9b372869e4a162b9a3c458d9513e2119dfda41bf9bae",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "EFF-05",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "维护者已将输入职责和请求统一为 reviewer，high 本身可用，因此不升到 xhigh/max。",
+        "role": "ric_devflow_reviewer",
+        "parameters": {
+          "role": "ric_devflow_reviewer",
+          "reasoning_effort": "high"
+        },
+        "reasoning_effort": "high",
+        "returns": {
+          "id": "R1"
+        },
+        "handoff_context": "职责：审核者｜当前已批准的单一审核动作\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。保持只读；核对独立性、单一审核模式、当前精确对象及适用 SHA；返回完整原始审核载荷，不修改受审对象。"
+      }
+    ],
+    "new_instances": 1,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "awaiting_review_result"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "等待 R1 当前批准审核动作的结果；原始冲突记录不伪装成候选 Skill 缺陷。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-reviewer/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md",
+      "skills/ric-devflow/references/contracts/role-boundaries.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "6e637c10daf190765202d7768cd6f82ef2e6713a0279d88fdb1712c9ac36e9ec",
+    "requested_effort": "high",
+    "effective_effort": "high",
+    "correction_retries": 0,
+    "input_revision_note": {
+      "initial_observation": "最初 role=reviewer，但 request 要求 tester handoff，工具返回写成 T1；独立评测先停止而未猜测角色。",
+      "maintainer_correction": "仅重读 EFF-05 确认 request 已改为 reviewer handoff，创建返回改为 R1；候选指令未变。",
+      "reevaluation": "本条动作基于修正后的 reviewer 输入；high 保持 high。"
+    },
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-reviewer/SKILL.md": "f12cca96389a985f6802ed24239d13f389f5a317283ef8d56f05b98492d31757",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56",
+      "skills/ric-devflow/references/contracts/role-boundaries.md": "468df8e774107ea9e16b8dfe5bd2e7701a89c6288aa82dc56d50474a9529b37f"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "EFF-06",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "max 不支持且 xhigh 在已确认允许集合内，按对称回退采用 xhigh。",
+        "role": "ric_devflow_tester",
+        "parameters": {
+          "role": "ric_devflow_tester",
+          "reasoning_effort": "xhigh"
+        },
+        "reasoning_effort": "xhigh",
+        "handoff_context": "职责：测试者｜当前已批准单一测试动作\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。只执行当前批准的单一测试动作，核对计划、环境和精确 SHA；生产路径受保护；返回完整测试或 Defect 原载荷。",
+        "returns": {
+          "id": "T1"
+        }
+      }
+    ],
+    "new_instances": 1,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "tester": {
+        "id": "T1",
+        "status": "awaiting_business_result"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "等待 T1 业务结果。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-tester/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "c119cdfa6245633ccf6f46b581d96ce81468ba1e9a454c41f7fe988ac18afc63",
+    "requested_effort": "max",
+    "effective_effort": "xhigh",
+    "correction_retries": 0,
+    "adjustment": "max -> xhigh",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-tester/SKILL.md": "a4c79b3c8a372a37856a9b372869e4a162b9a3c458d9513e2119dfda41bf9bae",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "EFF-07",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "Google 接入已有动态 thinking_budget，已验证继承可用；Schema 仅允许 role，不把 API 的 thinkingBudget 塞进 spawn。",
+        "role": "ric_devflow_tester",
+        "parameters": {
+          "role": "ric_devflow_tester"
+        },
+        "handoff_context": "职责：测试者｜当前已批准单一测试动作\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。只执行当前批准的单一测试动作，核对计划、环境和精确 SHA；生产路径受保护；返回完整测试或 Defect 原载荷。"
+      }
+    ],
+    "new_instances": 1,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "tester": {
+        "id": null,
+        "status": "creation_requested_return_not_supplied",
+        "bind_on_actual_return": true
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "仅发起一次必要创建；输入未给返回句柄，等待宿主真实返回再绑定槽位；失败按原错误处理，不预先声称创建成功或测试通过。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-tester/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "730eb14204619b4debb30d5f205cd01afc8a0289039b7ab82a9f5c23a549741a",
+    "requested_effort": "xhigh",
+    "effective_effort": "verified inherited dynamic thinking budget",
+    "correction_retries": 0,
+    "numeric_thinking_budget": null,
+    "creation_confirmation": "未提供返回。new_instances=1 表示此轨迹需要一个新槽位，不是已成功创建的证据。",
+    "identity_note": "不凭测试者角色命名猜测返回 ID 为 T1。",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-tester/SKILL.md": "a4c79b3c8a372a37856a9b372869e4a162b9a3c458d9513e2119dfda41bf9bae",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "EFF-08",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "GLM 接入只给 verified enabled thinking，且已验证继承；不由 GLM 名称推断 high/max。",
+        "role": "ric_devflow_tester",
+        "parameters": {
+          "role": "ric_devflow_tester"
+        },
+        "handoff_context": "职责：测试者｜当前已批准单一测试动作\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。只执行当前批准的单一测试动作，核对计划、环境和精确 SHA；生产路径受保护；返回完整测试或 Defect 原载荷。"
+      }
+    ],
+    "new_instances": 1,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "tester": {
+        "id": null,
+        "status": "creation_requested_return_not_supplied",
+        "bind_on_actual_return": true
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "仅发起一次必要创建；输入未给返回句柄，等待宿主真实返回再绑定槽位；失败按原错误处理，不预先声称创建成功或测试通过。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-tester/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "a1abd55435cee59826cce618cdc469f3d98acd5404d4974e26a9af226b9ac302",
+    "requested_effort": "xhigh",
+    "effective_effort": "verified inherited thinking enabled",
+    "correction_retries": 0,
+    "numeric_thinking_budget": null,
+    "creation_confirmation": "未提供返回。new_instances=1 表示此轨迹需要一个新槽位，不是已成功创建的证据。",
+    "identity_note": "不凭测试者角色命名猜测返回 ID 为 T1。",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-tester/SKILL.md": "a4c79b3c8a372a37856a9b372869e4a162b9a3c458d9513e2119dfda41bf9bae",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "EFF-09",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "保存已给定的 unsupported effort 失败及 task_started=false。",
+        "role": "ric_devflow_tester",
+        "trace_phase": "supplied_prior_attempt",
+        "supplied_feedback": {
+          "error": "unsupported effort",
+          "task_started": false
+        },
+        "parameter_evidence": "输入未给出首次完整调用参数，不补猜其传输值；该 action 仅保留已给定的历史调用。"
+      }
+    ],
+    "new_instances": 0,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {},
+    "planner_actor": "same-main-session",
+    "stop_condition": "只有模型 ID、没有允许枚举/映射且生效配置未知；不能重试 max/high 或盲目省略参数。停止该交接，要求当前接入层支持值及有效配置证据。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-tester/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md",
+      "skills/ric-devflow/references/bootstrap.md#文件、加载、调用分别核验"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "3126800dc8b6eafea45c385558deb3116cb1997aa3d53ad75f3e6a172b6da9bd",
+    "requested_effort": "xhigh",
+    "effective_effort": null,
+    "correction_retries": 0,
+    "gap": "supported_effort_or_verified_inherited_default_missing",
+    "preserved_model": "current-model",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-tester/SKILL.md": "a4c79b3c8a372a37856a9b372869e4a162b9a3c458d9513e2119dfda41bf9bae",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56",
+      "skills/ric-devflow/references/bootstrap.md": "00f3c0a43bc022fe2d26d4d5cf8dc65c1a58599befbfb0d4295184fcd225d6cf"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "EFF-10",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "记录角色文件强制 xhigh 后实际拒绝的首次调用；任务未启动。",
+        "role": "ric_devflow_tester",
+        "trace_phase": "supplied_prior_attempt",
+        "supplied_feedback": {
+          "error": "unsupported xhigh",
+          "task_started": false
+        },
+        "parameter_evidence": "输入未给出首次完整调用参数，不补猜其传输值；该 action 仅保留已给定的历史调用。",
+        "reasoning_effort": "xhigh"
+      }
+    ],
+    "new_instances": 0,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {},
+    "planner_actor": "same-main-session",
+    "stop_condition": "固定角色配置覆盖 spawn 参数，改成 max/high 或省略参数均未证明能绕过覆盖。停止该交接并报告已有配置冲突；不修改已安装文件、不用通用代理、不改模型。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-tester/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md",
+      "skills/ric-devflow/references/bootstrap.md#文件、加载、调用分别核验"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "e0ec9135fa82d99cca04fe3bf295c1c63e0d113fc82edc57ccf29b3376b55e5e",
+    "requested_effort": "xhigh",
+    "effective_effort": "xhigh (forced and rejected)",
+    "correction_retries": 0,
+    "gap": "installed_role_override_forces_unsupported_xhigh",
+    "recovery_condition": "由有权方处理该已确认覆盖并重新验证生效配置；仅调用参数变化不算修复。",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-tester/SKILL.md": "a4c79b3c8a372a37856a9b372869e4a162b9a3c458d9513e2119dfda41bf9bae",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56",
+      "skills/ric-devflow/references/bootstrap.md": "00f3c0a43bc022fe2d26d4d5cf8dc65c1a58599befbfb0d4295184fcd225d6cf"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "EFF-11",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "没有可控等级，但默认继承已验证且无错误覆盖，允许省略等级。",
+        "role": "ric_devflow_tester",
+        "parameters": {
+          "role": "ric_devflow_tester"
+        },
+        "handoff_context": "职责：测试者｜当前已批准单一测试动作\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。只执行当前批准的单一测试动作，核对计划、环境和精确 SHA；生产路径受保护；返回完整测试或 Defect 原载荷。"
+      }
+    ],
+    "new_instances": 1,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "tester": {
+        "id": null,
+        "status": "creation_requested_return_not_supplied",
+        "bind_on_actual_return": true
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "仅发起一次必要创建；输入未给返回句柄，等待宿主真实返回再绑定槽位；失败按原错误处理，不预先声称创建成功或测试通过。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-tester/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "fe2df475ecef9e68188501c32fc3e517d20b449f36369f50ee1d43149530316c",
+    "requested_effort": "xhigh",
+    "effective_effort": "verified usable inherited default",
+    "correction_retries": 0,
+    "numeric_thinking_budget": null,
+    "creation_confirmation": "未提供返回。new_instances=1 表示此轨迹需要一个新槽位，不是已成功创建的证据。",
+    "identity_note": "不凭测试者角色命名猜测返回 ID 为 T1。",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-tester/SKILL.md": "a4c79b3c8a372a37856a9b372869e4a162b9a3c458d9513e2119dfda41bf9bae",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "EFF-12",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "输入给定首次尝试失败，明确未执行，允许值变为 max。",
+        "role": "ric_devflow_tester",
+        "parameters": {
+          "role": "ric_devflow_tester",
+          "reasoning_effort": "xhigh"
+        },
+        "reasoning_effort": "xhigh",
+        "handoff_context": "职责：测试者｜当前已批准单一测试动作\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。只执行当前批准的单一测试动作，核对计划、环境和精确 SHA；生产路径受保护；返回完整测试或 Defect 原载荷。",
+        "supplied_feedback": {
+          "effort": "xhigh",
+          "error": "unsupported; allows max",
+          "task_started": false
+        },
+        "trace_phase": "supplied_prior_attempt"
+      },
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "第 1 次纠正依据首次错误给出的 max；本次仍未执行且错误给出新的允许值 high。",
+        "role": "ric_devflow_tester",
+        "parameters": {
+          "role": "ric_devflow_tester",
+          "reasoning_effort": "max"
+        },
+        "reasoning_effort": "max",
+        "handoff_context": "职责：测试者｜当前已批准单一测试动作\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。只执行当前批准的单一测试动作，核对计划、环境和精确 SHA；生产路径受保护；返回完整测试或 Defect 原载荷。",
+        "supplied_feedback": {
+          "on_retry": "max",
+          "error": "unsupported; updated allowed value high",
+          "task_started": false
+        }
+      },
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "第 2 次纠正依据上一错误新给出的 high；本次仍未执行。",
+        "role": "ric_devflow_tester",
+        "parameters": {
+          "role": "ric_devflow_tester",
+          "reasoning_effort": "high"
+        },
+        "reasoning_effort": "high",
+        "handoff_context": "职责：测试者｜当前已批准单一测试动作\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。只执行当前批准的单一测试动作，核对计划、环境和精确 SHA；生产路径受保护；返回完整测试或 Defect 原载荷。",
+        "supplied_feedback": {
+          "on_retry": "high",
+          "error": "unsupported; now allows medium",
+          "task_started": false
+        }
+      }
+    ],
+    "new_instances": 0,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {},
+    "planner_actor": "same-main-session",
+    "stop_condition": "首次调用之外的两次纠正已耗尽；即使最后错误新提到 medium，也不发第 4 次调用，交回参数/接入能力恢复。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-tester/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md",
+      "skills/ric-devflow/references/bootstrap.md#文件、加载、调用分别核验"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "f1c2a2465fa93152a44ea1a458184ba83a58ab76943e67e15925e8258f1afbc8",
+    "requested_effort": "xhigh",
+    "effective_effort": null,
+    "attempted_efforts": [
+      "xhigh",
+      "max",
+      "high"
+    ],
+    "correction_retries": 2,
+    "attempts": 3,
+    "no_attempt_for": "medium",
+    "gap": "bounded_correction_budget_exhausted_after_changing_capability_feedback",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-tester/SKILL.md": "a4c79b3c8a372a37856a9b372869e4a162b9a3c458d9513e2119dfda41bf9bae",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56",
+      "skills/ric-devflow/references/bootstrap.md": "00f3c0a43bc022fe2d26d4d5cf8dc65c1a58599befbfb0d4295184fcd225d6cf"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "EFF-13",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "记录给定首次失败：权限拒绝，任务未启动；错误不属于思考参数不兼容。",
+        "role": "ric_devflow_tester",
+        "trace_phase": "supplied_prior_attempt",
+        "supplied_feedback": {
+          "error": "permission_denied",
+          "task_started": false
+        },
+        "parameter_evidence": "输入未给出首次完整调用参数，不补猜其传输值；该 action 仅保留已给定的历史调用。"
+      }
+    ],
+    "new_instances": 0,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {},
+    "planner_actor": "same-main-session",
+    "stop_condition": "停止交接并保留 permission_denied；待原权限边界得到有权方处理后再验证，不降档、不重装、不用重启掩盖权限问题。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-tester/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md",
+      "skills/ric-devflow/references/bootstrap.md#文件、加载、调用分别核验"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "0692121cc10947afdfd8cd7bd91611d90b769879084f1948e23f8064e3ef30a8",
+    "requested_effort": "xhigh",
+    "effective_effort": null,
+    "correction_retries": 0,
+    "failure_class": "permission_denied",
+    "first_transmitted_effort": "未提供；不能由 requested_effort 或能力集合倒推历史参数",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-tester/SKILL.md": "a4c79b3c8a372a37856a9b372869e4a162b9a3c458d9513e2119dfda41bf9bae",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56",
+      "skills/ric-devflow/references/bootstrap.md": "00f3c0a43bc022fe2d26d4d5cf8dc65c1a58599befbfb0d4295184fcd225d6cf"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "EFF-14",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "记录给定首次失败：认证失败，任务未启动；错误不属于思考参数不兼容。",
+        "role": "ric_devflow_tester",
+        "trace_phase": "supplied_prior_attempt",
+        "supplied_feedback": {
+          "error": "authentication_failed",
+          "task_started": false
+        },
+        "parameter_evidence": "输入未给出首次完整调用参数，不补猜其传输值；该 action 仅保留已给定的历史调用。"
+      }
+    ],
+    "new_instances": 0,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {},
+    "planner_actor": "same-main-session",
+    "stop_condition": "停止交接并保留 authentication_failed；走受控认证恢复，不读取/输出凭据，不靠降档、换模型或重启规避认证。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-tester/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md",
+      "skills/ric-devflow/references/bootstrap.md#文件、加载、调用分别核验"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "f4e9980c76e8ee6ef303a1f722d439f48c586f68daf8a0e2e3f7e59ccf3e2b37",
+    "requested_effort": "xhigh",
+    "effective_effort": null,
+    "correction_retries": 0,
+    "failure_class": "authentication_failed",
+    "first_transmitted_effort": "未提供；不能由 requested_effort 或能力集合倒推历史参数",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-tester/SKILL.md": "a4c79b3c8a372a37856a9b372869e4a162b9a3c458d9513e2119dfda41bf9bae",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56",
+      "skills/ric-devflow/references/bootstrap.md": "00f3c0a43bc022fe2d26d4d5cf8dc65c1a58599befbfb0d4295184fcd225d6cf"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "EFF-15",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "记录 network_timeout；启动未知，不得把它当作参数拒绝或安全重试依据。",
+        "role": "ric_devflow_tester",
+        "trace_phase": "supplied_prior_attempt",
+        "supplied_feedback": {
+          "error": "network_timeout",
+          "task_started": "unknown"
+        },
+        "parameter_evidence": "输入未给出首次完整调用参数，不补猜其传输值；该 action 仅保留已给定的历史调用。"
+      }
+    ],
+    "new_instances": null,
+    "new_instances_basis": "网络超时后是否创建未知，精确计数不可知；真实评测没有创建实例。",
+    "final_slots": {
+      "tester": {
+        "id": null,
+        "status": "acceptance_and_start_unknown",
+        "pending_original_handoff": true
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "先等待/取回原调用的接受、启动和实际实例 ID/结果。场景只给 spawn/followup_task，没有查询/等待接口也没有目标 ID，因此不再调用、不臆造 list_agents 或目标句柄。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-tester/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md",
+      "skills/ric-devflow/references/bootstrap.md#文件、加载、调用分别核验"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "e2d6992eb738e5a4c3c04d8fd488e055c9eca1e99b99a9ca4bc7f830adf24785",
+    "requested_effort": "xhigh",
+    "effective_effort": null,
+    "correction_retries": 0,
+    "possible_new_instances": [
+      0,
+      1
+    ],
+    "gap": "original_call_start_and_instance_handle_unknown",
+    "conditional_recovery": "有权威证据后恢复原动作；未确认之前不可重新提交。",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-tester/SKILL.md": "a4c79b3c8a372a37856a9b372869e4a162b9a3c458d9513e2119dfda41bf9bae",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56",
+      "skills/ric-devflow/references/bootstrap.md": "00f3c0a43bc022fe2d26d4d5cf8dc65c1a58599befbfb0d4295184fcd225d6cf"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "EFF-16",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "记录给定首次失败：并发额度拒绝，任务未启动；错误不属于思考参数不兼容。",
+        "role": "ric_devflow_tester",
+        "trace_phase": "supplied_prior_attempt",
+        "supplied_feedback": {
+          "error": "concurrency_limit",
+          "task_started": false
+        },
+        "parameter_evidence": "输入未给出首次完整调用参数，不补猜其传输值；该 action 仅保留已给定的历史调用。"
+      }
+    ],
+    "new_instances": 0,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {},
+    "planner_actor": "same-main-session",
+    "stop_condition": "在主会话排队等待真实容量释放；不改并发配置、不新建探测实例、不降档重试。输入没有等待/状态工具，不虚构调用或繁忙轮询。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-tester/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md",
+      "skills/ric-devflow/references/bootstrap.md#文件、加载、调用分别核验"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "3b67491e007074f27ed1eae815d3583863eeb647e6c6bf2a3a095cd686104f48",
+    "requested_effort": "xhigh",
+    "effective_effort": null,
+    "correction_retries": 0,
+    "failure_class": "concurrency_limit",
+    "first_transmitted_effort": "未提供；不能由 requested_effort 或能力集合倒推历史参数",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-tester/SKILL.md": "a4c79b3c8a372a37856a9b372869e4a162b9a3c458d9513e2119dfda41bf9bae",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56",
+      "skills/ric-devflow/references/bootstrap.md": "00f3c0a43bc022fe2d26d4d5cf8dc65c1a58599befbfb0d4295184fcd225d6cf"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "EFF-17",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "输入明确任务已启动并返回 business_FAIL，调用发生与业务失败必须分开。",
+        "role": "ric_devflow_tester",
+        "trace_phase": "supplied_prior_attempt",
+        "supplied_feedback": {
+          "error": "business_FAIL",
+          "task_started": true
+        },
+        "parameter_evidence": "输入未给出首次完整调用参数，不补猜其传输值；该 action 仅保留已给定的历史调用。"
+      }
+    ],
+    "new_instances": 1,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "tester": {
+        "id": "T1",
+        "status": "business_failed",
+        "id_basis": "场景 create 契约声明返回 T1；业务已启动"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "保存失败和实际测试/Defect 原载荷，由同一 Planner 归因，等待相应授权范围内的下一动作；不得把 business_FAIL 当参数不兼容、重启原因或重新建代理的理由。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-tester/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md",
+      "skills/ric-devflow/references/bootstrap.md#文件、加载、调用分别核验"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "1c74746e7aa1200488a3f1d233de9023bebbb1f8d1d93f6b0b5bf6d64cbb7697",
+    "requested_effort": "xhigh",
+    "effective_effort": null,
+    "correction_retries": 0,
+    "runtime_effort_evidence": "任务已启动，但输入未给生效等级，不声称 xhigh/max 生效。",
+    "next_business_action": "按原任务处理 FAIL；本场景未给归因证据，故不擅自派 Implementer 修复或修改测试。",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-tester/SKILL.md": "a4c79b3c8a372a37856a9b372869e4a162b9a3c458d9513e2119dfda41bf9bae",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56",
+      "skills/ric-devflow/references/bootstrap.md": "00f3c0a43bc022fe2d26d4d5cf8dc65c1a58599befbfb0d4295184fcd225d6cf"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "EFF-18",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "spawn",
+        "execution": "simulated_only",
+        "reason": "文件、配置、启用和来源已核验，但宿主明确 unknown_role；属于当前加载缺口。",
+        "role": "ric_devflow_tester",
+        "trace_phase": "supplied_prior_attempt",
+        "supplied_feedback": {
+          "error": "unknown_role; files/config/enabled/source verified",
+          "task_started": false
+        },
+        "parameter_evidence": "输入未给出首次完整调用参数，不补猜其传输值；该 action 仅保留已给定的历史调用。"
+      }
+    ],
+    "new_instances": 0,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {},
+    "planner_actor": "same-main-session",
+    "stop_condition": "立即停止依赖该 Tester 的动作并提示重启 Codex、同一项目重调 Skill。保留正确文件，重启后重验加载与下一必要交接；不重复失败调用、不重装或降档。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-tester/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md",
+      "skills/ric-devflow/references/bootstrap.md#文件、加载、调用分别核验"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "79507e5e434b74ebea5c091482580400c015292194f96ec0c62e2724e89cb178",
+    "requested_effort": "xhigh",
+    "effective_effort": null,
+    "correction_retries": 0,
+    "notification": "请重启 Codex，并在同一项目重新调用 Skill；受影响原生角色为 ric_devflow_tester，当前反馈为 unknown_role。附已核验的逻辑定义路径、固定来源、原任务/批准、已完成检查点和下一次 Tester 交接；正确文件无需重复安装。",
+    "evidence_limit": "输入未枚举已核验定义路径/固定源完整 SHA；恢复说明应从已存在的核验记录携带这些值，不用本机源码路径或臆造 SHA 代替。",
+    "retry_after_restart": "重新确认当前会话实际角色能力；同一缺口仍在就报告新证据并诊断，不循环要求重启。",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-tester/SKILL.md": "a4c79b3c8a372a37856a9b372869e4a162b9a3c458d9513e2119dfda41bf9bae",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56",
+      "skills/ric-devflow/references/bootstrap.md": "00f3c0a43bc022fe2d26d4d5cf8dc65c1a58599befbfb0d4295184fcd225d6cf"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "CACHE-01",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "followup_task",
+        "execution": "simulated_only",
+        "reason": "T1 完成且已在 current-model/high 正常可用；宿主不支持更新已有实例 effort，保留有效设置而继续同一 ID。",
+        "role": "ric_devflow_tester",
+        "target": "T1",
+        "handoff_context": "职责：测试者｜下一个已批准 Task；保留当前有效 high 配置\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。只执行当前批准的单一测试动作，核对计划、环境和精确 SHA；生产路径受保护；返回完整测试或 Defect 原载荷。"
+      }
+    ],
+    "new_instances": 0,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "tester": {
+        "id": "T1",
+        "status": "continued_pending_result",
+        "model": "current-model",
+        "effort": "high"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "等待 T1 本次结果；不为偏好 xhigh 创建替代实例，也不声称已将 T1 更新为 xhigh。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-tester/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "93ff695b5b61ebc2912ac97fc0dd3905e0ba7d3aa26aba365dfe8ce360d40c21",
+    "requested_effort": "xhigh",
+    "effective_effort": "high",
+    "correction_retries": 0,
+    "adjustment_note": "请求 xhigh；现有实例 high 不支持原地更新，按复用规则保留。",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-tester/SKILL.md": "a4c79b3c8a372a37856a9b372869e4a162b9a3c458d9513e2119dfda41bf9bae",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "CACHE-02",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [],
+    "new_instances": 0,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "tester": {
+        "id": "T1",
+        "status": "completed_binding_reverification_required"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "丢弃 old-model/max 协商缓存的可复用性，保留 T1 和进度。必须核验 T1 当前真实模型/生效配置及宿主更新语义；输入未提供该证据或查询接口，不自动销毁、创建、更新参数或开始下一业务动作。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-tester/SKILL.md",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "d69f53b503fff7d7ca04278ef59765e038d821e5a4d423224b7ed89d76e0d5f3",
+    "requested_effort": "xhigh",
+    "effective_effort": null,
+    "cache_action": "invalidate affected negotiation cache only",
+    "newly_negotiable_effort": "high",
+    "negotiation_limit": "当前模型能力仅支持 high，可作为当前能力协商值；不等于既有 T1 已变为 current-model/high。",
+    "conditional_paths": [
+      "如果宿主证明 T1 当前仍可恢复且配置可用，继续 T1；需要更新时只用真实支持的更新接口。",
+      "若 T1 保留旧配置但仍可用且无原地更新，报告并保留有效设置，不因偏好变化重建。",
+      "只有证实实例不可恢复或职责/权限/独立性不满足，且旧实例已停止，才讨论按固定槽位规则替换。"
+    ],
+    "gap": "existing_instance_effective_configuration_not_supplied",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-tester/SKILL.md": "a4c79b3c8a372a37856a9b372869e4a162b9a3c458d9513e2119dfda41bf9bae",
+      "skills/ric-devflow/references/shared/reasoning-compatibility.md": "12fbbe2c68e5bcda0f1f3aa7860762f57f800a3b8aed12c13b700d3bb66aaf56"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "HOST-01",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "followup_task",
+        "execution": "simulated_only",
+        "reason": "该工具能唤醒并继续已完成 R1；send_message 只排队而不能唤醒，不满足本次继续需求。",
+        "role": "ric_devflow_reviewer",
+        "target": "R1",
+        "parameters": {
+          "target": "R1",
+          "message": "职责：审核者｜当前已批准的后续审核\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。保持只读；核对独立性、单一审核模式、当前精确对象及适用 SHA；返回完整原始审核载荷，不修改受审对象。"
+        }
+      }
+    ],
+    "new_instances": 0,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "continued_pending_result"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "等待 R1 本次审核返回；不 send_message 冒充已恢复，也不 spawn。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/codex.md",
+      "skills/ric-devflow-reviewer/SKILL.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "1959c4d110302192f17f3f8c899b370a3c806bab71eed6c5cf5fcafe1820e93b",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/codex.md": "cb46c61bef9af549bde1fb92052abaf769a76e4b072ea712b026ee3a15f88396",
+      "skills/ric-devflow-reviewer/SKILL.md": "f12cca96389a985f6802ed24239d13f389f5a317283ef8d56f05b98492d31757"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "HOST-02",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "SendMessage",
+        "execution": "simulated_only",
+        "reason": "当前 Claude Code Schema 明确 to 指向旧 ID 并唤醒已完成实例；Agent 会新建，故不调用 Agent。",
+        "role": "ric-devflow-reviewer",
+        "target": "R1",
+        "parameters": {
+          "to": "R1",
+          "message": "职责：审核者｜当前已批准的后续审核\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。保持只读；核对独立性、单一审核模式、当前精确对象及适用 SHA；返回完整原始审核载荷，不修改受审对象。"
+        }
+      }
+    ],
+    "new_instances": 0,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "continued_pending_result"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "等待 R1 本次审核结果；不把同角色新 Agent 当复用。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/claude-code.md",
+      "skills/ric-devflow-reviewer/SKILL.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "b44e336a2962170455c8f2bfe4768db39b9759b7a7173dc55bc3b7a785fdd0ee",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/claude-code.md": "741d0e53fac486c20fb72584dbd9988bdf579d551ecc1f6a0b6377c4288db06d",
+      "skills/ric-devflow-reviewer/SKILL.md": "f12cca96389a985f6802ed24239d13f389f5a317283ef8d56f05b98492d31757"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  },
+  {
+    "id": "HOST-03",
+    "evaluation_kind": "independent_skill_maintainer_decision_simulation",
+    "actions": [
+      {
+        "tool": "ContinueAgent",
+        "execution": "simulated_only",
+        "reason": "使用本场景 ZCode 明确暴露的恢复接口和字段；不照搬 Claude SendMessage 或 Codex followup_task。",
+        "role": "ric-devflow-reviewer",
+        "target": "R1",
+        "parameters": {
+          "agentId": "R1",
+          "input": "职责：审核者｜当前已批准的后续审核\n使用本场景已给定的 Root、Task/模式、产物路径和版本、精确 SHA、批准、允许/保护路径、预期输出、检查点及停止条件；角色入口和共享根绑定本次已确认来源，只补当前 Delta，不沿用其他对象的授权或结论。保持只读；核对独立性、单一审核模式、当前精确对象及适用 SHA；返回完整原始审核载荷，不修改受审对象。"
+        }
+      }
+    ],
+    "new_instances": 0,
+    "new_instances_basis": "本场景模拟轨迹的新实例数量；未给返回的创建仅表示计划需要的槽位，详见 creation_confirmation。真实新增代理始终为 0。",
+    "final_slots": {
+      "reviewer": {
+        "id": "R1",
+        "status": "continued_pending_result"
+      }
+    },
+    "planner_actor": "same-main-session",
+    "stop_condition": "等待 R1 本次审核结果；不 Agent 新建，不猜 resume 参数。",
+    "files_changed": [],
+    "references_read": [
+      "skills/ric-devflow/SKILL.md",
+      "skills/ric-devflow-planner/SKILL.md",
+      "skills/ric-devflow/references/shared/orchestration.md",
+      "skills/ric-devflow/references/platforms/zcode.md",
+      "skills/ric-devflow-reviewer/SKILL.md"
+    ],
+    "real_execution": {
+      "native_agent_calls": 0,
+      "provider_calls": 0,
+      "business_writes": 0,
+      "evaluation_output_only": ".devflow-validation-model-reuse-nxnwbgzv/results.json"
+    },
+    "business_input_handling": "接受场景 required_business_inputs 的完整性前提；未枚举的业务路径、版本、SHA 或批准只作给定输入引用，不编造具体值。",
+    "input_case_sha256": "99220812503f0470ac172fb844df8139704cfc661889299ca2ef4749dd30814b",
+    "candidate_reference_sha256": {
+      "skills/ric-devflow/SKILL.md": "c6a006a3fc8556ff45ed815c50cf5c68ca0a0c7355156556d06476313372b69f",
+      "skills/ric-devflow-planner/SKILL.md": "dfc68419a532cdb6387ce97893bfbbb2b0d6755b8b4762b363d5c3460841f311",
+      "skills/ric-devflow/references/shared/orchestration.md": "6a8b80fbecf7d602a3e1bcee85f3d44680dcee9615ccdfd4b46b7072fe97c6a6",
+      "skills/ric-devflow/references/platforms/zcode.md": "55bc3232fc2fefc2d0ef7a949690a1411f58a3df745335813ee4c475ab8da3ba",
+      "skills/ric-devflow-reviewer/SKILL.md": "f12cca96389a985f6802ed24239d13f389f5a317283ef8d56f05b98492d31757"
+    },
+    "candidate_recheck": "结束前复读 codex 平台数量/职责示例与 orchestration 职责命名段；此处摘要绑定最终候选字节。参数算法、生命周期和工具选择未因此改变。"
+  }
+]
+```
+
+</details>
+
+### 未运行与工作区保护
+
+未运行三平台用户安装、原生 DevFlow 加载/调用、真实供应商 API 和端到端性能 A/B；当前会话没有选择这些原生 DevFlow 角色的指定调用入口，维护者评测代理不能替代它们，也未改用户安装来补做实机实验。GUIDE 第三块旧 Git 机制回归未重跑：本轮未改变 Git 命令/保全机制，相关 v1/v2 与目录契约已由上述检查覆盖。
+
+本轮未提交、推送或修改用户配置；既有未跟踪 .codex/config.toml 的 SHA-256 保持 12de89de408b658600d73783b8fff15b138a7e89e3a57a1a5d4d105938ff6e82。临时评测产物在完整输入与作者载荷保全后精确清理；旧安装中的 Planner 定义由新运行规则保留且不调用，本轮没有操作那些安装目录。

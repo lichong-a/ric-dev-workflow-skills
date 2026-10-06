@@ -30,7 +30,7 @@
 
 原始输入：冻结前已识别三个独立AC/写域、私有detached worktree、无服务的短真实动作；另给共享contract/build/database/port/output/fixture/snapshot、同Task活跃writer、未验证依赖或host并发上限1。命令失败子例一条exit7、一条exit0。
 
-判定：独立才按资源上限并行，默认最多两个Task/两个Tester进程组，更严限制取小；一调用一Task、同Task单writer、空闲匹配会话复用。全部命令退出都采集且子进程清理，失败不吞；Frozen DAG不为方便拆改。集成串行，每新SHA触发G6。记录真实dispatch/动作重叠；短动作无重叠不能虚构加速。
+判定：独立才按资源上限并行，默认最多两个Task/两个Tester进程组，更严限制取小；一调用一Task、同Task单writer；固定三个角色实际ID，同角色排队，不为并行再建同角色实例。不同角色且隔离成立时才交错并行。全部命令退出都采集且子进程清理，失败不吞；Frozen DAG不为方便拆改。集成串行，每新SHA触发G6。记录真实dispatch/动作重叠；短动作无重叠不能虚构加速。
 
 ## PERF-06 — 选择器、依赖缓存与服务租约
 
