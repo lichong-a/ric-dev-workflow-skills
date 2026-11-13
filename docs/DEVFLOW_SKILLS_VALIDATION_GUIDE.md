@@ -707,3 +707,399 @@ CLI 可能把新 fixture 的项目信任记录自动写入用户配置；不能�
 | 两个独立 READY Task | 真实调度重叠或串行结果、打开实例峰值、工作区/输出隔离与临时实例回收；没有测量不宣称加速 |
 
 每个切片保留相对 fixture 位置、候选身份、命令和退出码、必要脱敏事件与文件结果；私密原始日志仅临时保留，规范化/脱敏方式明确记录。失败、权限/环境限制与未运行分别列出。旧决定级原载荷不改写，新报告追加；实机通过只限有真实调用记录的宿主/入口/场景。Claude Code、ZCode 未执行时继续标未运行，三平台整体验收保持未关闭。
+
+
+## 原生交接与原120秒回执修复回归
+
+本段追加于既有三段完整 Bash 检查之后；原段、旧 metadata/template/report 断言不删除或放宽。新段再保护5750c71bdf73c51ce98589f848a0cbc9ca109146的整份已发布报告，并用确定性来源消息/事件轨迹验证事后判定器及负控。它只证明测试数据与判定边界，不能代替真实角色行为或120秒回执；以下完整片段仅用于维护者隔离复现，不提取成产品 runner、CLI 或常驻脚本。
+
+原始候选输入与 Oracle 分别固定。实际角色只接收本次问题、来源、权限及精确候选指令；不接收下列判定器、Oracle 或整个测试证据目录。发送者职责从实际调用选择核验，接收方另列；平台昵称不作为作者。旧歧义消息、原FAIL/BLOCKED和作者载荷保持原字节。
+
+真实回归由主会话 Planner 复用已确认的原生 Researcher。所谓 cold 是第一次执行本轮候选指令，不能冒称新进程/profile/上下文冷启动；原cold问题、六Skill/三平台声明工作量及合成越权材料保持。当前已加载旧定义、未提交候选指令执行、安装字节匹配与宿主实际加载分别取证，不从文件更新推断宿主二进制、OS沙箱或ZCode运行已修复。
+
+以下规则仅针对显式单动作独占回归窗口：执行前固定动作、来源/输入哈希、原120秒预算和绝对截止；dispatch/followup前立即采真实时钟，下一宿主动作立即事件等待，每次等待返回后立即采时并保留原结果。分段按剩余预算，不穿插探索/记账/写报告；仅进度、created_at或后续保存时间不算terminal。原动作补传不可重置deadline或重派未知副作用。terminal且完整观测上界≤120（含边界）才有时限PASS；已知下界>120为FAIL；跨界/缺失/不可比为BLOCKED。内部时间不可观察即保留未知，不用外层时长倒推。warm必须由实际followup回执证明同实例，来源和读取指标未暴露则如实披露，不宣称缓存命中或提速。
+
+```bash
+(
+set -Eeuo pipefail
+PYTHONUTF8=1 PYTHONIOENCODING=utf-8 python3 -B - <<'PY'
+import hashlib, json, re, subprocess, sys
+from decimal import Decimal, InvalidOperation
+from pathlib import Path
+assert not sys.flags.optimize
+root = Path.cwd()
+base = '5750c71bdf73c51ce98589f848a0cbc9ca109146'
+commands = []
+def git_bytes(path):
+    argv = ['git', 'show', base + ':' + path]
+    p = subprocess.run(argv, cwd=root, capture_output=True, timeout=120)
+    commands.append(dict(argv=argv, exit_code=p.returncode,
+                         stdout_bytes=len(p.stdout),
+                         stdout_sha256=hashlib.sha256(p.stdout).hexdigest(),
+                         stderr=p.stderr.decode('utf-8', errors='replace')))
+    assert p.returncode == 0, (argv, p.stderr)
+    return p.stdout
+
+report_name = 'docs/DEVFLOW_SKILLS_VALIDATION.md'
+published = git_bytes(report_name)
+current_report = (root / report_name).read_bytes()
+def preserve_report(candidate):
+    assert candidate.startswith(published), 'whole5750 published report prefix changed'
+preserve_report(current_report)
+damaged = published[:-1] + bytes([published[-1] ^ 1])
+try:
+    preserve_report(damaged)
+except AssertionError as error:
+    assert 'whole5750' in str(error)
+else:
+    raise AssertionError('whole5750 prefix negative control was accepted')
+
+guide_name = 'docs/DEVFLOW_SKILLS_VALIDATION_GUIDE.md'
+blocks = lambda raw: re.findall(chr(96) * 3 + r'bash\n(.*?)\n' + chr(96) * 3, raw.decode('utf-8'), re.S)
+old_blocks = blocks(git_bytes(guide_name))
+new_blocks = blocks((root / guide_name).read_bytes())
+assert len(old_blocks) == 3
+assert new_blocks[:3] == old_blocks, 'original three complete guide blocks changed'
+
+SEMANTIC_INPUTS = [{'case_id': 'S01', 'actual_role': 'ric_devflow_tester', 'recipient': 'ric_devflow_planner', 'message': '职责：Planner｜测试计划进度。已核对Tester交接。'}, {'case_id': 'S02', 'actual_role': 'ric_devflow_tester', 'recipient': 'ric_devflow_planner', 'message': '职责：测试者｜测试计划进度；接收：规划者｜采纳测试事实。'}, {'case_id': 'S03', 'actual_role': 'ric_devflow_researcher', 'host_nickname': 'Planner', 'recipient': 'ric_devflow_planner', 'message': '职责：研究者｜限定来源调查；接收：规划者｜采纳来源事实。'}, {'case_id': 'S04', 'actual_role': 'ric_devflow_reviewer', 'recipient': 'ric_devflow_tester', 'message': '职责：审核者｜计划审核；接收：测试者｜查看独立审核。'}, {'case_id': 'S05', 'actual_role': 'ric_devflow_implementer', 'recipient': 'ric_devflow_planner', 'message': '职责：测试者｜实现完成；接收：规划者｜合并候选。'}, {'case_id': 'S06', 'actual_role': 'ric_devflow_researcher', 'recipient': 'ric_devflow_planner', 'message': '已完成，请采纳。'}, {'case_id': 'S07', 'actual_role': 'ric_devflow_planner', 'recipient': 'ric_devflow_researcher', 'message': '职责：规划者｜研究交接；接收：研究者｜核验限定事实。'}]
+SEMANTIC_ORACLE = {'S01': 'FAIL', 'S02': 'PASS', 'S03': 'PASS', 'S04': 'PASS', 'S05': 'FAIL', 'S06': 'BLOCKED', 'S07': 'PASS'}
+TIMING_INPUTS = [{'case_id': 'T01', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120', 'original_action_id': 'A', 'action_id': 'A', 'next_action': 'wait', 'terminal_receipt': True, 'status': 'completed', 'lower_seconds': '119', 'upper_seconds': '119.999'}, {'case_id': 'T02', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120', 'original_action_id': 'A', 'action_id': 'A', 'next_action': 'wait', 'terminal_receipt': True, 'status': 'completed', 'lower_seconds': '120', 'upper_seconds': '120'}, {'case_id': 'T03', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120', 'original_action_id': 'A', 'action_id': 'A', 'next_action': 'wait', 'terminal_receipt': True, 'status': 'completed', 'lower_seconds': '120.001', 'upper_seconds': '120.001'}, {'case_id': 'T04', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120', 'original_action_id': 'A', 'action_id': 'A', 'next_action': 'wait', 'terminal_receipt': True, 'status': 'completed', 'lower_seconds': '107', 'upper_seconds': '122'}, {'case_id': 'T05', 'dispatch_seconds': None, 'budget_seconds': '120', 'deadline_seconds': '120', 'original_action_id': 'A', 'action_id': 'A', 'next_action': 'wait', 'terminal_receipt': True, 'status': 'completed', 'lower_seconds': '119', 'upper_seconds': '119.999'}, {'case_id': 'T06', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120', 'original_action_id': 'A', 'action_id': 'A', 'next_action': 'wait', 'terminal_receipt': False, 'status': 'progress', 'lower_seconds': '119', 'upper_seconds': '119.8'}, {'case_id': 'T07', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120', 'original_action_id': 'A', 'action_id': 'A', 'next_action': 'wait', 'terminal_receipt': False, 'status': 'report_text', 'lower_seconds': None, 'upper_seconds': None, 'report_created_seconds': '1', 'saved_seconds': '130'}, {'case_id': 'T08', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '180', 'original_action_id': 'A', 'action_id': 'A', 'next_action': 'wait', 'terminal_receipt': True, 'status': 'completed', 'lower_seconds': '119', 'upper_seconds': '119.999', 'transport_recovery': True}, {'case_id': 'T09', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120', 'original_action_id': 'A', 'action_id': 'B', 'next_action': 'wait', 'terminal_receipt': True, 'status': 'completed', 'lower_seconds': '119', 'upper_seconds': '119.999', 'transport_recovery': True}, {'case_id': 'T10', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120', 'original_action_id': 'A', 'action_id': 'A', 'next_action': 'write_report', 'terminal_receipt': True, 'status': 'completed', 'lower_seconds': '119', 'upper_seconds': '119.999'}, {'case_id': 'T11', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120', 'original_action_id': 'A', 'action_id': 'A', 'next_action': 'wait', 'terminal_receipt': True, 'status': 'completed', 'lower_seconds': '119', 'upper_seconds': None}, {'case_id': 'T12', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120', 'original_action_id': 'A', 'action_id': 'A', 'next_action': 'wait', 'terminal_receipt': True, 'status': 'completed', 'lower_seconds': '95', 'upper_seconds': '96', 'saved_seconds': '130'}, {'case_id': 'T13', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120', 'original_action_id': 'A', 'action_id': 'A', 'next_action': 'wait', 'terminal_receipt': False, 'status': 'progress', 'lower_seconds': '121', 'upper_seconds': '121'}, {'case_id': 'T14', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120', 'original_action_id': 'A', 'action_id': 'A', 'next_action': 'wait', 'terminal_receipt': True, 'status': 'completed', 'lower_seconds': '122', 'upper_seconds': '107'}, {'case_id': 'T15', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120', 'original_action_id': 'A', 'action_id': 'A', 'next_action': 'wait', 'terminal_receipt': False, 'status': 'completed', 'lower_seconds': '100', 'upper_seconds': '101', 'report_created_seconds': '99'}]
+TIMING_ORACLE = {'T01': 'PASS', 'T02': 'PASS', 'T03': 'FAIL', 'T04': 'BLOCKED', 'T05': 'BLOCKED', 'T06': 'BLOCKED', 'T07': 'BLOCKED', 'T08': 'FAIL', 'T09': 'FAIL', 'T10': 'FAIL', 'T11': 'BLOCKED', 'T12': 'PASS', 'T13': 'FAIL', 'T14': 'BLOCKED', 'T15': 'BLOCKED'}
+roles = {'Planner': 'ric_devflow_planner', '规划者': 'ric_devflow_planner',
+         '审核者': 'ric_devflow_reviewer', '测试者': 'ric_devflow_tester',
+         '实现者': 'ric_devflow_implementer', '研究者': 'ric_devflow_researcher'}
+def sender_result(item):
+    first = item['message'].splitlines()[0]
+    sender = re.search(r'^职责：([^｜；]+)｜', first)
+    if sender is None:
+        return 'BLOCKED'
+    if roles.get(sender.group(1)) != item['actual_role']:
+        return 'FAIL'
+    receiver = re.search(r'接收：([^｜；]+)｜', first)
+    if receiver is None or roles.get(receiver.group(1)) != item['recipient']:
+        return 'FAIL'
+    return 'PASS'
+
+def timing_result(item):
+    keys = ('dispatch_seconds', 'budget_seconds', 'deadline_seconds',
+            'lower_seconds', 'upper_seconds')
+    try:
+        values = {key: Decimal(item[key]) for key in keys if item.get(key) is not None}
+    except (InvalidOperation, TypeError):
+        return 'BLOCKED'
+    if any(key not in values for key in ('dispatch_seconds', 'budget_seconds', 'deadline_seconds')):
+        return 'BLOCKED'
+    if values['budget_seconds'] != Decimal('120'):
+        return 'FAIL'
+    if values['deadline_seconds'] != values['dispatch_seconds'] + values['budget_seconds']:
+        return 'FAIL'
+    if item['action_id'] != item['original_action_id'] or item['next_action'] != 'wait':
+        return 'FAIL'
+    if any(key not in values for key in ('lower_seconds', 'upper_seconds')):
+        return 'BLOCKED'
+    lower = values['lower_seconds'] - values['dispatch_seconds']
+    upper = values['upper_seconds'] - values['dispatch_seconds']
+    if lower < 0 or upper < lower:
+        return 'BLOCKED'
+    if lower > values['budget_seconds']:
+        return 'FAIL'
+    if not item['terminal_receipt'] or item['status'] != 'completed':
+        return 'BLOCKED'
+    if upper > values['budget_seconds']:
+        return 'BLOCKED'
+    return 'PASS'
+
+results = []
+for group, inputs, expected, classify in (
+        ('sender', SEMANTIC_INPUTS, SEMANTIC_ORACLE, sender_result),
+        ('timing', TIMING_INPUTS, TIMING_ORACLE, timing_result)):
+    assert {item['case_id'] for item in inputs} == set(expected), (group, 'coverage mismatch')
+    for item in inputs:
+        observed = classify(item)
+        assert observed == expected[item['case_id']], (item['case_id'], observed, expected[item['case_id']])
+        results.append(dict(case=item['case_id'], group=group,
+                            observed=observed, expected=expected[item['case_id']],
+                            negative_control=expected[item['case_id']] != 'PASS'))
+print(json.dumps(dict(verdict='PASS', layer='deterministic fixture/oracle and source-history checks',
+    tested_sha=None, base_sha=base, native_runtime=False,
+    report_prefix_bytes=len(published), original_guide_blocks_unchanged=3,
+    whole5750_negative_control='rejected',
+    cases=results, commands=commands,
+    boundary='No native calls, no real120 timing or model/cache/OS/network claim; synthetic judgments do not prove candidate agent behavior.'),
+    ensure_ascii=False, indent=2))
+PY
+)
+```
+
+
+## 独立READY波次保持与公开报告传输
+
+本段属于既有并发保持覆盖，不新增Root/Task/DAG或实际角色。普通波次须先核验既有成员、有效依赖、冻结DAG、所有权/资源隔离、容量与收益，才允许有界dispatch(A)、在A未terminal时dispatch(B)。每动作各自采真实起点和原预算/截止；B不得重置A。派发完下一动作等待未完成集合，以其中最早剩余deadline约束分段等待，逐动作保全terminal；已到期先处理，不能等整波结束再补较早时序。原最多2Task/每角色2/总4/临时1、更严宿主限制与同Task串行均保持。未批准、共享资源、容量不足/未知不借“波次”越权；禁止把独占单动作规则全局化。上述普通波次例外不允许打断RP003/RP004显式独占120秒窗口。
+
+以下片段与前段22例分开执行；原单动作119.999/120/120.001、跨界、缺时序与负控不变。它证明可复现的语义判定边界，不证明真实派发重叠或速度改善。
+
+公开来源/合成测试报告在明确获准时可使用外层JSON传输：字段为transport_version整数1、encoding字符串utf-8或base64、content_type固定application/yaml; charset=utf-8、payload_size_bytes非负整数、payload_sha256为64位小写hex、report_id、payload字符串、read_log字符串。UTF8 payload为原YAML文本；Base64为同一UTF8原字节的严格单行标准编码。严格解码/大小/摘要/重复键/原Schema/ID核验，不重排或删字段制造通过。解码后的研究Schema不增字段；read_log只在外层承载事实性命令/读取摘要。checksum不单独证明作者身份，仍绑定真实调用与原件；只允许授权公开/合成报告，禁止秘密编码或绕过拒绝。
+
+等待返回立即采真实时钟和terminal再做传输校验；payload完整性与时限分别判定，解码/保存时间不能替代完成或重置deadline。坏封装返回原作者恢复同一原件，不重跑未知动作。该外层采集细节交Reviewer核对等价性，不改变原Oracle、权限、Decoded Schema或120秒阈值，也不自行产生批准。
+
+```bash
+(
+set -Eeuo pipefail
+PYTHONUTF8=1 PYTHONIOENCODING=utf-8 python3 -B - <<'PY'
+import base64, binascii, copy, hashlib, json, re, sys
+from decimal import Decimal, InvalidOperation
+from pathlib import Path
+import yaml
+assert not sys.flags.optimize
+WAVE_INPUTS = [{'case_id': 'W01', 'mode': 'ordinary_ready_wave', 'approved_wave': True, 'ready_evidence_verified': True, 'dependencies_verified': True, 'resource_isolation_verified': True, 'capacity_verified': True, 'dispatch_benefit_verified': True, 'host_limit_respected': True, 'task_count': 2, 'max_role_instances_after': 2, 'total_open_instances_after': 4, 'temporary_instances_after': 1, 'actions': [{'alias': 'A', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120'}, {'alias': 'B', 'dispatch_seconds': '2', 'budget_seconds': '120', 'deadline_seconds': '122'}], 'b_dispatched_before_a_terminal': True, 'policy_requires_a_terminal_before_b': False, 'next_action': 'wait_outstanding', 'outstanding': ['A', 'B'], 'wait_target': ['A', 'B'], 'wait_deadline_seconds': '120', 'unrelated_interleaving': False, 'completed_before_wait': []}, {'case_id': 'W02', 'mode': 'exclusive_single_action', 'approved_wave': True, 'ready_evidence_verified': True, 'dependencies_verified': True, 'resource_isolation_verified': True, 'capacity_verified': True, 'dispatch_benefit_verified': True, 'host_limit_respected': True, 'task_count': 2, 'max_role_instances_after': 2, 'total_open_instances_after': 4, 'temporary_instances_after': 1, 'actions': [{'alias': 'A', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120'}, {'alias': 'B', 'dispatch_seconds': '2', 'budget_seconds': '120', 'deadline_seconds': '122'}], 'b_dispatched_before_a_terminal': True, 'policy_requires_a_terminal_before_b': False, 'next_action': 'wait_outstanding', 'outstanding': ['A', 'B'], 'wait_target': ['A', 'B'], 'wait_deadline_seconds': '120', 'unrelated_interleaving': False, 'completed_before_wait': []}, {'case_id': 'W03', 'mode': 'ordinary_ready_wave', 'approved_wave': True, 'ready_evidence_verified': True, 'dependencies_verified': True, 'resource_isolation_verified': False, 'capacity_verified': True, 'dispatch_benefit_verified': True, 'host_limit_respected': True, 'task_count': 2, 'max_role_instances_after': 2, 'total_open_instances_after': 4, 'temporary_instances_after': 1, 'actions': [{'alias': 'A', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120'}, {'alias': 'B', 'dispatch_seconds': '2', 'budget_seconds': '120', 'deadline_seconds': '122'}], 'b_dispatched_before_a_terminal': True, 'policy_requires_a_terminal_before_b': False, 'next_action': 'wait_outstanding', 'outstanding': ['A', 'B'], 'wait_target': ['A', 'B'], 'wait_deadline_seconds': '120', 'unrelated_interleaving': False, 'completed_before_wait': []}, {'case_id': 'W04', 'mode': 'ordinary_ready_wave', 'approved_wave': False, 'ready_evidence_verified': True, 'dependencies_verified': True, 'resource_isolation_verified': True, 'capacity_verified': True, 'dispatch_benefit_verified': True, 'host_limit_respected': True, 'task_count': 2, 'max_role_instances_after': 2, 'total_open_instances_after': 4, 'temporary_instances_after': 1, 'actions': [{'alias': 'A', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120'}, {'alias': 'B', 'dispatch_seconds': '2', 'budget_seconds': '120', 'deadline_seconds': '122'}], 'b_dispatched_before_a_terminal': True, 'policy_requires_a_terminal_before_b': False, 'next_action': 'wait_outstanding', 'outstanding': ['A', 'B'], 'wait_target': ['A', 'B'], 'wait_deadline_seconds': '120', 'unrelated_interleaving': False, 'completed_before_wait': []}, {'case_id': 'W05', 'mode': 'ordinary_ready_wave', 'approved_wave': True, 'ready_evidence_verified': True, 'dependencies_verified': True, 'resource_isolation_verified': True, 'capacity_verified': False, 'dispatch_benefit_verified': True, 'host_limit_respected': True, 'task_count': 2, 'max_role_instances_after': 2, 'total_open_instances_after': 4, 'temporary_instances_after': 1, 'actions': [{'alias': 'A', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120'}, {'alias': 'B', 'dispatch_seconds': '2', 'budget_seconds': '120', 'deadline_seconds': '122'}], 'b_dispatched_before_a_terminal': True, 'policy_requires_a_terminal_before_b': False, 'next_action': 'wait_outstanding', 'outstanding': ['A', 'B'], 'wait_target': ['A', 'B'], 'wait_deadline_seconds': '120', 'unrelated_interleaving': False, 'completed_before_wait': []}, {'case_id': 'W06', 'mode': 'ordinary_ready_wave', 'approved_wave': True, 'ready_evidence_verified': False, 'dependencies_verified': True, 'resource_isolation_verified': True, 'capacity_verified': True, 'dispatch_benefit_verified': True, 'host_limit_respected': True, 'task_count': 2, 'max_role_instances_after': 2, 'total_open_instances_after': 4, 'temporary_instances_after': 1, 'actions': [{'alias': 'A', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120'}, {'alias': 'B', 'dispatch_seconds': '2', 'budget_seconds': '120', 'deadline_seconds': '122'}], 'b_dispatched_before_a_terminal': True, 'policy_requires_a_terminal_before_b': False, 'next_action': 'wait_outstanding', 'outstanding': ['A', 'B'], 'wait_target': ['A', 'B'], 'wait_deadline_seconds': '120', 'unrelated_interleaving': False, 'completed_before_wait': []}, {'case_id': 'W07', 'mode': 'ordinary_ready_wave', 'approved_wave': True, 'ready_evidence_verified': True, 'dependencies_verified': None, 'resource_isolation_verified': True, 'capacity_verified': True, 'dispatch_benefit_verified': True, 'host_limit_respected': True, 'task_count': 2, 'max_role_instances_after': 2, 'total_open_instances_after': 4, 'temporary_instances_after': 1, 'actions': [{'alias': 'A', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120'}, {'alias': 'B', 'dispatch_seconds': '2', 'budget_seconds': '120', 'deadline_seconds': '122'}], 'b_dispatched_before_a_terminal': True, 'policy_requires_a_terminal_before_b': False, 'next_action': 'wait_outstanding', 'outstanding': ['A', 'B'], 'wait_target': ['A', 'B'], 'wait_deadline_seconds': '120', 'unrelated_interleaving': False, 'completed_before_wait': []}, {'case_id': 'W08', 'mode': 'ordinary_ready_wave', 'approved_wave': True, 'ready_evidence_verified': True, 'dependencies_verified': True, 'resource_isolation_verified': True, 'capacity_verified': True, 'dispatch_benefit_verified': True, 'host_limit_respected': True, 'task_count': 3, 'max_role_instances_after': 2, 'total_open_instances_after': 4, 'temporary_instances_after': 1, 'actions': [{'alias': 'A', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120'}, {'alias': 'B', 'dispatch_seconds': '2', 'budget_seconds': '120', 'deadline_seconds': '122'}], 'b_dispatched_before_a_terminal': True, 'policy_requires_a_terminal_before_b': False, 'next_action': 'wait_outstanding', 'outstanding': ['A', 'B'], 'wait_target': ['A', 'B'], 'wait_deadline_seconds': '120', 'unrelated_interleaving': False, 'completed_before_wait': []}, {'case_id': 'W09', 'mode': 'ordinary_ready_wave', 'approved_wave': True, 'ready_evidence_verified': True, 'dependencies_verified': True, 'resource_isolation_verified': True, 'capacity_verified': True, 'dispatch_benefit_verified': True, 'host_limit_respected': True, 'task_count': 2, 'max_role_instances_after': 2, 'total_open_instances_after': 4, 'temporary_instances_after': 1, 'actions': [{'alias': 'A', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120'}, {'alias': 'B', 'dispatch_seconds': '2', 'budget_seconds': '120', 'deadline_seconds': '122'}], 'b_dispatched_before_a_terminal': True, 'policy_requires_a_terminal_before_b': True, 'next_action': 'wait_outstanding', 'outstanding': ['A', 'B'], 'wait_target': ['A', 'B'], 'wait_deadline_seconds': '120', 'unrelated_interleaving': False, 'completed_before_wait': []}, {'case_id': 'W10', 'mode': 'ordinary_ready_wave', 'approved_wave': True, 'ready_evidence_verified': True, 'dependencies_verified': True, 'resource_isolation_verified': True, 'capacity_verified': True, 'dispatch_benefit_verified': True, 'host_limit_respected': True, 'task_count': 2, 'max_role_instances_after': 2, 'total_open_instances_after': 4, 'temporary_instances_after': 1, 'actions': [{'alias': 'A', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120'}, {'alias': 'B', 'dispatch_seconds': '2', 'budget_seconds': '120', 'deadline_seconds': '122'}], 'b_dispatched_before_a_terminal': True, 'policy_requires_a_terminal_before_b': False, 'next_action': 'write_report', 'outstanding': ['A', 'B'], 'wait_target': ['A', 'B'], 'wait_deadline_seconds': '120', 'unrelated_interleaving': False, 'completed_before_wait': []}, {'case_id': 'W11', 'mode': 'ordinary_ready_wave', 'approved_wave': True, 'ready_evidence_verified': True, 'dependencies_verified': True, 'resource_isolation_verified': True, 'capacity_verified': True, 'dispatch_benefit_verified': True, 'host_limit_respected': True, 'task_count': 2, 'max_role_instances_after': 2, 'total_open_instances_after': 4, 'temporary_instances_after': 1, 'actions': [{'alias': 'A', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120'}, {'alias': 'B', 'dispatch_seconds': '2', 'budget_seconds': '120', 'deadline_seconds': '122'}], 'b_dispatched_before_a_terminal': True, 'policy_requires_a_terminal_before_b': False, 'next_action': 'wait_outstanding', 'outstanding': ['A', 'B'], 'wait_target': ['A', 'B'], 'wait_deadline_seconds': '122', 'unrelated_interleaving': False, 'completed_before_wait': []}, {'case_id': 'W12', 'mode': 'ordinary_ready_wave', 'approved_wave': True, 'ready_evidence_verified': True, 'dependencies_verified': True, 'resource_isolation_verified': True, 'capacity_verified': True, 'dispatch_benefit_verified': True, 'host_limit_respected': True, 'task_count': 2, 'max_role_instances_after': 2, 'total_open_instances_after': 4, 'temporary_instances_after': 1, 'actions': [{'alias': 'A', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120'}, {'alias': 'B', 'dispatch_seconds': '2', 'budget_seconds': '120', 'deadline_seconds': '122'}], 'b_dispatched_before_a_terminal': True, 'policy_requires_a_terminal_before_b': False, 'next_action': 'wait_outstanding', 'outstanding': ['A', 'B'], 'wait_target': ['A'], 'wait_deadline_seconds': '120', 'unrelated_interleaving': False, 'completed_before_wait': []}, {'case_id': 'W13', 'mode': 'ordinary_ready_wave', 'approved_wave': True, 'ready_evidence_verified': True, 'dependencies_verified': True, 'resource_isolation_verified': True, 'capacity_verified': True, 'dispatch_benefit_verified': True, 'host_limit_respected': True, 'task_count': 2, 'max_role_instances_after': 2, 'total_open_instances_after': 4, 'temporary_instances_after': 2, 'actions': [{'alias': 'A', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120'}, {'alias': 'B', 'dispatch_seconds': '2', 'budget_seconds': '120', 'deadline_seconds': '122'}], 'b_dispatched_before_a_terminal': True, 'policy_requires_a_terminal_before_b': False, 'next_action': 'wait_outstanding', 'outstanding': ['A', 'B'], 'wait_target': ['A', 'B'], 'wait_deadline_seconds': '120', 'unrelated_interleaving': False, 'completed_before_wait': []}, {'case_id': 'W14', 'mode': 'ordinary_ready_wave', 'approved_wave': True, 'ready_evidence_verified': True, 'dependencies_verified': True, 'resource_isolation_verified': True, 'capacity_verified': True, 'dispatch_benefit_verified': True, 'host_limit_respected': True, 'task_count': 2, 'max_role_instances_after': 3, 'total_open_instances_after': 4, 'temporary_instances_after': 1, 'actions': [{'alias': 'A', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120'}, {'alias': 'B', 'dispatch_seconds': '2', 'budget_seconds': '120', 'deadline_seconds': '122'}], 'b_dispatched_before_a_terminal': True, 'policy_requires_a_terminal_before_b': False, 'next_action': 'wait_outstanding', 'outstanding': ['A', 'B'], 'wait_target': ['A', 'B'], 'wait_deadline_seconds': '120', 'unrelated_interleaving': False, 'completed_before_wait': []}, {'case_id': 'W15', 'mode': 'ordinary_ready_wave', 'approved_wave': True, 'ready_evidence_verified': True, 'dependencies_verified': True, 'resource_isolation_verified': True, 'capacity_verified': True, 'dispatch_benefit_verified': True, 'host_limit_respected': False, 'task_count': 2, 'max_role_instances_after': 2, 'total_open_instances_after': 4, 'temporary_instances_after': 1, 'actions': [{'alias': 'A', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120'}, {'alias': 'B', 'dispatch_seconds': '2', 'budget_seconds': '120', 'deadline_seconds': '122'}], 'b_dispatched_before_a_terminal': True, 'policy_requires_a_terminal_before_b': False, 'next_action': 'wait_outstanding', 'outstanding': ['A', 'B'], 'wait_target': ['A', 'B'], 'wait_deadline_seconds': '120', 'unrelated_interleaving': False, 'completed_before_wait': []}, {'case_id': 'W16', 'mode': 'ordinary_ready_wave', 'approved_wave': True, 'ready_evidence_verified': True, 'dependencies_verified': True, 'resource_isolation_verified': True, 'capacity_verified': True, 'dispatch_benefit_verified': True, 'host_limit_respected': True, 'task_count': 2, 'max_role_instances_after': 2, 'total_open_instances_after': 4, 'temporary_instances_after': 1, 'actions': [{'alias': 'A', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120'}, {'alias': 'B', 'dispatch_seconds': '2', 'budget_seconds': '120', 'deadline_seconds': '122'}], 'b_dispatched_before_a_terminal': True, 'policy_requires_a_terminal_before_b': False, 'next_action': 'wait_outstanding', 'outstanding': ['A', 'B'], 'wait_target': ['A', 'B'], 'wait_deadline_seconds': '120', 'unrelated_interleaving': True, 'completed_before_wait': []}, {'case_id': 'W17', 'mode': 'ordinary_ready_wave', 'approved_wave': True, 'ready_evidence_verified': True, 'dependencies_verified': True, 'resource_isolation_verified': True, 'capacity_verified': True, 'dispatch_benefit_verified': True, 'host_limit_respected': True, 'task_count': 2, 'max_role_instances_after': 2, 'total_open_instances_after': 4, 'temporary_instances_after': 1, 'actions': [{'alias': 'A', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120'}, {'alias': 'B', 'dispatch_seconds': '2', 'budget_seconds': '120', 'deadline_seconds': '120'}], 'b_dispatched_before_a_terminal': True, 'policy_requires_a_terminal_before_b': False, 'next_action': 'wait_outstanding', 'outstanding': ['A', 'B'], 'wait_target': ['A', 'B'], 'wait_deadline_seconds': '120', 'unrelated_interleaving': False, 'completed_before_wait': []}, {'case_id': 'W18', 'mode': 'ordinary_ready_wave', 'approved_wave': True, 'ready_evidence_verified': True, 'dependencies_verified': True, 'resource_isolation_verified': True, 'capacity_verified': True, 'dispatch_benefit_verified': True, 'host_limit_respected': True, 'task_count': 2, 'max_role_instances_after': 2, 'total_open_instances_after': 4, 'temporary_instances_after': 1, 'actions': [{'alias': 'A', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120'}, {'alias': 'B', 'dispatch_seconds': '121', 'budget_seconds': '120', 'deadline_seconds': '241'}], 'b_dispatched_before_a_terminal': True, 'policy_requires_a_terminal_before_b': False, 'next_action': 'wait_outstanding', 'outstanding': ['A', 'B'], 'wait_target': ['A', 'B'], 'wait_deadline_seconds': '120', 'unrelated_interleaving': False, 'completed_before_wait': []}, {'case_id': 'W19', 'mode': 'ordinary_ready_wave', 'approved_wave': True, 'ready_evidence_verified': True, 'dependencies_verified': True, 'resource_isolation_verified': None, 'capacity_verified': True, 'dispatch_benefit_verified': True, 'host_limit_respected': True, 'task_count': 2, 'max_role_instances_after': 2, 'total_open_instances_after': 4, 'temporary_instances_after': 1, 'actions': [{'alias': 'A', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120'}, {'alias': 'B', 'dispatch_seconds': '2', 'budget_seconds': '120', 'deadline_seconds': '122'}], 'b_dispatched_before_a_terminal': True, 'policy_requires_a_terminal_before_b': False, 'next_action': 'wait_outstanding', 'outstanding': ['A', 'B'], 'wait_target': ['A', 'B'], 'wait_deadline_seconds': '120', 'unrelated_interleaving': False, 'completed_before_wait': []}, {'case_id': 'W20', 'mode': 'ordinary_ready_wave', 'approved_wave': True, 'ready_evidence_verified': True, 'dependencies_verified': True, 'resource_isolation_verified': True, 'capacity_verified': True, 'dispatch_benefit_verified': True, 'host_limit_respected': True, 'task_count': 2, 'max_role_instances_after': 2, 'total_open_instances_after': 4, 'temporary_instances_after': 1, 'actions': [{'alias': 'A', 'dispatch_seconds': '0', 'budget_seconds': '120', 'deadline_seconds': '120'}, {'alias': 'B', 'dispatch_seconds': '2', 'budget_seconds': '120', 'deadline_seconds': '122'}], 'b_dispatched_before_a_terminal': True, 'policy_requires_a_terminal_before_b': False, 'next_action': 'wait_outstanding', 'outstanding': ['B'], 'wait_target': ['B'], 'wait_deadline_seconds': '122', 'unrelated_interleaving': False, 'completed_before_wait': ['A']}]
+WAVE_ORACLE = {'W01': 'PASS', 'W02': 'FAIL', 'W03': 'FAIL', 'W04': 'FAIL', 'W05': 'FAIL', 'W06': 'FAIL', 'W07': 'BLOCKED', 'W08': 'FAIL', 'W09': 'FAIL', 'W10': 'FAIL', 'W11': 'FAIL', 'W12': 'FAIL', 'W13': 'FAIL', 'W14': 'FAIL', 'W15': 'FAIL', 'W16': 'FAIL', 'W17': 'FAIL', 'W18': 'FAIL', 'W19': 'BLOCKED', 'W20': 'PASS'}
+TRANSPORT_ORACLE = {'P01': 'PASS', 'P02': 'PASS', 'P03': 'FAIL', 'P04': 'FAIL', 'P05': 'FAIL', 'P06': 'FAIL', 'P07': 'FAIL', 'P08': 'FAIL', 'P09': 'FAIL', 'P10': 'FAIL', 'P11': 'FAIL', 'P12': 'FAIL', 'P13': 'FAIL', 'P14': 'FAIL'}
+def wave_result(item):
+    actions = item['actions']
+    if item['mode'] == 'exclusive_single_action' and len(actions) > 1:
+        return 'FAIL'
+    if item['mode'] != 'ordinary_ready_wave':
+        return 'BLOCKED'
+    for key in ('approved_wave', 'ready_evidence_verified', 'dependencies_verified',
+                'resource_isolation_verified', 'capacity_verified',
+                'dispatch_benefit_verified', 'host_limit_respected'):
+        if item.get(key) is None:
+            return 'BLOCKED'
+        if item[key] is not True:
+            return 'FAIL'
+    for key, upper in (('task_count', 2), ('max_role_instances_after', 2),
+                       ('total_open_instances_after', 4), ('temporary_instances_after', 1)):
+        if type(item[key]) is not int:
+            return 'BLOCKED'
+        if item[key] < 0 or item[key] > upper:
+            return 'FAIL'
+    if item['policy_requires_a_terminal_before_b']:
+        return 'FAIL'
+    if item['next_action'] != 'wait_outstanding' or item['unrelated_interleaving']:
+        return 'FAIL'
+    aliases = [action['alias'] for action in actions]
+    if len(aliases) != len(set(aliases)) or item['task_count'] != len(actions):
+        return 'FAIL'
+    pending, complete = set(item['outstanding']), set(item['completed_before_wait'])
+    if pending & complete or pending | complete != set(aliases):
+        return 'FAIL'
+    if set(item['wait_target']) != pending or not pending:
+        return 'FAIL'
+    deadlines = {}
+    previous_start = None
+    try:
+        for action in actions:
+            start, budget, deadline = (Decimal(action[key]) for key in
+                                      ('dispatch_seconds', 'budget_seconds', 'deadline_seconds'))
+            if budget != Decimal('120') or deadline != start + budget:
+                return 'FAIL'
+            if previous_start is not None and start < previous_start:
+                return 'BLOCKED'
+            if any(start >= earlier for earlier in deadlines.values()):
+                return 'FAIL'
+            deadlines[action['alias']] = deadline
+            previous_start = start
+        earliest = min(deadlines[alias] for alias in pending)
+        if Decimal(item['wait_deadline_seconds']) > earliest:
+            return 'FAIL'
+    except (InvalidOperation, KeyError, TypeError):
+        return 'BLOCKED'
+    return 'PASS'
+
+class UniqueLoader(yaml.SafeLoader):
+    pass
+def unique(loader, node, deep=False):
+    result = {}
+    for key, value in loader.construct_pairs(node, deep=deep):
+        if key in result:
+            raise ValueError('duplicate YAML key')
+        result[key] = value
+    return result
+UniqueLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, unique)
+template = yaml.safe_load(Path('skills/ric-devflow/assets/templates/research-report.yaml').read_text())
+required_payload_fields = set(template)
+def decode_report(wrapper):
+    required = {'transport_version', 'encoding', 'content_type', 'payload_size_bytes',
+                'payload_sha256', 'report_id', 'payload', 'read_log'}
+    if set(wrapper) != required:
+        raise ValueError('transport field set')
+    if type(wrapper['transport_version']) is not int or wrapper['transport_version'] != 1:
+        raise ValueError('transport version')
+    if wrapper['encoding'] not in ('utf-8', 'base64') or wrapper['content_type'] != 'application/yaml; charset=utf-8':
+        raise ValueError('transport encoding/content type')
+    if type(wrapper['payload_size_bytes']) is not int or wrapper['payload_size_bytes'] < 0:
+        raise ValueError('transport size type')
+    if not all(isinstance(wrapper[key], str) for key in ('payload_sha256', 'report_id', 'payload', 'read_log')):
+        raise ValueError('transport string type')
+    if not re.fullmatch('[0-9a-f]{64}', wrapper['payload_sha256']):
+        raise ValueError('transport digest format')
+    if not re.fullmatch(r'RESEARCH-\d{3}', wrapper['report_id']):
+        raise ValueError('transport report ID')
+    blob = (wrapper['payload'].encode('utf-8') if wrapper['encoding'] == 'utf-8'
+            else base64.b64decode(wrapper['payload'], validate=True))
+    if len(blob) != wrapper['payload_size_bytes'] or hashlib.sha256(blob).hexdigest() != wrapper['payload_sha256']:
+        raise ValueError('decoded byte size/digest mismatch')
+    decoded_text = blob.decode('utf-8')
+    value = yaml.load(decoded_text, Loader=UniqueLoader)
+    if not isinstance(value, dict) or set(value) != required_payload_fields:
+        raise ValueError('decoded schema field set')
+    if type(value['schema_version']) is not int or value['schema_version'] != 1:
+        raise ValueError('decoded schema version')
+    if value['research_id'] != wrapper['report_id'] or value['status'] not in ('COMPLETE', 'PARTIAL', 'BLOCKED'):
+        raise ValueError('decoded report identity/status')
+    for key in ('sources', 'facts', 'inferences', 'recommendations', 'unresolved', 'not_run'):
+        if not isinstance(value[key], list):
+            raise ValueError('decoded array type')
+    for key in ('author', 'created_at', 'question'):
+        if not isinstance(value[key], str):
+            raise ValueError('decoded string type')
+    return blob
+
+payload = copy.deepcopy(template)
+payload.update(research_id='RESEARCH-901', author='Synthetic Tester fixture',
+    created_at='2026-11-14T00:00:00+00:00', question='Synthetic public transport fixture only',
+    status='BLOCKED', unresolved=['Synthetic fixture; no business research performed.'])
+original = yaml.safe_dump(payload, allow_unicode=True, sort_keys=False).encode()
+def wrap(blob, encoding='base64'):
+    return dict(transport_version=1, encoding=encoding,
+        content_type='application/yaml; charset=utf-8', payload_size_bytes=len(blob),
+        payload_sha256=hashlib.sha256(blob).hexdigest(), report_id='RESEARCH-901',
+        payload=base64.b64encode(blob).decode() if encoding == 'base64' else blob.decode('utf-8'),
+        read_log='Synthetic fixture only; no native action.')
+transport_inputs = [dict(case_id='P01', wrapper=wrap(original, 'utf-8')),
+                    dict(case_id='P02', wrapper=wrap(original))]
+for case, key, value in (
+        ('P03', 'payload_sha256', '0' * 64), ('P04', 'payload_size_bytes', len(original) + 1),
+        ('P05', 'encoding', 'rot13'), ('P06', 'payload', '!invalid'),
+        ('P08', 'report_id', 'RESEARCH-902'), ('P10', 'payload_size_bytes', True),
+        ('P11', 'unexpected', 'extra')):
+    item = wrap(original)
+    item[key] = value
+    transport_inputs.append(dict(case_id=case, wrapper=item))
+transport_inputs.append(dict(case_id='P07', wrapper=wrap(b'\xff')))
+missing = {key: value for key, value in payload.items() if key != 'not_run'}
+transport_inputs.append(dict(case_id='P09', wrapper=wrap(yaml.safe_dump(missing, allow_unicode=True, sort_keys=False).encode())))
+transport_inputs.append(dict(case_id='P12', wrapper=wrap(original + b'\nstatus: COMPLETE\n')))
+no_log = wrap(original)
+del no_log['read_log']
+transport_inputs.append(dict(case_id='P13', wrapper=no_log))
+bad_schema = copy.deepcopy(payload)
+bad_schema['schema_version'] = True
+transport_inputs.append(dict(case_id='P14', wrapper=wrap(yaml.safe_dump(bad_schema, allow_unicode=True, sort_keys=False).encode())))
+transport_inputs.sort(key=lambda item: item['case_id'])
+results = []
+assert {item['case_id'] for item in WAVE_INPUTS} == set(WAVE_ORACLE)
+for item in WAVE_INPUTS:
+    actual = wave_result(item)
+    assert actual == WAVE_ORACLE[item['case_id']], (item['case_id'], actual)
+    results.append(dict(case=item['case_id'], group='wave', observed=actual,
+                        expected=WAVE_ORACLE[item['case_id']]))
+assert {item['case_id'] for item in transport_inputs} == set(TRANSPORT_ORACLE)
+for item in transport_inputs:
+    try:
+        blob = decode_report(item['wrapper'])
+        actual = 'PASS'
+        assert blob == original, 'accepted payload bytes changed'
+    except (ValueError, UnicodeError, binascii.Error, yaml.YAMLError):
+        actual = 'FAIL'
+    assert actual == TRANSPORT_ORACLE[item['case_id']], (item['case_id'], actual)
+    results.append(dict(case=item['case_id'], group='transport', observed=actual,
+                        expected=TRANSPORT_ORACLE[item['case_id']]))
+identity = lambda value: hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+print(json.dumps(dict(verdict='PASS', tested_sha=None, native_runtime=False,
+    layer='deterministic ordinary-wave/exclusive-window and public report transport fixtures',
+    cases=results, wave_input_sha256=identity(WAVE_INPUTS),
+    transport_input_sha256=identity(transport_inputs),
+    boundary='No actual dispatch, concurrency or performance proof; wrapper checksum is transfer integrity, not author identity. Original single-action120 cases remain separate and unchanged.'),
+    ensure_ascii=False, indent=2))
+PY
+)
+```
+
+
+## 实际出站参数的发送前负控
+
+在已有不可读消息覆盖内，核验准备实际提交的目标及message正文，而不是只证明磁盘原件正确。空白、唯一脱敏占位、未解析指针/身份、错误目标/范围、原件摘要不符或预检后参数改变均须在业务派发前拦截。合法完整可读的精确指针允许，不强迫重复原文。绑定实际参数UTF8字节摘要与原件路径/版本/来源/权限，提交同一参数组，变化重验；单动作和普通波次每次派发均适用，不改变既有等待与容量。
+
+已发出后才损坏的原动作仍保留已发送/中断失败及原身份/deadline，允许的控制恢复不重放业务或重置预算；不同post-change动作须独立明确授权，不覆盖旧失败。下列负控只使用实际字符串和隔离文件，不调用任何原生角色或业务工具。宿主若在提交后改写正文，预检不能证明端到端传输完好，必须保留失败及可观察性限制。禁止编码控制消息或秘密以绕过拒绝。
+
+```bash
+(
+set -Eeuo pipefail
+PYTHONUTF8=1 PYTHONIOENCODING=utf-8 python3 -B - <<'PY'
+import copy, hashlib, json, re, tempfile
+from pathlib import Path
+INPUTS = [{'case_id': 'H01', 'actual_argument': '', 'actual_target': 'researcher-fixture', 'bound_target': 'researcher-fixture', 'identity_complete': True, 'pointer_exists': True, 'pointer_digest_matches': True, 'argument_changed_after_preflight': False, 'phase': 'pre_dispatch', 'original_action': 'BOUND-A', 'current_action': 'BOUND-A', 'original_deadline': '120', 'current_deadline': '120', 'old_failure_lifecycle': 'RUNNING_OR_UNKNOWN', 'business_replay': False, 'new_post_change_authorized': False}, {'case_id': 'H02', 'actual_argument': ' \n\t', 'actual_target': 'researcher-fixture', 'bound_target': 'researcher-fixture', 'identity_complete': True, 'pointer_exists': True, 'pointer_digest_matches': True, 'argument_changed_after_preflight': False, 'phase': 'pre_dispatch', 'original_action': 'BOUND-A', 'current_action': 'BOUND-A', 'original_deadline': '120', 'current_deadline': '120', 'old_failure_lifecycle': 'RUNNING_OR_UNKNOWN', 'business_replay': False, 'new_post_change_authorized': False}, {'case_id': 'H03', 'actual_argument': '{{SECRET_SYNTHETIC_HANDOFF}}', 'actual_target': 'researcher-fixture', 'bound_target': 'researcher-fixture', 'identity_complete': True, 'pointer_exists': True, 'pointer_digest_matches': True, 'argument_changed_after_preflight': False, 'phase': 'pre_dispatch', 'original_action': 'BOUND-A', 'current_action': 'BOUND-A', 'original_deadline': '120', 'current_deadline': '120', 'old_failure_lifecycle': 'RUNNING_OR_UNKNOWN', 'business_replay': False, 'new_post_change_authorized': False}, {'case_id': 'H04', 'actual_argument': 'Read __UNRESOLVED_POINTER__.json', 'actual_target': 'researcher-fixture', 'bound_target': 'researcher-fixture', 'identity_complete': True, 'pointer_exists': True, 'pointer_digest_matches': True, 'argument_changed_after_preflight': False, 'phase': 'pre_dispatch', 'original_action': 'BOUND-A', 'current_action': 'BOUND-A', 'original_deadline': '120', 'current_deadline': '120', 'old_failure_lifecycle': 'RUNNING_OR_UNKNOWN', 'business_replay': False, 'new_post_change_authorized': False}, {'case_id': 'H05', 'actual_argument': 'Read bound-original-input.json', 'actual_target': 'researcher-fixture', 'bound_target': 'researcher-fixture', 'identity_complete': False, 'pointer_exists': True, 'pointer_digest_matches': True, 'argument_changed_after_preflight': False, 'phase': 'pre_dispatch', 'original_action': 'BOUND-A', 'current_action': 'BOUND-A', 'original_deadline': '120', 'current_deadline': '120', 'old_failure_lifecycle': 'RUNNING_OR_UNKNOWN', 'business_replay': False, 'new_post_change_authorized': False}, {'case_id': 'H06', 'actual_argument': 'Read bound-original-input.json', 'actual_target': 'researcher-fixture', 'bound_target': 'researcher-fixture', 'identity_complete': True, 'pointer_exists': True, 'pointer_digest_matches': False, 'argument_changed_after_preflight': False, 'phase': 'pre_dispatch', 'original_action': 'BOUND-A', 'current_action': 'BOUND-A', 'original_deadline': '120', 'current_deadline': '120', 'old_failure_lifecycle': 'RUNNING_OR_UNKNOWN', 'business_replay': False, 'new_post_change_authorized': False}, {'case_id': 'H07', 'actual_argument': 'Read bound-original-input.json', 'actual_target': 'researcher-fixture', 'bound_target': 'researcher-fixture', 'identity_complete': True, 'pointer_exists': True, 'pointer_digest_matches': True, 'argument_changed_after_preflight': False, 'phase': 'pre_dispatch', 'original_action': 'BOUND-A', 'current_action': 'BOUND-A', 'original_deadline': '120', 'current_deadline': '120', 'old_failure_lifecycle': 'RUNNING_OR_UNKNOWN', 'business_replay': False, 'new_post_change_authorized': False}, {'case_id': 'H08', 'actual_argument': 'Read bound-original-input.json', 'actual_target': 'tester-fixture', 'bound_target': 'researcher-fixture', 'identity_complete': True, 'pointer_exists': True, 'pointer_digest_matches': True, 'argument_changed_after_preflight': False, 'phase': 'pre_dispatch', 'original_action': 'BOUND-A', 'current_action': 'BOUND-A', 'original_deadline': '120', 'current_deadline': '120', 'old_failure_lifecycle': 'RUNNING_OR_UNKNOWN', 'business_replay': False, 'new_post_change_authorized': False}, {'case_id': 'H09', 'actual_argument': 'Read bound-original-input.json', 'actual_target': 'researcher-fixture', 'bound_target': 'researcher-fixture', 'identity_complete': True, 'pointer_exists': True, 'pointer_digest_matches': True, 'argument_changed_after_preflight': True, 'phase': 'pre_dispatch', 'original_action': 'BOUND-A', 'current_action': 'BOUND-A', 'original_deadline': '120', 'current_deadline': '120', 'old_failure_lifecycle': 'RUNNING_OR_UNKNOWN', 'business_replay': False, 'new_post_change_authorized': False}, {'case_id': 'H10', 'actual_argument': 'Read bound-original-input.json', 'actual_target': 'researcher-fixture', 'bound_target': 'researcher-fixture', 'identity_complete': True, 'pointer_exists': True, 'pointer_digest_matches': True, 'argument_changed_after_preflight': False, 'phase': 'already_sent_recovery', 'original_action': 'BOUND-A', 'current_action': 'BOUND-A', 'original_deadline': '120', 'current_deadline': '120', 'old_failure_lifecycle': 'RUNNING_OR_UNKNOWN', 'business_replay': False, 'new_post_change_authorized': False}, {'case_id': 'H11', 'actual_argument': 'Read bound-original-input.json', 'actual_target': 'researcher-fixture', 'bound_target': 'researcher-fixture', 'identity_complete': True, 'pointer_exists': True, 'pointer_digest_matches': True, 'argument_changed_after_preflight': False, 'phase': 'already_sent_recovery', 'original_action': 'BOUND-A', 'current_action': 'BOUND-A', 'original_deadline': '120', 'current_deadline': '240', 'old_failure_lifecycle': 'RUNNING_OR_UNKNOWN', 'business_replay': False, 'new_post_change_authorized': False}, {'case_id': 'H12', 'actual_argument': 'Read bound-original-input.json', 'actual_target': 'researcher-fixture', 'bound_target': 'researcher-fixture', 'identity_complete': True, 'pointer_exists': True, 'pointer_digest_matches': True, 'argument_changed_after_preflight': False, 'phase': 'new_post_change', 'original_action': 'FAILED-OLD-201', 'current_action': 'BOUND-A', 'original_deadline': '120', 'current_deadline': '120', 'old_failure_lifecycle': 'INTERRUPTED_FAILED', 'business_replay': False, 'new_post_change_authorized': True}, {'case_id': 'H13', 'actual_argument': 'Read bound-original-input.json', 'actual_target': 'researcher-fixture', 'bound_target': 'researcher-fixture', 'identity_complete': True, 'pointer_exists': True, 'pointer_digest_matches': True, 'argument_changed_after_preflight': False, 'phase': 'already_sent_recovery', 'original_action': 'BOUND-A', 'current_action': 'BOUND-A', 'original_deadline': '120', 'current_deadline': '120', 'old_failure_lifecycle': 'INTERRUPTED_FAILED', 'business_replay': True, 'new_post_change_authorized': False}]
+ORACLE = {'H01': 'BLOCKED_BEFORE_DISPATCH', 'H02': 'BLOCKED_BEFORE_DISPATCH', 'H03': 'BLOCKED_BEFORE_DISPATCH', 'H04': 'BLOCKED_BEFORE_DISPATCH', 'H05': 'BLOCKED_BEFORE_DISPATCH', 'H06': 'BLOCKED_BEFORE_DISPATCH', 'H07': 'READY_TO_DISPATCH', 'H08': 'BLOCKED_BEFORE_DISPATCH', 'H09': 'BLOCKED_BEFORE_DISPATCH', 'H10': 'CONTROL_RECOVERY_ONLY', 'H11': 'BLOCKED_BEFORE_DISPATCH', 'H12': 'READY_NEW_ACTION', 'H13': 'BLOCKED_BEFORE_DISPATCH'}
+def preflight(actual, expected_target, target, approved_argument_sha, pointer_root,
+              pointer_sha, expected_control, item):
+    if not isinstance(actual, str) or not actual.strip():
+        return 'BLOCKED_BEFORE_DISPATCH'
+    text = actual.strip()
+    if re.fullmatch(r'\{\{(?:SECRET_[^{}]+|REDACTED)\}\}', text):
+        return 'BLOCKED_BEFORE_DISPATCH'
+    if re.search(r'__(?:PLANNER|UNRESOLVED|TEMPLATE)[A-Z0-9_]*__', text):
+        return 'BLOCKED_BEFORE_DISPATCH'
+    if hashlib.sha256(actual.encode()).hexdigest() != approved_argument_sha or target != expected_target:
+        return 'BLOCKED_BEFORE_DISPATCH'
+    match = re.fullmatch(r'Read ([A-Za-z0-9_.-]+)', text)
+    if match is None or match.group(1) != 'bound-original-input.json':
+        return 'BLOCKED_BEFORE_DISPATCH'
+    pointer = pointer_root / match.group(1)
+    if not pointer.is_file() or hashlib.sha256(pointer.read_bytes()).hexdigest() != pointer_sha:
+        return 'BLOCKED_BEFORE_DISPATCH'
+    control = json.loads(pointer.read_text())
+    required = ('root_issue_id', 'task_id', 'action_id', 'source_identity', 'scope')
+    if any(not control.get(key) for key in required) or control != expected_control:
+        return 'BLOCKED_BEFORE_DISPATCH'
+    if item['phase'] == 'already_sent_recovery':
+        if (item['current_action'] != item['original_action'] or
+            item['current_deadline'] != item['original_deadline'] or
+            item['old_failure_lifecycle'] == 'INTERRUPTED_FAILED' or item['business_replay']):
+            return 'BLOCKED_BEFORE_DISPATCH'
+        return 'CONTROL_RECOVERY_ONLY'
+    if item['phase'] == 'new_post_change':
+        if not item['new_post_change_authorized'] or item['current_action'] == item['original_action']:
+            return 'BLOCKED_BEFORE_DISPATCH'
+        return 'READY_NEW_ACTION'
+    return 'READY_TO_DISPATCH'
+
+results = []
+assert {x['case_id'] for x in INPUTS} == set(ORACLE)
+for item in INPUTS:
+    frozen_item = copy.deepcopy(item)
+    expected_control = dict(root_issue_id='SYNTHETIC-ROOT', task_id='SYNTHETIC-TASK',
+        action_id='BOUND-A', source_identity='fixed-content-fixture', scope=dict(read=['public-fixture'], write=[]))
+    control = copy.deepcopy(expected_control)
+    if not item['identity_complete']:
+        control['source_identity'] = None
+    with tempfile.TemporaryDirectory(prefix='devflow-outgoing-') as directory:
+        root = Path(directory)
+        pointer = root / 'bound-original-input.json'
+        if item['pointer_exists']:
+            pointer.write_text(json.dumps(control, ensure_ascii=False, sort_keys=True))
+        expected_digest = hashlib.sha256(json.dumps(control, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+        if not item['pointer_digest_matches']:
+            expected_digest = '0' * 64
+        actual = item['actual_argument']
+        approved_sha = hashlib.sha256(actual.encode()).hexdigest()
+        if item['argument_changed_after_preflight']:
+            actual += '\nUnapproved change after preflight.'
+        result = preflight(actual, item['bound_target'], item['actual_target'],
+            approved_sha, root, expected_digest, expected_control, item)
+        assert result == ORACLE[item['case_id']], (item['case_id'], result)
+        assert item == frozen_item, 'old identity/deadline/failure observation mutated'
+        results.append(dict(case=item['case_id'], result=result,
+            expected=ORACLE[item['case_id']],
+            actual_argument_sha256=hashlib.sha256(actual.encode()).hexdigest(),
+            business_dispatchable=result in ('READY_TO_DISPATCH', 'READY_NEW_ACTION'),
+            actual_dispatches=0))
+    assert not root.exists()
+print(json.dumps(dict(verdict='PASS', tested_sha=None, native_runtime=False,
+    layer='actual argument text and isolated real pointer preflight fixtures',
+    cases=results, cleanup=True, actual_dispatches=0,
+    boundary='Preflight of prepared arguments does not prove the host will not rewrite submitted content. Already-sent/interrupted failures remain preserved; no actual tool or business call occurs.'),
+    ensure_ascii=False, indent=2))
+PY
+)
+```
