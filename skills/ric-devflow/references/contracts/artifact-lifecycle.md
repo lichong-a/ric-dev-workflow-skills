@@ -8,6 +8,8 @@
 
 沿用 Root Issue `REQ-YYYYMMDD-NNN`、`TASK-NNN`、`AC-NNN`、`REVIEW-NNN`、`TEST-NNN`、`IMPL-NNN`、`DEFECT-NNN`、`DECISION-NNN` 或仓库已有不冲突的 ID。跨文件引用必须能定位精确对象，不能只写“最新版”。
 
+可选研究扩展使用 `RESEARCH-NNN` 与独立 schema1 [研究报告模板](../../assets/templates/research-report.yaml)，不改变上述既有载荷、Gate、Verdict 或状态。研究者只返回完整原文；v2 由 Planner 原样追加 `kind: research` 记录到 evidence，v1 唯一发布路径为 `attachments/research/RESEARCH-NNN.yaml`，无 Root 仅返回、不创建文件或业务对象。来源身份、时效与 COMPLETE/PARTIAL/BLOCKED 的研究覆盖含义见[共享研究规则](../shared/research.md)，这些状态不构成批准或依赖解锁证据。
+
 ## 持久文件路径
 
 新写入 `.devflow/` 的文件（包括核心正文、报告、附件和 `.local` 中的交接材料）使用可随仓库迁移的路径。基准是当前交付所在的已确认业务仓库/worktree 根；无 Git 时使用已确认项目根。此规则适用于 v1/v2 的新内容，不改变 Schema、角色所有权或历史证据身份。
@@ -24,7 +26,7 @@
 - 正式送审前固定对象修订与不可变身份：Git 完整 Commit SHA + 路径 + 对象 ID；无 Git、不能跟踪或没有提交授权时保存不可变本地快照及内容哈希，注明仅本地可恢复。代码门禁所需 SHA 不能用文档哈希替代。
 - 一经交给独立 Reviewer 或产生正式结论，被审内容即已发布；被拒绝或阻塞的版本也须可逐字恢复。v2 的固定正文文件可以继续修订，历史由 Git 或快照冻结；v1 已发布的旧路径不可覆盖。
 - 每个 Task 独立修订。局部修改不递增无关 Task/测试用例版本，不复制 Root、Profile、Decision 或整套矩阵。
-- 审核、测试、实现、Defect 的已发布记录不可修改；修正由原职责作者发布新 ID/版本与 `supersedes`。v2 在 `evidence.md` 追加，v1 新路径发布。历史结论始终保留原绑定。
+- 审核、测试、实现、Defect 和研究的已发布记录不可修改；修正由原职责作者发布新 ID/版本与 `supersedes`。v2 在 `evidence.md` 追加，v1 新路径发布。历史结论始终保留原绑定。
 
 ## 有效性而非父文件版本连锁
 

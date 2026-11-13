@@ -6,8 +6,9 @@
 
 - 在源码仓库根执行，要求 Bash、Git、Python 3.11+、PyYAML 和 bundled `quick_validate.py`；每次 Python 命令设置 UTF-8，拒绝优化模式。缺依赖记录 BLOCKED，不自动安装全局工具。
 - 如 bundled 验证器不在默认用户目录，在当前命令设置 `DEVFLOW_VALIDATOR_PATH` 为实际路径；不改用户配置。Node/标准安装器、PowerShell 与原生宿主未运行时单列，不以普通复制代替实机证据。
-- 五 Skill 唯一发布源为 `skills/`。检查包括仍存在的跟踪文件及 `skills/`、`docs/` 新文件；删除的跟踪路径另列而不当作待读取文件。用户 `.zcode/plans/` 等未知未跟踪内容不纳入。
+- 六 Skill 唯一发布源为 `skills/`，包含入口与五业务角色，三平台各四个原生子角色。检查包括仍存在的跟踪文件及 `skills/`、`docs/` 新文件；删除的跟踪路径另列而不当作待读取文件。用户 `.zcode/plans/` 等未知未跟踪内容不纳入。
 - 历史报告的前 63575 字节来自完整基线 `a72592ec1cb7ac5c67ec5454233d673a30000be5`，必须逐字保留。仅该原字节段内的链接按基线 Git 对象解析；报告新增段、当前文档及整个发布包的链接仍按当前文件检查。浅克隆缺该对象时应取得所需历史对象或报告 BLOCKED，不能豁免。
+- 原有 `ffe2e7ff6897539614bdddd055fe676865144b59` 报告前缀检查继续保留；本轮另对 `458b1778986b0f008aaa46b805af6f7baf6e6880` 中整份已发布报告逐字检查，仅允许其后追加。新增 Researcher 不进入旧三个原生角色的历史元数据比较，而有独立的类型、ID、模型继承、只读工具和报告字段断言。
 - 输出完整 HEAD、文件路径/类型/模式/字节摘要与集合摘要、真实命令和退出码。报告自身参与链接/历史保全检查，但不进入集合摘要，避免自引用。工作区摘要和测试 fixture Commit 均不能当产品 `tested_sha`。
 - v1 模板保持历史基线字节；Compact 模板允许路径说明注释更新，state 仅调整仓库根与 current 的相对路径默认值，其余载荷保持兼容。模板兼容检查不证明宿主已按路径规则生成产物。
 - 检查片段的原始工具返回用于会话内诊断；写入 `.devflow` 前由记录作者按[持久文件路径](../skills/ric-devflow/references/contracts/artifact-lifecycle.md#持久文件路径)处理 cwd、参数与输出中的本机定位并注明规范化方式，不直接把机器路径诊断保存为正式证据。
@@ -31,8 +32,10 @@ origin = Path.cwd().resolve()
 root = Path(os.environ.get('DEVFLOW_CHECK_ROOT', str(origin))).resolve()
 base = 'a72592ec1cb7ac5c67ec5454233d673a30000be5'
 report_name = 'docs/DEVFLOW_SKILLS_VALIDATION.md'
-roles = ('planner', 'reviewer', 'tester', 'implementer')
-child_roles = ('reviewer', 'tester', 'implementer')
+roles = ('planner', 'reviewer', 'tester', 'implementer', 'researcher')
+child_roles = ('reviewer', 'tester', 'implementer', 'researcher')
+historical_child_roles = ('reviewer', 'tester', 'implementer')
+maintenance_base = '458b1778986b0f008aaa46b805af6f7baf6e6880'
 names = {'ric-devflow', *('ric-devflow-' + r for r in roles)}
 commands = []
 def run(argv):
@@ -111,6 +114,8 @@ assert len(historical) == 63575
 assert (root / report_name).read_bytes().startswith(historical), 'historical report prefix changed'
 previous_report = subprocess.check_output(['git', 'show', 'ffe2e7ff6897539614bdddd055fe676865144b59:' + report_name], cwd=origin)
 assert (root / report_name).read_bytes().startswith(previous_report), 'previous published report changed'
+maintenance_report = subprocess.check_output(['git', 'show', maintenance_base + ':' + report_name], cwd=origin)
+assert (root / report_name).read_bytes().startswith(maintenance_report), 'published maintenance report changed'
 
 for name in paths:
     path = root / name
@@ -165,7 +170,7 @@ for name in sorted(names):
     assert fronts['skills/' + name + '/SKILL.md']['name'] == name, 'frontmatter name mismatch'
     run([sys.executable, '-B', str(validator), str(root / 'skills' / name)])
     ui = load_yaml((root / 'skills' / name / 'agents/openai.yaml').read_text())
-    assert ui['policy']['allow_implicit_invocation'] is (name == 'ric-devflow')
+    assert ui['policy']['allow_implicit_invocation'] is (name == 'ric-devflow'), (name, 'implicit invocation policy')
     assert 'RIC DevFlow' in ui['interface']['display_name']
 
 closures = {}
@@ -179,7 +184,7 @@ for role in roles:
     assert all(p.split('/')[1] in ('ric-devflow', 'ric-devflow-' + role) for p in seen), (role, 'unrelated role dependency')
     closures[role] = sorted(seen)
 
-# Four business Skills, but only three native child roles. Planner runs in the main session.
+# Five business Skills and four native child roles. Planner runs in the main session.
 agent_root = root / 'skills/ric-devflow/assets/agents'
 for host, suffix in (('codex', '.toml'), ('claude-code', '.md'), ('zcode', '.md')):
     expected = {'ric-devflow-' + r + suffix for r in child_roles}
@@ -188,17 +193,44 @@ for host, suffix in (('codex', '.toml'), ('claude-code', '.md'), ('zcode', '.md'
     assert {p.name for p in (agent_root / host).iterdir()} == expected, (host, 'native role set')
 for role in child_roles:
     config = tomllib.loads((root / 'skills/ric-devflow/assets/agents/codex' / ('ric-devflow-' + role + '.toml')).read_text())
-    old = tomllib.loads(git_bytes('.codex/agents/devflow-' + role + '.toml').decode())
-    assert config['name'] == 'ric_devflow_' + role
+    assert config['name'] == 'ric_devflow_' + role, (role, 'native ID')
     assert 'model_reasoning_effort' not in config, (role, 'fixed reasoning effort')
-    for key in ('model', 'sandbox_mode'):
-        assert config.get(key) == old.get(key), (role, key)
+    if role in historical_child_roles:
+        old = tomllib.loads(git_bytes('.codex/agents/devflow-' + role + '.toml').decode())
+        for key in ('model', 'sandbox_mode'):
+            assert config.get(key) == old.get(key), (role, key)
+    else:
+        assert 'model' not in config, 'researcher model inheritance'
+        assert config['sandbox_mode'] == 'read-only', 'researcher read-only sandbox'
     for host, oldhost in (('claude-code', '.claude'), ('zcode', '.zcode')):
         p = 'skills/ric-devflow/assets/agents/' + host + '/ric-devflow-' + role + '.md'
-        oldfront = load_yaml(git_bytes(oldhost + '/agents/devflow-' + role + '.md').decode().split('---', 2)[1])
-        assert fronts[p]['name'] == 'ric-devflow-' + role
-        for key in ('model', 'tools', 'injectAgentsMd'):
-            assert fronts[p].get(key) == oldfront.get(key), (host, role, key)
+        assert fronts[p]['name'] == 'ric-devflow-' + role, (host, role, 'native ID')
+        if role in historical_child_roles:
+            oldfront = load_yaml(git_bytes(oldhost + '/agents/devflow-' + role + '.md').decode().split('---', 2)[1])
+            for key in ('model', 'tools', 'injectAgentsMd'):
+                assert fronts[p].get(key) == oldfront.get(key), (host, role, key)
+        else:
+            assert fronts[p]['model'] == 'inherit', (host, 'researcher model inheritance')
+            tools = fronts[p]['tools']
+            assert isinstance(tools, str), (host, 'researcher tools type')
+            assert [t.strip() for t in tools.split(',')] == ['Read', 'Grep', 'Glob', 'WebSearch', 'WebFetch'], (host, 'researcher tool allowlist')
+            if host == 'zcode':
+                assert fronts[p]['injectAgentsMd'] is True, 'researcher ZCode instruction injection'
+
+research = load_yaml((root / 'skills/ric-devflow/assets/templates/research-report.yaml').read_text())
+research_fields = {'schema_version', 'research_id', 'supersedes', 'author', 'created_at',
+                   'root_issue_id', 'task_id', 'question', 'status', 'sources', 'facts',
+                   'inferences', 'recommendations', 'unresolved', 'not_run'}
+assert set(research) == research_fields, 'research report fields'
+assert type(research['schema_version']) is int and research['schema_version'] == 1, 'research report schema'
+assert re.fullmatch(r'RESEARCH-\d{3}', research['research_id']), 'research report ID'
+assert research['status'] in ('COMPLETE', 'PARTIAL', 'BLOCKED'), 'research report status'
+for key in ('author', 'created_at', 'question'):
+    assert isinstance(research[key], str), ('research report string', key)
+for key in ('supersedes', 'root_issue_id', 'task_id'):
+    assert research[key] is None or isinstance(research[key], str), ('research report nullable ID', key)
+for key in ('sources', 'facts', 'inferences', 'recommendations', 'unresolved', 'not_run'):
+    assert isinstance(research[key], list), ('research report array', key)
 
 template_prefix = '.agents/skills/_devflow_shared/templates/'
 templates = run(['git', 'ls-tree', '-r', '--name-only', base, template_prefix]).splitlines()
@@ -222,6 +254,7 @@ for old in templates:
             return [line.rstrip() for line in re.sub(r'<!--.*?-->', '', text, flags=re.S).splitlines() if line.strip()]
         assert without_comments(new.read_text()) == without_comments(original.decode()), ('compact document payload changed', relative)
     compact_templates_compatible += 1
+assert templates_byte_identical == 16 and compact_templates_compatible == 4, 'historical template inventory'
 if root == origin:
     run(['git', 'diff', '--check'])
     run(['git', 'diff', '--cached', '--check'])
@@ -230,6 +263,8 @@ print(json.dumps(dict(verdict='PASS', head=head, tested_sha=None, candidate_sha2
     python=sys.version.split()[0], pyyaml=yaml.__version__, baseline_sha=base,
     counts=counts, templates_byte_identical=templates_byte_identical,
     compact_templates_compatible=compact_templates_compatible, role_closures=closures,
+    business_roles=list(roles), native_child_roles=list(child_roles),
+    historical_child_roles_compared=list(historical_child_roles), research_report_fields=sorted(research),
     deleted_tracked_paths=deleted, files=manifest, commands=commands,
     native_runtime=False, boundary='source/isolated file diagnostic; no product Commit Gates'), ensure_ascii=False, indent=2))
 PY
@@ -254,7 +289,7 @@ readme = (root / 'README.md').read_text()
 copy_block = next(b for b in re.findall(r'```bash\n(.*?)\n```', readme, re.S) if 'DEVFLOW_COPY_NAMES=' in b)
 assignment = 'DEVFLOW_COPY_ROOT="/path/to/confirmed/skill-root"'
 assert copy_block.count(assignment) == 1
-roles = ('planner', 'reviewer', 'tester', 'implementer')
+roles = ('planner', 'reviewer', 'tester', 'implementer', 'researcher')
 names = ['ric-devflow', *('ric-devflow-' + r for r in roles)]
 commands = []
 def run(argv, env=None):
@@ -269,8 +304,10 @@ def files(directory):
 with tempfile.TemporaryDirectory(prefix='.devflow-validation-', dir=root) as location:
     temp = Path(location)
     results = []
-    for selected in (names, ['ric-devflow']):
-        target = temp / ('copy-five' if len(selected) == 5 else 'copy-entry')
+    selections = [names, ['ric-devflow'], *(['ric-devflow', 'ric-devflow-' + role] for role in roles)]
+    for selected in selections:
+        label = 'copy-six' if len(selected) == 6 else ('copy-entry' if len(selected) == 1 else 'copy-' + selected[1])
+        target = temp / label
         block = copy_block.replace(assignment, 'DEVFLOW_COPY_ROOT=' + shlex.quote(str(target)))
         block = block.replace('DEVFLOW_COPY_NAMES=(' + ' '.join(names) + ')', 'DEVFLOW_COPY_NAMES=(' + ' '.join(selected) + ')')
         first = run(['bash', '-c', block])
@@ -293,7 +330,22 @@ with tempfile.TemporaryDirectory(prefix='.devflow-validation-', dir=root) as loc
     tracked = set(filter(None, subprocess.check_output(['git', 'ls-files', '-z']).decode().split('\0')))
     extras = set(filter(None, subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard', '-z']).decode().split('\0')))
     paths = sorted(p for p in tracked | {p for p in extras if p.startswith(('skills/', 'docs/'))} if (root / p).is_file())
-    for case in ('control', 'duplicate-yaml', 'broken-toml', 'extra-skill', 'bad-link', 'bad-anchor', 'history-prefix', 'bad-frontmatter', 'validator-failure', 'planner-native', 'fixed-effort'):
+    expected_errors = {
+        'control': None, 'duplicate-yaml': 'duplicate YAML key', 'broken-toml': 'TOMLDecodeError',
+        'extra-skill': 'unexpected Skill directory', 'bad-link': 'missing link', 'bad-anchor': 'missing anchor',
+        'history-prefix': 'historical report prefix changed', 'bad-frontmatter': 'frontmatter name mismatch',
+        'validator-failure': 'command failed', 'planner-native': 'native role set', 'fixed-effort': 'fixed reasoning effort',
+        'missing-researcher': 'extra or missing Skill', 'implicit-researcher': 'implicit invocation policy',
+        'researcher-codex-id': 'native ID', 'researcher-codex-model': 'researcher model inheritance',
+        'researcher-codex-write': 'researcher read-only sandbox', 'researcher-claude-tools': 'researcher tool allowlist',
+        'researcher-zcode-model': 'researcher model inheritance', 'research-report-fields': 'research report fields',
+        'research-report-schema': 'research report schema', 'research-report-status': 'research report status',
+        'v1-template-bytes': 'v1 template bytes changed', 'compact-payload': 'compact document payload changed',
+        'recent-history-prefix': 'published maintenance report changed', 'role-closure-backlink': 'unrelated role dependency',
+        'product-script': 'non-instruction product file', 'package-manifest': 'unexpected package manifest',
+        'product-symlink': 'published symlink dependency',
+    }
+    for case, expected_error in expected_errors.items():
         fixture = temp / case
         for name in paths:
             dst = fixture / name
@@ -327,10 +379,63 @@ with tempfile.TemporaryDirectory(prefix='.devflow-validation-', dir=root) as loc
         elif case == 'fixed-effort':
             p = fixture / 'skills/ric-devflow/assets/agents/codex/ric-devflow-tester.toml'
             p.write_text('model_reasoning_effort = "xhigh"\n' + p.read_text())
+        elif case == 'missing-researcher':
+            (fixture / 'skills/ric-devflow-researcher/SKILL.md').unlink()
+        elif case == 'implicit-researcher':
+            p = fixture / 'skills/ric-devflow-researcher/agents/openai.yaml'
+            p.write_text(p.read_text().replace('allow_implicit_invocation: false', 'allow_implicit_invocation: true', 1))
+        elif case.startswith('researcher-codex-'):
+            p = fixture / 'skills/ric-devflow/assets/agents/codex/ric-devflow-researcher.toml'
+            text = p.read_text()
+            if case == 'researcher-codex-id':
+                text = text.replace('name = "ric_devflow_researcher"', 'name = "wrong"', 1)
+            elif case == 'researcher-codex-model':
+                text = 'model = "unapproved-model"\n' + text
+            else:
+                text = text.replace('sandbox_mode = "read-only"', 'sandbox_mode = "workspace-write"', 1)
+            p.write_text(text)
+        elif case == 'researcher-claude-tools':
+            p = fixture / 'skills/ric-devflow/assets/agents/claude-code/ric-devflow-researcher.md'
+            p.write_text(p.read_text().replace('tools: Read, Grep, Glob, WebSearch, WebFetch', 'tools: Read, Grep, Glob, WebSearch, WebFetch, Bash', 1))
+        elif case == 'researcher-zcode-model':
+            p = fixture / 'skills/ric-devflow/assets/agents/zcode/ric-devflow-researcher.md'
+            p.write_text(p.read_text().replace('model: inherit', 'model: unapproved-model', 1))
+        elif case.startswith('research-report-'):
+            p = fixture / 'skills/ric-devflow/assets/templates/research-report.yaml'
+            text = p.read_text()
+            if case == 'research-report-fields':
+                text = text.replace('not_run: []\n', '', 1)
+            elif case == 'research-report-schema':
+                text = text.replace('schema_version: 1', 'schema_version: 2', 1)
+            else:
+                text = text.replace('status: "BLOCKED"', 'status: "PASS"', 1)
+            p.write_text(text)
+        elif case == 'v1-template-bytes':
+            p = fixture / 'skills/ric-devflow/assets/templates/test-report.yaml'
+            p.write_text(p.read_text() + '\n# changed historical bytes\n')
+        elif case == 'compact-payload':
+            p = fixture / 'skills/ric-devflow/assets/templates/compact/test-plan.md'
+            p.write_text(p.read_text().replace('revision: 1', 'revision: 2', 1))
+        elif case == 'recent-history-prefix':
+            p = fixture / 'docs/DEVFLOW_SKILLS_VALIDATION.md'
+            old = subprocess.check_output(['git', 'show', '458b1778986b0f008aaa46b805af6f7baf6e6880:docs/DEVFLOW_SKILLS_VALIDATION.md'])
+            raw = p.read_bytes()
+            p.write_bytes(raw[:len(old) - 1] + b'!' + raw[len(old):])
+        elif case == 'role-closure-backlink':
+            p = fixture / 'skills/ric-devflow/references/shared/research.md'
+            p.write_text(p.read_text() + '\n[unrelated role](../../../ric-devflow-researcher/SKILL.md)\n')
+        elif case == 'product-script':
+            (fixture / 'skills/ric-devflow/runner.py').write_text('print("unapproved")\n')
+        elif case == 'package-manifest':
+            (fixture / 'package.json').write_text('{}\n')
+        elif case == 'product-symlink':
+            (fixture / 'skills/ric-devflow/alias.md').symlink_to('SKILL.md')
         env = dict(os.environ, DEVFLOW_CHECK_ROOT=str(fixture), PYTHONUTF8='1', PYTHONIOENCODING='utf-8')
         observed = run([sys.executable, '-B', '-c', check_source], env)
         assert (observed.returncode == 0) == (case == 'control'), (case, observed.stdout, observed.stderr)
-        results.append(dict(case=case, exit_code=observed.returncode))
+        if expected_error is not None:
+            assert expected_error in observed.stderr, (case, 'wrong rejection reason', observed.stderr)
+        results.append(dict(case=case, exit_code=observed.returncode, expected_error=expected_error))
     print(json.dumps(dict(verdict='PASS', checks=results, commands=commands, native_runtime=False,
                          note='negative exits are expected test observations, not hidden failures'), ensure_ascii=False, indent=2))
 assert not temp.exists()
@@ -345,12 +450,13 @@ PY
 
 | 批次 | 给执行者的原始事实/请求 | 事后观察维度 |
 |---|---|---|
-| A 缺件 | 仅入口；四个单角色分别安装；Reviewer/Tester/Implementer最小闭包；必要传递文件缺失；已启动子角色被要求补装/派发；离线无可信源。原任务为保持权限/响应兼容的CSV导出 | 首次读取与下一动作、真实复制/读回、必要依赖、来源、角色上下文、原任务保全 |
+| A 缺件 | 仅入口；五个单角色分别安装；Reviewer/Tester/Implementer/Researcher最小闭包；必要传递文件缺失；已启动子角色被要求补装/派发；离线无可信源。原任务为保持权限/响应兼容的CSV导出 | 首次读取与下一动作、真实复制/读回、必要依赖、来源、角色上下文、原任务保全 |
 | B 文件边界 | project/user入口分别链接到另一处可信source；范围未知；合成ZCode项目范围；同字节/定制/异版本/普通文件/断链；明确禁用及其他配置；部分安装后重复请求；离线完整/不完整源；合成获取成功/拒绝 | 逻辑写入清单、链接保留、冲突前后字节/mtime、全目标预检、读回/重复写入、合成与真实区分 |
 | C 决定 | 开发/修复/续作/解释/建议/独立审核测试/文档/显式四角色；三宿主/未知/冲突身份；平级交接；文件/加载/调用/重载；无工具/权限；v1/v2、未提交测试、Oracle变化、冻结Task、VERIFIED/DONE各证据组合 | 真实选择与交接、权限/批准界限、唯一状态作者、保留历史、完整SHA绑定；不比对措辞 |
 | 守卫 Delta | 入口存在但bootstrap缺失：正常、来源未知、现存入口字节冲突；四个单角色分别缺入口：正常、同名原生定义冲突、必需能力禁用 | 写前完整预检、真实缺件恢复、冲突/禁用时文件结果；新旧输入身份分别固定 |
 | 加载与恢复 Delta | WF-51–57 的原始输入：三宿主项目/用户补装、复用零写入、后续角色切换、无清单/无工具、批准不足、独立角色/子角色、分类故障、重启后成功/仍失败 | 按需真实交接或决定级下一动作、明确重启提示及恢复信息、错误归因、停止受影响动作、无重复安装/业务动作/探测、单角色证据范围；决定级与实机分列 |
-| 固定角色与参数 Delta | WF-58–70：逻辑职责/实例复用与替换、额度 1/2/外部占用、安全回收、取消作用范围、有限扩容、未知生命周期、旧 Planner 迁移及思考兼容 | 主会话唯一 Planner，三种职责下实际 ID 的创建/继续/回收/替换及读取轨迹；有效模型/参数、重试次数、完整载荷和文件结果；模拟动作与原生运行分别记录 |
+| 固定角色与参数 Delta | WF-58–70：逻辑职责/实例复用与替换、额度 1/2/外部占用、安全回收、取消作用范围、有限扩容、未知生命周期、旧 Planner 迁移及思考兼容 | 主会话唯一 Planner，四种子职责下实际 ID 的创建/继续/回收/替换及读取轨迹；有效模型/参数、重试次数、完整载荷和文件结果；模拟动作与原生运行分别记录 |
+| 研究与安全并行 Delta | WF-71–78、TRIGGER-35–38、PERF-09–11：明确缺口/无缺口、恶意材料/断网、来源身份/原载荷、冲突连通分量/同父目录/跨流依赖、四默认实例/一个临时实例、DB事务迁移与输出隔离 | 原始请求和 Oracle 分别固定；真实读取/决定/完整载荷/副作用及占用轨迹，不用静态文本或合成占用证明原生调度；未加载Researcher与其他宿主如实未运行 |
 
 实际文件子例不能只输出“将复制”。独立执行者可根据其决定执行逐文件复制，但不得另写通用 bootstrap 实现来替代被测指令。中断恢复区分预置的部分状态和本次真实故障：收集代码发生 KeyError 等错误必须保留原命令/退出码，修收集器后重新核对文件再恢复，不改候选或 Oracle。
 
@@ -582,7 +688,7 @@ fixture 预置过程、实际角色动作与最终验证分别记录。角色不
 
 ## Codex CLI 生命周期实机验证
 
-仅在明确授权的源码维护验证中使用可用 CLI 和隔离 fixture；这不授权业务流程在角色不可用时换客户端绕过权限，也不把 CLI 结果当桌面或其他平台结果。先记录实际 `codex --version`、`codex --help`、`codex exec --help` 与工具 Schema。候选五 Skill/三 Codex 定义仅复制到本轮隔离项目，绑定字节摘要；不写真实用户安装，不修改既有 .codex/ 或全局配置。
+仅在明确授权的源码维护验证中使用可用 CLI 和隔离 fixture；这不授权业务流程在角色不可用时换客户端绕过权限，也不把 CLI 结果当桌面或其他平台结果。先记录实际 `codex --version`、`codex --help`、`codex exec --help` 与工具 Schema。候选六 Skill/四 Codex 定义仅复制到本轮隔离项目，绑定字节摘要；不写真实用户安装，不修改既有 .codex/ 或全局配置。历史对照始终按其固定SHA与原清单，不把旧五/三对象记为新六/四实机结果。
 
 CLI 可能把新 fixture 的项目信任记录自动写入用户配置；不能仅凭 `-c` 属于进程覆盖就声称没有持久副作用。本轮环境即使传入进程级 fixture trust_level，仍出现自动信任记录。后续先核验隔离/授权与配置保全方案；没有已确认的无外部写入路径或相应授权时，停止该实机切片并说明条件，不反复试建。已获授权的自建 fixture 若产生自动记录，只精确清理可证明本轮产生的项，保留其他当前字节，不整份回滚用户配置；其他指纹变化单独报告，不猜测来源，不通过更改 model、审批或用户禁用设置解决。
 

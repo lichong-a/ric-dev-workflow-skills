@@ -4889,3 +4889,38 @@ CLI 产生过 MCP 启动/认证/keyring 及 legacy_notify 告警，保留分类�
 报告追加后再次执行静态检查 exit 0：当前链接 277、历史链接 3，集合摘要与报告前一致；附件 JSON 可解析，旧报告 306753 字节前缀保持。
 
 最终清理：精确移除本轮自建临时树中的 1502 个文件，保全的四份 fixture 已先从持久 bundle 恢复并逐字核验。临时 fixture 信任项剩余 0；仓库 .codex/config.toml 字节未变。用户级配置清理后摘要为 f42c5bd616466d6906108bf94b154e75e7c37c651a9b7d031808a5fe5e07026b，仍与最初摘要不同，其余差异来源未确认，保留当前设置。本轮源码未提交、未推送。
+
+
+---
+
+## 2026-11-14 — Researcher 与安全并行：独立本地诊断
+
+本轮按 REQ-20261113-001、Spec revision 1、TEST-PLAN-r1（REVIEW-002 APPROVE）执行，由已加载的原 Tester 负责，未安装候选。真实源码 HEAD 仍为 `458b1778986b0f008aaa46b805af6f7baf6e6880`，候选包含未提交源码和测试材料，`tested_sha: null`。以下 PASS 仅指声明的本地切片；完整行为/原生切片仍为 BLOCKED/未运行，不代表 G5—G10。
+
+- 完整静态与闭包：PASS，Bash 退出0，12条内部命令均退出0；六份 bundled Skill 验证通过，五个单角色闭包成立，三平台四原生子角色与仅入口隐式调用符合检查。旧Reviewer/Tester/Implementer历史元数据逐项比较保留；Researcher另验ID、模型继承、只读工具和完整schema1研究字段。解析15 YAML、5 TOML、17 frontmatter、94 Markdown，305个当前链接与3个历史链接。
+- 普通复制及负控：PASS，36项检查、43条真实命令；六Skill、仅入口、五种入口加单角色共七种复制组合，重复/冲突均拒绝且无部分写入。干净对照通过，27个独立负控均以预期原因非零，包括缺Researcher、错误权限/工具/模型/研究字段、旧模板/Compact/历史报告破坏、无关角色反链、产品脚本/包清单/符号链接。临时副本已清理。
+- Git机制：PASS，11项、103条真实Git命令，包括预期拒绝和冲突；覆盖单功能分支、detached Task、同Task串行作者、候选保全、拒绝脏/锁定回收、squash后bundle独立恢复。fixture已清理，必要bundle与全部命令/退出码转存Root持久附件。这些合成动作不证明原生角色或真实门禁。
+- 进程机制：PASS，实际收集退出码7、0及自有进程取消退出-15；全部wait/reap，只清理本轮所有资源，未触碰用户服务/未知进程。数据库隔离仅有待独立评测情境，没有实际DB服务验证。
+- 保持行为：原16份v1模板逐字不变，4份Compact有效载荷兼容；本轮前整份317454字节历史报告SHA256 `231aea2f3f26b2bcc0ceb82c08f9c82eecc3eda37a7cf37f7afd8cb851a69ca3` 原字节保留，本节只追加。Implementer交接30文件的路径/模式/内容身份逐一未变。
+
+最终指令/测试材料集合SHA256为 `8e26b9c1feed07c2c15c547478b2e4991b32f33b79e4b911409fd96271562959`（沿用指南manifest算法，排除本报告自身防止自引用）。精确命令、退出码、环境、完整清单和规范化输出在 `.devflow/changes/REQ-20261113-001/attachments/tester-static-v1.json`、`tester-copy-v1.json`、`tester-git-v1.json`、`tester-resource-v1.json` 及 `tester-git-artifacts-v1/`。工作区摘要和fixture Commit都不是产品tested_sha。
+
+首次日志收集器在启动检查块前因字符串换行转义错误产生两个退出1，未运行候选检查；原始命令/错误保存在同Root `attachments/tester-collector-failure-v1.json` 与 `defect-001.yaml`。修正收集器后才取得上述真实结果；断言、候选与120秒预算未被放宽。此为疑似测试准备缺陷，最终归因/关闭由Planner处理，不能把它冒充历史失败或删掉。
+
+八组独立决定级原始请求固定为同Root `attachments/evaluator-raw-inputs-v1.md`（SHA256 `4c927682e01ec58c58bf3c1aa16bc7a087327f13c11be370cf67c8f68b6219e6`）；Oracle另存 `attachments/evaluator-oracle-v1.json`，不提供给执行者。研究来源/恶意材料/无缺口复用/报告恢复、冲突连通分量/同父目录/跨流A1→B1→A2、实例容量、事务迁移/输出隔离及warm失效已形成原始情境，本节尚未取得独立返回，不计行为PASS。
+
+未运行：候选Researcher原生加载/调用及工具/网络权限执行、Claude Code/ZCode原生实机、真实安装/恢复、性能A/B与提速测量、目标分支冒烟和G5—G10。未获得安装、提交、合并、服务或配置变更授权，未使用其他agent客户端或派生代理。无应用构建/服务测试适用。最终整体行为结论保持BLOCKED，局部静态/文件/Git/进程结果按上述真实边界记录。
+
+### 2026-11-14 — 并发契约返修与决定级诊断补证
+
+上节 TEST-001 原文及其当时的 BLOCKED/not_run 均保留。本节由 Planner 汇聚后续真实证据，不改写 Tester 或 Reviewer 原报告，不把源码决定级回答升级为原生实机结果。
+
+独立 REVIEW-003 在35文件文档快照中指出 FINDING-001：Git 并发条款仍笼统禁止共享公开契约/构建配置，与允许共同只读输入的新规则矛盾。Implementer 在原 TASK-001/DEFECT-002 内仅修正该条款并新增 WF-79：共同读取固定 OpenAPI/构建配置可构成独立窗口，修改共享契约、共享配置或重叠生成输出三个对照必须串行协调。冻结 DAG、资源隔离和实例上限不变。原作者新报告为同 Root 的 `attachments/implementation-report-003.yaml`，旧报告保留；后续独立增量审核记录以 Root 中的新 Review 为准。
+
+独立源码阅读者先核验30文件快照，再在未读取 Oracle 的情况下返回 RD-01—RD-08。Planner 收到后才读取独立 Oracle 逐项核对；RD-06 的进程收集/取消边界另以不含答案的原始问题补问。阅读者又核验修正后的四份来源，回答固定只读契约正例、共享契约修改、共享配置修改及重叠输出四个回归情境。八组原始决定和四组回归的事后判定均为 PASS，仅限源码决定级：研究报告明确来源及未运行，恶意材料无授权效力；冲突传递、跨流依赖、容量、隔离、缓存及报告恢复符合预期。没有实际派发候选 Researcher、改变 Task 状态、释放真实实例或执行这些合成情境中的进程。完整 RD-01 原载荷、决定正文、原始问题与事后判定分别保全在同 Root 的 `attachments/evaluator-decisions-v1.md`、`evaluator-decisions-v2.md`、`evaluator-request.yaml`、`evaluator-grading-v1.json`，不以精确措辞匹配取代决定核对。
+
+返修后 Planner 重新执行当前指南三份完整 Bash 块：完整静态/闭包 PASS（12条内部命令均退出0，六个 Skill 验证器通过、16份旧 v1 字节及4份 Compact 载荷保持、305个当前链接及3个历史链接）；复制/负控 PASS（36项、43条命令，27项负控和七种复制组合）；Git 机制 PASS（11项，预期拒绝/冲突的非零退出作为测试观察保留）。自有临时目录已清理，命令/输出及必要 Git 机制附件保存在同 Root 的 `attachments/planner-final-static-v2.json`、`planner-final-copy-negative-v2.json`、`planner-final-git-mechanism-v2.json`、`planner-final-git-artifacts-v2/`。这些是 Planner 复核，不冒充新增独立 Tester 或原生角色测试。
+
+最终指令/测试材料集合 SHA256 为 `e4cf62088797730414e21196e3c0f0c3763d3d1694e1ba77811c2a375d5dc9b9`，沿用指南算法排除本报告自身，真实源码 HEAD 仍为 `458b1778986b0f008aaa46b805af6f7baf6e6880`，`tested_sha: null`。原收集器 DEFECT-001 由 Planner 归因 TEST：错误发生在执行检查块前，修正后真实静态/复制/Git执行均成功；此准备缺陷按新处置记录关闭，不是产品断言失败，也未删除原失败记录。
+
+仍未运行：候选 Researcher 实际加载/调用和工具/网络权限执行、Claude Code/ZCode 实机、真实用户目录安装/恢复、性能 A/B、目标分支冒烟及 G5—G10。源码/决定级诊断通过不能证明这些切片；没有提速或 Token/成本收益主张，没有新增产品脚本、CLI、包清单、服务或工作流状态。未提交、推送、合并、安装或迁移业务 Root。

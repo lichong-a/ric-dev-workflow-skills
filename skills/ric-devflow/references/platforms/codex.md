@@ -6,12 +6,14 @@
 
 - 项目 Skill 根为项目 `.agents/skills`，用户根为 `~/.agents/skills`；跟随已发现的逻辑入口，普通目录复制可用。
 - 原生定义源为入口 `assets/agents/codex/ric-devflow-<role>.toml`，目标为同范围 `.codex/agents/ric-devflow-<role>.toml`。
-- 角色 ID 来自 TOML `name`，为 `ric_devflow_reviewer/tester/implementer`，不是文件名推测。保留 `name`、`description`、`developer_instructions` 必需字段。
-- 主会话直接承担 Planner；只分发三个子角色定义。子角色模板不设置固定模型或 `model_reasoning_effort`，保留模型继承；角色偏好在首次需要时由主会话按[思考兼容](../shared/reasoning-compatibility.md)协商。Reviewer `sandbox_mode = "read-only"`，Tester/Implementer `workspace-write`，不能覆盖更严格的宿主限制。
+- 角色 ID 来自 TOML `name`，为 `ric_devflow_reviewer/tester/implementer/researcher`，不是文件名推测。保留 `name`、`description`、`developer_instructions` 必需字段。
+- 主会话直接承担 Planner；只分发四个子角色定义。子角色模板不设置固定模型或 `model_reasoning_effort`，保留模型继承；角色偏好在首次需要时由主会话按[思考兼容](../shared/reasoning-compatibility.md)协商。Reviewer/Researcher `sandbox_mode = "read-only"`，Tester/Implementer `workspace-write`，不能覆盖更严格的宿主限制。
 - `[agents].enabled` 默认 true，无显式设置时不必为安装增加配置。明确 false 不反转。已有并发数、模型、权限、Agent 配置保留；[配置示例](../../assets/agents/codex/config.toml)是原基线示例，不能整段写入或把示例并发数强加给用户。
-- 五份 Skill `agents/openai.yaml` 中只有 `ric-devflow` 允许隐式调用，四业务角色均为 false；不把该 Codex 策略声称为其他宿主硬开关。
+- 六份 Skill `agents/openai.yaml` 中只有 `ric-devflow` 允许隐式调用，五业务角色均为 false；不把该 Codex 策略声称为其他宿主硬开关。
 
-仅补本次必要的原生角色定义；同名定制或不同版本先报告，不覆盖。独立主会话直接执行角色时不要求其他原生角色；完整开发核验三份子角色定义及宿主提供的加载信息，实际调用随必要交接逐角色确认，不以一例成功证明三个目标均可用。交接携带已确认角色入口绝对路径、入口共享根与适用仓库规则，不将源码 checkout 路径永久写进 Agent 模板。
+仅补本次必要的原生角色定义；同名定制或不同版本先报告，不覆盖。独立主会话直接执行角色时不要求其他原生角色；完整开发核验四份子角色定义及宿主提供的加载信息，实际调用随必要交接逐角色确认，不以一例成功证明四个目标均可用。交接携带已确认角色入口绝对路径、入口共享根与适用仓库规则，不将源码 checkout 路径永久写进 Agent 模板。
+
+新增 Researcher 定义同样不指定模型或思考等级，保持 `read-only`，仅在显式研究或 Planner 明确事实缺口时调用；公开检索/抓取只使用当前会话真实可用能力。沙箱配置不证明网络已开放或任意工具已授权，未知工具、禁用或网络受限报告具体缺口及 `not_run`，不通过安装/配置或通用代理绕过。来源安全、事实/推断及完整报告按[共享研究规则](../shared/research.md)。旧 Reviewer/Tester/Implementer 三角色的历史权限比较独立保留，不用新角色替代保持检查。
 
 ## 角色名称与界面边界
 
@@ -21,7 +23,7 @@
 
 实际调用工具支持 `task_name` 时按[职责命名](../shared/orchestration.md#职责命名与可读交接)首次使用稳定的 `ric_<role>`；只在工具确实提供人类标题字段时传“实现者｜Skill布局”等标题。平台昵称、调用任务名和 Skill `agents/openai.yaml` 的 `display_name` 是不同对象。当前工具没有旧子代理重命名接口时，不承诺修改 Skill UI 或 TOML 描述会改名、不重建会话来模拟改名、不追溯修改旧会话；通过后续进度和交接自述说明职责。
 
-完整性要求核验三个原生子角色，不要求立即创建全部实例；按[会话复用](../shared/orchestration.md#按需派发与会话复用)由同一主会话跨 Root 保持职责、优先复用实例。官方字段与宿主能力以[Codex subagents 文档](https://learn.chatgpt.com/docs/agent-configuration/subagents)及当前实际工具 Schema 为准，配置可解析不证明界面昵称已经变化。
+完整性要求核验四个原生子角色，不要求立即创建全部实例；按[会话复用](../shared/orchestration.md#按需派发与会话复用)由同一主会话跨 Root 保持职责、优先复用实例。官方字段与宿主能力以[Codex subagents 文档](https://learn.chatgpt.com/docs/agent-configuration/subagents)及当前实际工具 Schema 为准，配置可解析不证明界面昵称已经变化。
 
 ## 当前实例的继续与恢复
 

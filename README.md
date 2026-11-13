@@ -4,11 +4,11 @@
 
 **把一次编码请求，升级成可审计、可接管、可交付的软件工程闭环。**
 
-面向 Codex、Claude Code 和 ZCode 的五 Skill 发布包：一个准备入口，加规划、独立审核、独立测试和受控实现四个业务角色。
+面向 Codex、Claude Code 和 ZCode 的六 Skill 发布包：一个准备入口，加规划、独立审核、独立测试、受控实现和只读研究五个业务角色。
 
 ![Codex Skills](https://img.shields.io/badge/Codex-Skills-111827?style=flat-square)
 ![Instruction Only](https://img.shields.io/badge/Architecture-Instruction--Only-2563EB?style=flat-square)
-![Four Roles](https://img.shields.io/badge/Roles-4-7C3AED?style=flat-square)
+![Five Roles](https://img.shields.io/badge/Roles-5-7C3AED?style=flat-square)
 ![Schema Version](https://img.shields.io/badge/Schema-v2%20%2B%20v1-059669?style=flat-square)
 
 </div>
@@ -23,7 +23,7 @@
 npx skills add lichong-a/ric-dev-workflow-skills -g
 ```
 
-按安装器提示选择当前使用的 Agent，以及 `ric-devflow` 入口或全部五个 `ric-` Skill。此命令用于首次安装；已有同名 Skill 时先按[安装与恢复](#安装与恢复)检查，避免覆盖定制内容。
+按安装器提示选择当前使用的 Agent，以及 `ric-devflow` 入口或全部六个 `ric-` Skill。此命令用于首次安装；已有同名 Skill 时先按[安装与恢复](#安装与恢复)检查，避免覆盖定制内容。
 
 安装后，在目标项目中调用入口并描述需求：
 
@@ -48,16 +48,19 @@ RIC DevFlow Skills 把这些约束做成一套纯指令式工作流。它不增�
 
 ## 一眼看懂
 
-**Planner 统一调度，Reviewer 独立把关，Tester 用证据验证，Implementer 在批准范围内实现。**
+**Planner 统一调度，Researcher 按明确缺口核验事实，Reviewer 独立把关，Tester 用证据验证，Implementer 在批准范围内实现。**
 
-下图按「需求与计划 → 单个 Task 交付 → 最终验收」展开。同色节点代表同一角色，实线表示通过后推进，虚线表示退回或继续下一项 Task。箭头展示产物的推进顺序；所有角色动作都由同一个 Planner 调度，完成后向它回传结果。
+下图按「需求与计划 → 单个 Task 交付 → 最终验收」展开。同色节点代表同一角色，实线表示通过后推进，虚线表示退回、可选研究或继续下一项 Task。Researcher 只在明确问题出现时提供来源与建议，不增加阶段门禁；所有角色动作都由同一个 Planner 调度，完成后向它回传结果。
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"fontFamily": "Noto Sans CJK SC, Microsoft YaHei, Arial", "fontSize": "16px", "lineColor": "#94a3b8", "primaryTextColor": "#1e293b", "clusterBkg": "#f8fafc", "clusterBorder": "#cbd5e1", "edgeLabelBackground": "#ffffff"}, "flowchart": {"curve": "basis", "nodeSpacing": 28, "rankSpacing": 36, "padding": 14}}}%%
 flowchart TB
-    accTitle: DevFlow 四角色协作与返修流程
-    accDescr: Planner 统一调度，依次完成需求与计划、单个 Task 交付和最终验收。Reviewer 独立审核，Tester 设计测试并验证，实现类问题由 Implementer 修复。审核退回和测试失败交由 Planner 归因，再修正并重新审核或验证。
+    accTitle: DevFlow 五角色协作与返修流程
+    accDescr: Planner 统一调度，依次完成需求与计划、单个 Task 交付和最终验收。Researcher 只在明确缺口时返回来源与建议。Reviewer 独立审核，Tester 设计测试并验证，实现类问题由 Implementer 修复。审核退回和测试失败交由 Planner 归因，再修正并重新审核或验证。
     START([用户提出需求]) --> PREP
+    Q("Researcher<br/>按明确缺口核验事实")
+    P1 -. 明确事实缺口 .-> Q
+    Q -. 来源与建议 .-> P1
 
     subgraph PREP["01 · 需求与计划"]
         direction LR
@@ -106,12 +109,14 @@ flowchart TB
     classDef reviewer fill:#f5f3ff,stroke:#8b5cf6,color:#5b21b6,stroke-width:2px
     classDef tester fill:#ecfdf5,stroke:#10b981,color:#065f46,stroke-width:2px
     classDef implementer fill:#fff7ed,stroke:#f59e0b,color:#9a3412,stroke-width:2px
+    classDef researcher fill:#fff1f2,stroke:#f43f5e,color:#9f1239,stroke-width:2px
     classDef user fill:#f1f5f9,stroke:#64748b,color:#334155,stroke-width:1.5px
     classDef terminal fill:#0f172a,stroke:#0f172a,color:#ffffff,stroke-width:2px
     class P1,P2,P3,P4,FIX planner
     class R1,R2,R3,R4 reviewer
     class T1,T2,T3,T4 tester
     class I implementer
+    class Q researcher
     class U user
     class START,DONE terminal
     style PREP fill:#f8fafc,stroke:#cbd5e1,stroke-width:1px,rx:12,ry:12
@@ -123,11 +128,12 @@ flowchart TB
 
 | 角色 | 默认调用方式 | 核心职责 | 写入边界 |
 |---|---|---|---|
-| `ric-devflow` | 范围内完整开发隐式调用，也可显式调用 | 识别宿主和范围、按需补装与加载核验、角色路由 | 仅已授权准备，不承担第五业务角色 |
+| `ric-devflow` | 范围内完整开发隐式调用，也可显式调用 | 识别宿主和范围、按需补装与加载核验、角色路由 | 仅已授权准备，不承担业务角色 |
 | `ric-devflow-planner` | 仅显式调用或由入口精确路由 | 需求接收、仓库接管、Spec、Task DAG、状态、调度、归因、合并与关闭 | 规划/状态产物和已过门禁的 Git 协调；不写生产代码 |
 | `ric-devflow-reviewer` | 仅显式调用或由 Planner 委派 | 独立审核基线、Spec、测试计划、代码和发布证据 | 只读；只返回 `APPROVE`、`REQUEST_CHANGES` 或 `BLOCKED` |
 | `ric-devflow-tester` | 仅显式调用或由 Planner 委派 | 测试计划、特征测试、集成/E2E/回归验证、缺陷证据 | 只写测试及自身证据；不改生产代码 |
 | `ric-devflow-implementer` | 仅显式调用或由 Planner 委派 | 在一个已批准 Task 和变更预算内完成最小完整实现 | 只处理获批范围；不改 Spec、不自审、不合并 |
+| `ric-devflow-researcher` | 仅显式研究或 Planner 明确事实缺口委派 | 只读调查仓库与公开官方资料，区分事实、推断、建议及未知项 | 不写文件、不批准、不解锁 Task/Gate、不派生 |
 
 ## 核心卖点
 
@@ -155,7 +161,7 @@ Planner 不写生产代码，Reviewer 不修改被审核对象，Tester 不替 I
 
 ### 固定 DAG，不递归启动研发流程
 
-只有 Root Planner 调度角色；Implementer、Tester、Reviewer 不创建子任务或再次启动四角色流程。DAG 首次规划完成即作为送审基线，G2 通过后冻结；内部顺序、正常返修、上下文恢复和测试细化不改图。只有用户改变范围、已证实的依赖错误或无法在原 Task 内解决的安全/权限/环境/发布障碍，才记录依据并局部复审改图；不全图重建。
+只有 Root Planner 调度角色；Implementer、Tester、Reviewer、Researcher 不创建子任务或再次启动角色流程。DAG 首次规划完成即作为送审基线，G2 通过后冻结；内部顺序、正常返修、上下文恢复和测试细化不改图。只有用户改变范围、已证实的依赖错误或无法在原 Task 内解决的安全/权限/环境/发布障碍，才记录依据并局部复审改图；不全图重建。
 
 G0–G4 为当前 Root/阶段共享，不为每个步骤重走。内部步骤、不适用的额外基线专项、已由有效独立证据覆盖的重复审核可以直接省略；完整代码候选的 G5/G6 和最终验收仍保留。所谓“跳过审核”是少一次不必要的调用，不是替未审核代码写 APPROVE。详细规则见[门禁策略](skills/ric-devflow/references/contracts/gate-policy.md)。
 
@@ -167,7 +173,9 @@ Skill 按“入口分类 → 选中角色 → 当前动作参考 → 必要模�
 
 角色交接只传 Root Issue、动作、精确产物路径/版本、适用 SHA、当前 Finding/Defect、允许与保护路径、输出和停止条件；续作只补 Delta。原作者报告首次完整传输，Planner 逐字持久化后改用稳定指针；首次指针只适用于宿主已提供完整、稳定、可校验的原始结果。截断重传原件，状态写入失败只修复索引，不重跑工作。平台支持时默认使用最小上下文继承，例如 `fork_turns: "none"`。
 
-三个平台统一由主会话担任 Planner，固定 Reviewer、Tester、Implementer 三种职责，默认每角色一个实例并优先复用。固定职责不要求常驻线程或永久相同 ID：配额不足、无恢复接口等情况，在旧动作结束、结果与副作用保全后可安全回收或受控替换，不重做旧动作。用户取消按作用范围保持停止，独立新 Root 不被旧任务的局部取消误阻塞。已批准的两个独立 READY Task 在隔离、资源和收益条件满足时，可增加一个临时同角色实例；工作流最多四个打开实例，服从更严格宿主限制，不修改全局上限。每个新集成 SHA 仍逐一验证，不把减少创建或允许并行当作已证明提速。入口见[会话复用](skills/ric-devflow/references/shared/orchestration.md#按需派发与会话复用)，具体容量、替换和取消仅按需读[实例生命周期](skills/ric-devflow/references/shared/agent-lifecycle.md)。
+三个平台统一由主会话担任 Planner，固定 Reviewer、Tester、Implementer、Researcher 四种职责，默认每角色一个实例并优先复用。固定职责不要求常驻线程或永久相同 ID：配额不足、无恢复接口等情况，在旧动作结束、结果与副作用保全后可安全回收或受控替换，不重做旧动作。用户取消按作用范围保持停止，独立新 Root 不被旧任务的局部取消误阻塞。已批准的两个独立 READY Task 在隔离、资源和收益条件满足时，可增加一个临时同角色实例；工作流最多四个打开实例，服从更严格宿主限制，不修改全局上限。每个新集成 SHA 仍逐一验证，不把减少创建或允许并行当作已证明提速。入口见[会话复用](skills/ric-devflow/references/shared/orchestration.md#按需派发与会话复用)，具体容量、替换和取消仅按需读[实例生命周期](skills/ric-devflow/references/shared/agent-lifecycle.md)。
+
+首次 G2 前在原 Task notes/规划说明列出预计实际写集、独占资源和冲突，冲突连通分量各自串行；共同父目录或共同只读输入本身不冲突，未知则串行。流只是调度约束，跨流仍按原 Task 有效证据解锁，按拓扑顺序再稳定 Task ID 选择最多两个 READY Task，不把 A1→B1→A2 压成流级假环。每角色最多两个、总计最多四个打开实例，同时最多一个仍打开的临时实例；四默认实例满额先安全回收，研究本身不扩容。测试计划声明端口、数据库命名空间与事务/迁移、构建、fixture、输出、快照和清理，不同表不单独证明隔离；所有 Tester 合计最多两个进程组，保全全部退出码并仅清理自有进程。
 
 交接首行、首条进度和返回结果会注明“职责：实现者｜Skill布局”等中文职责与工作。原生角色 ID 保持稳定；工具支持时，首次调用任务名采用 `ric_implementer` 等稳定角色名，已有实例保留原名字。Skill UI 展示名与平台子代理昵称不同，修改展示名不会保证旧会话改名；当前没有重命名接口时用职责自述说明，不为换名新开代理。临时 ID 映射保存在主会话上下文，已有 Root 的 `.local` 仅缓存相关投影，Root 关闭不清空逻辑职责与证据关系，实例可按容量策略回收，正式证据仍使用业务 ID 与真实作者。见[职责命名与可读交接](skills/ric-devflow/references/shared/orchestration.md#职责命名与可读交接)。
 
@@ -187,7 +195,7 @@ Reviewer 必须在一轮中完成全部适用维度，并一次性返回当时�
 
 首页快速开始使用 GitHub 仓库作为安装来源；下面提供本地 checkout 的细分安装方式。用于自动恢复的来源必须固定到包含新 `skills/` 布局的完整 Commit SHA，并核对现存包文件；不能把旧布局的基线 Commit 用作新包来源。安装器 CLI 与原生宿主的实际验证情况见[验证报告](docs/DEVFLOW_SKILLS_VALIDATION.md)，普通复制检查不代表 CLI 或原生加载已通过。
 
-### 标准安装器：只装入口或装五个
+### 标准安装器：只装入口或装六个
 
 以下 CLI **只适用于首次安装，且每个所选 Skill 的实际宿主目标和 canonical 目标均不存在**；已有空目录、完整安装和不完整安装也不能用这些命令重装或补装。先核验包含新布局的本地 checkout 及完整 SHA，再完成下述只读预检；不能用一次 `skills add` 试运行来发现目标。[标准 Skills 安装器](https://github.com/vercel-labs/skills)支持根 `skills/` 发现、本地路径、`--skill`、`-a` 和 `-g`；本轮未运行 CLI。
 
@@ -202,17 +210,17 @@ Reviewer 必须在一轮中完成全部适用维度，并一次性返回当时�
 # Codex，项目范围：只安装准备入口；如提示范围，选择已预检的 Project
 npx skills add . --skill ric-devflow -a codex
 
-# Codex，项目范围：明确安装五个 Skill
-npx skills add . --skill ric-devflow ric-devflow-planner ric-devflow-reviewer ric-devflow-tester ric-devflow-implementer -a codex
+# Codex，项目范围：明确安装六个 Skill
+npx skills add . --skill ric-devflow ric-devflow-planner ric-devflow-reviewer ric-devflow-tester ric-devflow-implementer ric-devflow-researcher -a codex
 
 # Claude Code，项目范围：只安装入口
 npx skills add . --skill ric-devflow -a claude-code
 
-# Claude Code，用户范围：安装五个 Skill
-npx skills add . --skill ric-devflow ric-devflow-planner ric-devflow-reviewer ric-devflow-tester ric-devflow-implementer -a claude-code -g
+# Claude Code，用户范围：安装六个 Skill
+npx skills add . --skill ric-devflow ric-devflow-planner ric-devflow-reviewer ric-devflow-tester ric-devflow-implementer ric-devflow-researcher -a claude-code -g
 ```
 
-同一场景只选择一条命令。`-g` 明确用户范围；未指定时可能提示选择范围，必须保持已预检的项目范围，在其他项目使用时给可信 checkout 的实际路径。`--skill '*'` 选择全部五 Skill 时也必须预检这五项的全部目标；避免使用会选择所有 Agent 的 `--all`。ZCode CLI 支持未核验，采用下方普通复制及官方管理入口。后续 bootstrap 补缺仍按逻辑发现位置确定范围，不能由解析后的源路径推断用户级安装。
+同一场景只选择一条命令。`-g` 明确用户范围；未指定时可能提示选择范围，必须保持已预检的项目范围，在其他项目使用时给可信 checkout 的实际路径。`--skill '*'` 选择全部六 Skill 时也必须预检这六项的全部目标；避免使用会选择所有 Agent 的 `--all`。ZCode CLI 支持未核验，采用下方普通复制及官方管理入口。后续 bootstrap 补缺仍按逻辑发现位置确定范围，不能由解析后的源路径推断用户级安装。
 
 只装入口后，主会话按[准备与恢复](skills/ric-devflow/references/bootstrap.md)核验同源固定候选，补齐当前任务必需角色和当前宿主配置；现存包字节不匹配、没有包含新布局的固定来源或尚未加载时准确报告缺口。仅安装入口不保证自动准备必然成功，也不代表任何业务 Gate 已过。
 
@@ -226,15 +234,15 @@ npx skills add . --skill ric-devflow ric-devflow-planner ric-devflow-reviewer ri
 | Claude Code | 项目 `.claude/skills` | `~/.claude/skills` | 同范围 `.claude/agents` |
 | ZCode | 跟随宿主实际发现的项目逻辑位置 | `~/.zcode/skills`，刷新核验 | 官方用户 `~/.zcode/agents` |
 
-旧 ZCode 官方随包文档记录过 `.agents/skills` 发现能力；对当前版本仍以宿主发现结果为准。项目入口的 ZCode 例外只允许必要原生角色定义写用户 agents，五 Skill 不因此迁至用户范围。
+旧 ZCode 官方随包文档记录过 `.agents/skills` 发现能力；对当前版本仍以宿主发现结果为准。项目入口的 ZCode 例外只允许必要原生角色定义写用户 agents，六 Skill 不因此迁至用户范围。
 
-以下 Bash 示例只面向**新空目标**，可以作为本候选的隔离复制检查；将 `DEVFLOW_COPY_ROOT` 改为当前已确认目标，不直接用未知用户目录。默认复制全部五目录；只装入口时把数组改为 `(ric-devflow)`。它不是恢复器，已有目标一律保留并退出；补缺和冲突恢复由 bootstrap 执行。
+以下 Bash 示例只面向**新空目标**，可以作为本候选的隔离复制检查；将 `DEVFLOW_COPY_ROOT` 改为当前已确认目标，不直接用未知用户目录。默认复制全部六目录；只装入口时把数组改为 `(ric-devflow)`。它不是恢复器，已有目标一律保留并退出；补缺和冲突恢复由 bootstrap 执行。
 
 ```bash
 (
 set -Eeuo pipefail
 DEVFLOW_COPY_ROOT="/path/to/confirmed/skill-root"
-DEVFLOW_COPY_NAMES=(ric-devflow ric-devflow-planner ric-devflow-reviewer ric-devflow-tester ric-devflow-implementer)
+DEVFLOW_COPY_NAMES=(ric-devflow ric-devflow-planner ric-devflow-reviewer ric-devflow-tester ric-devflow-implementer ric-devflow-researcher)
 for skill_name in "${DEVFLOW_COPY_NAMES[@]}"; do
   test -d "skills/${skill_name}"
   if [ -e "${DEVFLOW_COPY_ROOT}/${skill_name}" ] || [ -L "${DEVFLOW_COPY_ROOT}/${skill_name}" ]; then
@@ -255,11 +263,11 @@ Windows 可在确认全部目标缺失后，通过文件管理器普通复制这
 
 ### 准备当前平台原生角色
 
-入口只读取当前平台一份参考：[Codex](skills/ric-devflow/references/platforms/codex.md)、[Claude Code](skills/ric-devflow/references/platforms/claude-code.md)、[ZCode](skills/ric-devflow/references/platforms/zcode.md)。原生源在入口 `assets/agents/<platform>/`；完整开发核验五 Skill 与三个原生子角色，独立角色只核验所需定义和闭包，Planner 不要求原生定义。
+入口只读取当前平台一份参考：[Codex](skills/ric-devflow/references/platforms/codex.md)、[Claude Code](skills/ric-devflow/references/platforms/claude-code.md)、[ZCode](skills/ric-devflow/references/platforms/zcode.md)。原生源在入口 `assets/agents/<platform>/`；完整开发核验六 Skill 与四个原生子角色，独立角色只核验所需定义和闭包，Planner 不要求原生定义。
 
-三个原生子角色的 Codex ID 为 `ric_devflow_<role>`，Claude/ZCode 为 `ric-devflow-<role>`；Planner Skill 由主会话直接执行，不再分发 Planner 子代理模板。模型保持继承，模板不固定思考等级；Reviewer 偏好 high、Tester/Implementer 偏好 xhigh，由主会话按实际能力协商，不换模型。首次确定参数、能力变化或明确不兼容时才读取[思考兼容](skills/ric-devflow/references/shared/reasoning-compatibility.md)，例如接入层已确认支持 max 而拒绝 xhigh 时才映射。Reviewer 只读及其他子角色受限写入意图不变，不改用户全局并发、模型、权限或禁用设置。
+四个原生子角色的 Codex ID 为 `ric_devflow_<role>`，Claude/ZCode 为 `ric-devflow-<role>`，包含新增 researcher；Planner Skill 由主会话直接执行，不再分发 Planner 子代理模板。模型保持继承，模板不固定思考等级；Reviewer 偏好 high、Tester/Implementer 偏好 xhigh，Researcher 继承宿主设置，由主会话按实际能力协商，不换模型。首次确定参数、能力变化或明确不兼容时才读取[思考兼容](skills/ric-devflow/references/shared/reasoning-compatibility.md)，例如接入层已确认支持 max 而拒绝 xhigh 时才映射。Reviewer/Researcher 保持只读，Tester/Implementer 保持受限写入意图，不改用户全局并发、模型、权限或禁用设置。
 
-Claude/ZCode Reviewer 仅 Read/Grep/Glob，Tester/Implementer 加 Bash/Edit/Write；工具白名单不是文件路径沙箱。原生模板从已确认 Skill 路径读取规则；主会话直接规划、派发并原样保存报告，三个子角色均不派生。既有安装中的旧 Planner 定义保留但不调用，旧工作流先确认其停止并交接证据，再由主会话接管。具体流程见[编排](skills/ric-devflow/references/shared/orchestration.md#原生平级调用)。
+Claude/ZCode Reviewer 仅 Read/Grep/Glob，Tester/Implementer 加 Bash/Edit/Write；Researcher 严格为 Read/Grep/Glob/WebSearch/WebFetch，无 Bash/Edit/Write/Agent，Codex 使用 read-only。工具白名单不是文件路径沙箱，模板也不证明网络或工具已可用；未知工具、禁用或网络受限报告具体缺口。原生模板从已确认 Skill 路径读取规则；主会话直接规划、派发并原样保存报告，四个子角色均不派生。既有安装中的旧 Planner 定义保留但不调用，旧工作流先确认其停止并交接证据，再由主会话接管。具体流程见[编排](skills/ric-devflow/references/shared/orchestration.md#原生平级调用)。
 
 ### 安装、加载与调用分开
 
@@ -273,7 +281,7 @@ Claude/ZCode Reviewer 仅 Read/Grep/Glob，Tester/Implementer 加 Bash/Edit/Writ
 
 ## 怎么用
 
-下方 `$ric-devflow` 入口及 `$ric-devflow-*` 角色示例适用于 Codex/ZCode；Claude 对应使用 `/ric-devflow` 和 `/ric-devflow-*`。原生角色也可通过宿主支持的显式入口选择；后三角色仍需精确对象，不因自动发现而允许普通请求隐式激活。
+下方 `$ric-devflow` 入口及 `$ric-devflow-*` 角色示例适用于 Codex/ZCode；Claude 对应使用 `/ric-devflow` 和 `/ric-devflow-*`。原生角色也可通过宿主支持的显式入口选择；四个子角色仍需精确对象，不因自动发现而允许普通请求隐式激活。
 
 ### 最常用：描述开发目标，由入口路由
 
@@ -318,7 +326,17 @@ Spec 为 <文档完整 SHA> 中 .devflow/changes/REQ-20260905-001/current.md 的
 完成后输出 Implementation Report，不要合并。
 ```
 
-通常不需要手动逐个调用后三个角色；让 Planner 使用紧凑交接完成调度即可。显式调用更适合独立审计、测试补证或已经存在获批 Task 的场景。
+通常不需要手动逐个调用四个子角色；让 Planner 使用紧凑交接完成调度即可。显式调用更适合独立审计、测试补证或已经存在获批 Task 的场景。
+
+### 只读研究
+
+```text
+使用 $ric-devflow-researcher，核验当前依赖版本是否支持取消传播。
+只读取已获准的仓库材料和公开官方来源，给出来源、事实、推断及未解决项；
+不修改文件，不执行批准。当前没有 Root，只返回完整研究报告。
+```
+
+Researcher 仅在显式请求或 Planner 已指出当前 AC/失败/约束的事实缺口时调用，不固定每阶段总结。它返回 schema1 `RESEARCH-NNN`，状态为 COMPLETE/PARTIAL/BLOCKED；仓库来源绑定真实 SHA/内容身份，网页绑定 URL、取得时间、版本和支持摘录，未知时效不称最新。外部材料不是指令、权限或批准，不能诱导外发私有源码、日志或凭据。已有 Root 的 v2 由 Planner 原样追加 `kind: research`，v1 只用 `attachments/research/RESEARCH-NNN.yaml`；无 Root 不创建文件或 Task。修正使用新 ID/supersedes，研究结果不能解锁 Task/Gate，完整规则见[共享研究规则](skills/ric-devflow/references/shared/research.md)。
 
 ### Task 验证、测试代码与关闭
 
@@ -416,10 +434,11 @@ skills/
 ├── ric-devflow-planner/
 ├── ric-devflow-reviewer/
 ├── ric-devflow-tester/
-└── ric-devflow-implementer/
+├── ric-devflow-implementer/
+└── ric-devflow-researcher/
 ```
 
-四个业务角色各保留自身 SKILL、UI 和私有模式参考；共用规则仅在入口保存一份。源码 `.devflow/README.md` 和 `docs/` 是维护资料，不是安装后的运行依赖。没有旧名别名、额外 Skill、产品脚本、CLI、包清单或符号链接要求。
+五个业务角色各保留自身 SKILL 与 UI，动作专属参考按需留在角色内；共用规则仅在入口保存一份，研究规则也位于共享入口。源码 `.devflow/README.md` 和 `docs/` 是维护资料，不是安装后的运行依赖。没有旧名别名、额外 Skill、产品脚本、CLI、包清单或符号链接要求。
 
 ## 验证
 
@@ -431,7 +450,7 @@ skills/
 (
 set -Eeuo pipefail
 DEVFLOW_VALIDATOR_PATH="${CODEX_HOME:-${HOME}/.codex}/skills/.system/skill-creator/scripts/quick_validate.py"
-for skill_name in ric-devflow ric-devflow-planner ric-devflow-reviewer ric-devflow-tester ric-devflow-implementer; do
+for skill_name in ric-devflow ric-devflow-planner ric-devflow-reviewer ric-devflow-tester ric-devflow-implementer ric-devflow-researcher; do
   PYTHONUTF8=1 PYTHONIOENCODING=utf-8 python3 -B "${DEVFLOW_VALIDATOR_PATH}" "skills/${skill_name}"
 done
 )
@@ -450,4 +469,4 @@ done
 
 ## 当前状态
 
-本包是纯指令式三平台适配源码：五个发布 Skill、四个业务角色，保持 Compact v2/v1、原 Schema、Gate、职责分离和真实 SHA 证据要求。标准安装器、用户级真实安装和三平台原生加载/调用未由文件检查证明。完整交付状态以绑定当前受检对象的独立报告为准。
+本包是纯指令式三平台适配源码：六个发布 Skill、五个业务角色，保持 Compact v2/v1、原 Schema、Gate、职责分离和真实 SHA 证据要求。标准安装器、用户级真实安装和三平台原生加载/调用未由文件检查证明。完整交付状态以绑定当前受检对象的独立报告为准。

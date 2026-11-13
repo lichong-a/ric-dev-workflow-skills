@@ -1,0 +1,5 @@
+interface:
+  display_name: "研究者｜RIC DevFlow"
+  short_description: "研究者：只读调查明确事实缺口并提供可追溯的来源与建议"
+policy:
+  allow_implicit_invocation: false

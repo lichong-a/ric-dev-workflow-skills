@@ -18,7 +18,7 @@
 
 - Planner 写 `state.yaml`、`current.md`；后者在现有章节中容纳 Intake、Root、Repository Profile、Continuation Assessment、Spec/UI、Decision/Risk Acceptance、预算与当前阶段 Task。逻辑内容仍须完整，旧模板可作字段检查表，不再实例化为一堆文件。
 - Tester 独立写 `test-plan.md`，包含 AC 映射、确定性步骤/预期、环境权限、测试职责、退出和未运行条件。
-- 各角色是各自证据的唯一作者；Planner 是 `evidence.md` 的唯一串行持久化写入者，逐字转录原始载荷。Reviewer 保持只读；Tester/Implementer 返回报告，不直接并发编辑账本。
+- 各角色是各自证据的唯一作者；Planner 是 `evidence.md` 的唯一串行持久化写入者，逐字转录原始载荷。Reviewer/Researcher 保持只读；Tester/Implementer 返回报告，不直接并发编辑账本。
 - `state.yaml` 只索引当前阶段、Task 状态、有效证据和开放问题。Task 正文不重复存入状态，完整 Review、迁移索引和历史 transitions 不塞进 state。
 
 模板：[State](../../assets/templates/compact/state.yaml)、[Current](../../assets/templates/compact/current.md)、[Test Plan](../../assets/templates/compact/test-plan.md)、[Evidence](../../assets/templates/compact/evidence.md)。v2 容器以 `schema_version: 2` 标记；嵌入的原 Review/Test/Implementation/Defect 载荷仍用原模板与 `schema_version: 1`，保留所有字段和未知扩展，不把容器版本写入原报告。
@@ -44,6 +44,8 @@ REQ-ID；角色动作/模式；
 ## 账本记录
 
 每条记录一个独立锚点，容器元数据包括 `record_id`、`author`、`created_at`、`kind`、`objects` 与 `supersedes`。记录 ID 可直接沿用载荷的 Review/Test/Implementation/Defect ID；同一账本唯一。新发布的报告将目标对象的完整文档身份放在 `objects`，原载荷中的代码 SHA、Verdict、Finding 和全部字段原样保留。导入的历史载荷不补写猜测身份，未知或旧引用由迁移索引解析且明确限制。
+
+可选 [RESEARCH 原载荷](research.md#research-原载荷)仍为 schema_version: 1，以 `RESEARCH-NNN` 作为 record_id，`kind: research`；Planner 原样追加，来源身份与报告原字段全部保留，不新增 state 批准/状态。研究覆盖 COMPLETE/PARTIAL/BLOCKED 不代表 Gate 结论或 Task 依赖有效；旧四文件模板及已有载荷无需增加研究字段。
 
 完整原始载荷使用足够长的 fenced block 隔离，保留空白、未知字段、旧 ID 和引用；仅在围栏之外补充定位说明。用户批准、状态事件、适用性与 Finding 处置由其真实作者记录，不捏造独立结论。账户/会话 ID、cursor、PID 不进入正式记录；角色作者用可审计且不含本机运行状态的身份。
 

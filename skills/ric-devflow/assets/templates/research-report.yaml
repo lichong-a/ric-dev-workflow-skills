@@ -1,0 +1,15 @@
+schema_version: 1
+research_id: "RESEARCH-001"
+supersedes: null
+author: ""
+created_at: ""
+root_issue_id: null
+task_id: null
+question: ""
+status: "BLOCKED"
+sources: []
+facts: []
+inferences: []
+recommendations: []
+unresolved: []
+not_run: []
