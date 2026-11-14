@@ -44,13 +44,13 @@ Codex 可显式使用 `$ric-devflow`，Claude Code 可使用 `/ric-devflow`。�
 - 多轮审核是否会一次次释放新问题，导致成本和等待失控；
 - 中途换 Agent 后，能否从持久证据恢复，而不是重新阅读整段对话。
 
-RIC DevFlow Skills 把这些约束做成一套纯指令式工作流。它不增加新的 CLI、守护进程或状态机，而是让宿主 Agent 在使用目标仓库原有 Git、测试、CI 和发布工具时，遵循清晰的角色边界、G0–G10 门禁和不可变证据规则。
+RIC DevFlow Skills 按实际影响选择轻量维护或完整研发。目标清楚、可回滚的指令/文档维护先走[轻量维护](skills/ric-devflow/references/contracts/gate-policy.md#轻量维护)：主会话直接修改、做相关检查和必要复核、按授权交付后结束；不默认创建 Root、Spec/计划链或派齐角色。完整研发把这些约束做成一套纯指令式工作流。它不增加新的 CLI、守护进程或状态机，而是让宿主 Agent 在使用目标仓库原有 Git、测试、CI 和发布工具时，遵循清晰的角色边界、G0–G10 门禁和不可变证据规则。
 
 ## 一眼看懂
 
 **Planner 统一调度，Researcher 按明确缺口核验事实，Reviewer 独立把关，Tester 用证据验证，Implementer 在批准范围内实现。**
 
-下图按「需求与计划 → 单个 Task 交付 → 最终验收」展开。同色节点代表同一角色，实线表示通过后推进，虚线表示退回、可选研究或继续下一项 Task。Researcher 只在明确问题出现时提供来源与建议，不增加阶段门禁；所有角色动作都由同一个 Planner 调度，完成后向它回传结果。
+下图展示完整研发路径；轻量维护按其有限清单直接交付。下图按「需求与计划 → 单个 Task 交付 → 最终验收」展开。同色节点代表同一角色，实线表示通过后推进，虚线表示退回、可选研究或继续下一项 Task。Researcher 只在明确问题出现时提供来源与建议，不增加阶段门禁；所有角色动作都由同一个 Planner 调度，完成后向它回传结果。
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"fontFamily": "Noto Sans CJK SC, Microsoft YaHei, Arial", "fontSize": "16px", "lineColor": "#94a3b8", "primaryTextColor": "#1e293b", "clusterBkg": "#f8fafc", "clusterBorder": "#cbd5e1", "edgeLabelBackground": "#ffffff"}, "flowchart": {"curve": "basis", "nodeSpacing": 28, "rankSpacing": 36, "padding": 14}}}%%
@@ -163,7 +163,7 @@ Planner 不写生产代码，Reviewer 不修改被审核对象，Tester 不替 I
 
 只有 Root Planner 调度角色；Implementer、Tester、Reviewer、Researcher 不创建子任务或再次启动角色流程。DAG 首次规划完成即作为送审基线，G2 通过后冻结；内部顺序、正常返修、上下文恢复和测试细化不改图。只有用户改变范围、已证实的依赖错误或无法在原 Task 内解决的安全/权限/环境/发布障碍，才记录依据并局部复审改图；不全图重建。
 
-G0–G4 为当前 Root/阶段共享，不为每个步骤重走。内部步骤、不适用的额外基线专项、已由有效独立证据覆盖的重复审核可以直接省略；完整代码候选的 G5/G6 和最终验收仍保留。所谓“跳过审核”是少一次不必要的调用，不是替未审核代码写 APPROVE。详细规则见[门禁策略](skills/ric-devflow/references/contracts/gate-policy.md)。
+以下门禁链用于已经选择的完整研发；轻量维护按其完成清单交付，不伪造门禁。G0–G4 为当前 Root/阶段共享，不为每个步骤重走。内部步骤、不适用的额外基线专项、已由有效独立证据覆盖的重复审核可以直接省略；完整代码候选的 G5/G6 和最终验收仍保留。所谓“跳过审核”是少一次不必要的调用，不是替未审核代码写 APPROVE。详细规则见[门禁策略](skills/ric-devflow/references/contracts/gate-policy.md)。
 
 ### 5. 更小的上下文，更快的恢复
 
@@ -184,6 +184,8 @@ Skill 按“入口分类 → 选中角色 → 当前动作参考 → 必要模�
 交接首行、首条进度和返回结果先注明当前发送者/执行者的职责，接收方另列。例如子角色返回为“职责：实现者｜Skill布局；接收：规划者｜采纳候选”，不能因收件人为 Planner 就把作者写成规划者；向 Planner 的后续消息同样保留自身职责。主会话汇聚/转述保留原作者前缀与原载荷，实际角色依据原生调用，不能由昵称或文案证明。原生角色 ID 保持稳定；工具支持时，首次调用任务名采用 `ric_implementer` 等稳定角色名，已有实例保留原名字。Skill UI 展示名与平台子代理昵称不同，修改展示名不会保证旧会话改名；当前没有重命名接口时用职责自述说明，不为换名新开代理。临时 ID 映射保存在主会话上下文，已有 Root 的 `.local` 仅缓存相关投影，Root 关闭不清空逻辑职责与证据关系，实例可按容量策略回收，正式证据仍使用业务 ID 与真实作者。见[职责命名与可读交接](skills/ric-devflow/references/shared/orchestration.md#职责命名与可读交接)。
 
 限定研究的问题、固定来源与权限足够时，只读必要材料并返回简洁完整的研究载荷，跳过无关历史、记忆及全仓搜索；全部字段、必要来源支持、失败和 not_run 仍保留。不重复整包规则，也不据耗时猜测缓存或 Token 收益。
+
+维护和完整流程都按[实际差异复用证据](skills/ric-devflow/references/contracts/change-control.md#按实际差异复用证据)：内容/必要输入不变时，候选固定为提交只做一次可追溯对应，不重复同问题研究或冒充新运行。全局配置后续摘要变化按[漂移分级](skills/ric-devflow/references/shared/repository-discovery.md#环境漂移分级)限定影响；目标与必要读回达成后按[收尾规则](skills/ric-devflow/references/shared/orchestration.md#收尾与有效进展)结束，不从新报告派生新证明目标。
 
 ### 6. Reviewer 循环可收敛
 

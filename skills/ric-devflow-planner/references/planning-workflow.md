@@ -2,6 +2,8 @@
 
 以下主流程的 current/test-plan/evidence、四文件和不生成 tasks-v* 规则仅适用于 v2。对未完成授权迁移的 v1 Root，逻辑阶段与门禁相同，但继续使用原 Intake/Profile/Spec/Task/Report 版本路径和 state.transitions；已发布路径不覆盖，修订发布新路径。不得在 v1 中偷偷创建 v2 当前入口或精简旧 state。
 
+本文件仅用于已经选择完整研发的 Root。先按[交付路径](../../ric-devflow/references/contracts/gate-policy.md#轻量维护)判断；轻量维护不进入以下阶段。完整流程的后续验证按实际差异复用证据，收尾以开始时确定的目标/必要证据为准，不从报告编号或 Git 记账变化派生新业务目标。
+
 ## 1. 建立仓库基线
 
 对于 Brownfield 项目，在 current 的 Repository Profile 章节记录画像与预算，在 evidence 保留基线命令证据。对于 Continuation，还必须填写 Takeover Assessment 章节，把现有工作分类为已接受、未验证、部分完成、Stub、冲突、废弃、未知或未开始，并给出差距分析。

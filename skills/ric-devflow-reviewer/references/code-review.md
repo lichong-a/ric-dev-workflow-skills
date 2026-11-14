@@ -1,6 +1,8 @@
 # CODE_REVIEW（代码审核）
 
-针对 `base_sha..head_sha` 精确审核一个 Task 的完整候选，或其实现类/测试类 Defect 修正，并结合当前 Spec、测试计划、变更预算、仓库画像、各代码作者报告和已知基线。不得用分支名代替 SHA 进行审核。
+完整研发 G5 适用下文的 Task/Spec/作者报告及完整 base/head 要求。轻量维护的综合复核先按[维护边界](../../ric-devflow/references/contracts/gate-policy.md#轻量维护)执行：审核目标与完整实际差异，固定文件内容/模式或真实提交身份；无 Root/Spec/计划时不补建它们。未提交快照的结论只证明该维护对象，不能冒充正式 G5。
+
+完整研发针对 `base_sha..head_sha` 精确审核一个 Task 的完整候选，或其实现类/测试类 Defect 修正，并结合当前 Spec、测试计划、变更预算、仓库画像、各代码作者报告和已知基线。不得用分支名代替 SHA 进行审核。
 
 ## 确立 diff
 
@@ -25,4 +27,4 @@ Tester 可以按[测试代码交付](../../ric-devflow/references/shared/test-co
 
 检查允许/受保护路径、依赖/锁文件、公开/数据变更、格式化半径、生成文件流程、参考模式一致性，以及重构属于 required/incidental/opportunistic 哪一类。除非能修复当前具体风险，否则广泛现代化不是发布要求，也不能被悄悄塞入 diff。
 
-将结论绑定到 Task、Spec 版本和精确 SHA 范围。任何 head 变化都会使批准失效，除非新的明确范围审核覆盖该变化。
+将结论绑定到 Task、Spec 版本和精确 SHA 范围。相关内容或必要输入变化使批准按影响失效；纯提交元数据/记账变化按[版本对应](../../ric-devflow/references/contracts/change-control.md#按实际差异复用证据)核验，不改旧批准、不机械重复整轮审核。

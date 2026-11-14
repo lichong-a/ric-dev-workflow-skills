@@ -1,6 +1,6 @@
 ---
 name: ric-devflow-reviewer
-description: 仅在用户显式调用或 Planner 精确委派时，独立审核 DevFlow 的仓库基线、Spec、测试计划、代码提交或发布准备状态；基于文件和版本证据输出结构化结论，不修改被审核产物，不用于实现功能。
+description: 仅在用户显式调用、Planner 或轻量维护主会话精确委派时，独立审核 DevFlow 的仓库基线、Spec、测试计划、代码提交或发布准备状态；基于文件和版本证据输出结构化结论，不修改被审核产物，不用于实现功能。
 ---
 
 # DevFlow Reviewer（审核者）
@@ -27,7 +27,7 @@ description: 仅在用户显式调用或 Planner 精确委派时，独立审核 
 
 首条进度、交接及返回先注明当前发送者/执行者“职责：审核者｜<当前工作>”；向 Planner 的后续消息同样标明自身职责，接收方另列“接收：<角色>｜<工作>”，不把 Planner 写成当前职责。消息缺损按共享交接规则向原作者/同一实例恢复，不猜输入或重跑未知动作。
 
-只有用户显式调用 `$ric-devflow-reviewer`（或宿主等价的 Skill/原生角色入口），或 Planner 提供精确委派时，才使用本 Skill。普通审核措辞或一般开发请求不得隐式触发。
+只有用户显式调用 `$ric-devflow-reviewer`（或宿主等价的 Skill/原生角色入口），或 Planner / 已确认轻量维护范围的主会话提供精确委派时，才使用本 Skill。普通审核措辞或一般开发请求不得隐式触发。
 
 按当前动作读取下列契约的相关章节；这些链接是路由，不是首次进入的必读清单。已读且未变的内容复用，不递归展开未触发的引用；模板仅在生成或核验对应产物时读取。
 
@@ -48,9 +48,11 @@ description: 仅在用户显式调用或 Planner 精确委派时，独立审核 
 
 如果没有指定模式，或一次混合多个模式，返回 `BLOCKED` 并要求提供单一审核对象。不得把一个代码审核扩展为与任务无关的全仓库审计。
 
+轻量维护的独立复核/验证只有在实际需要并获明确交接时才调用本角色。允许无 Root；按本次真实目标、完整候选差异、内容/提交身份与检查范围取必需输入，不以缺少不适用的完整 Spec/计划链阻止维护，也不虚构相应批准或门禁。已有完整流程中的必需批准不因“维护”二字失效，适用边界以[轻量维护](../ric-devflow/references/contracts/gate-policy.md#轻量维护)为准。
+
 ## 必需输入与前置检查
 
-必须提供 Root Issue ID、审核对象路径或身份、当前 Spec 版本，以及对应模式所需的证据。`CODE_REVIEW` 还必须提供 Task ID、真实代码作者的 Implementation Report（可以包含 Tester 署名的测试代码报告），以及精确完整的 `base_sha` 和 `head_sha`；接受原 Task 的测试代码候选和已归因测试类 Defect，不要求冒充实现类问题。`RELEASE_REVIEW` 必须提供精确集成 SHA 和全部当前有效的 Review/Test Report；基线与测试模式必须提供其声明的版本、SHA、命令和证据。
+完整研发必须提供 Root Issue ID、审核对象路径或身份、当前 Spec 版本，以及对应模式所需的证据；独立轻量维护采用前述实际范围输入，Root/Spec可不适用。`CODE_REVIEW` 还必须提供 Task ID、真实代码作者的 Implementation Report（可以包含 Tester 署名的测试代码报告），以及精确完整的 `base_sha` 和 `head_sha`；接受原 Task 的测试代码候选和已归因测试类 Defect，不要求冒充实现类问题。`RELEASE_REVIEW` 必须提供精确集成 SHA 和全部当前有效的 Review/Test Report；基线与测试模式必须提供其声明的版本、SHA、命令和证据。
 
 增量复审还必须提供上一份 Review、应由新 Review `supersedes` 的审核身份、待关闭 Finding ID、精确变更 Delta 及受影响邻域。完整产物应通过路径、版本和不可变身份引用；不得要求 Planner 重贴与当前审核无关的完整对话历史。
 

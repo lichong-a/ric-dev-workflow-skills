@@ -2,6 +2,8 @@
 
 只有当前负责的规划者可以更新 `.devflow/changes/<REQ-ID>/state.yaml`。
 
+本文件只定义完整研发 Root/Task 的正式状态；[轻量维护](gate-policy.md#轻量维护)不创建对应状态链、不伪造 Gate PASS。若沿用已有 Root 保存记录，也不因本次维护完成就自动关闭旧任务，或为维护结束补建全部旧门禁。
+
 ## Root Issue 状态
 
 主路径：

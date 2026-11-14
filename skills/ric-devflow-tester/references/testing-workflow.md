@@ -1,5 +1,7 @@
 # Tester 分动作工作流
 
+下文按完整研发的基线/计划/正式验收阶段组织。轻量维护仅采用真实交接的目标、保持项、候选身份和受影响检查；不为执行独立检查补建 Spec/计划/门禁。旧结果适用性、环境漂移及结束条件以[维护路径](../../ric-devflow/references/contracts/gate-policy.md#轻量维护)及其共享引用为准，不能借维护名义改写旧 PASS/FAIL 或声称未执行的真实运行。
+
 ## 1. 建立 Brownfield 基线
 
 生产修改前，解析并记录完整 SHA、命令、工作目录、脱敏后的环境、退出码、结果摘要和分类。没有基线证据及相关性分析，不得把失败标记为历史遗留。对于受影响且必须保持、但缺少可靠覆盖的行为，使用 [特征测试](../../ric-devflow/references/shared/characterization-testing.md)。
