@@ -188,7 +188,7 @@ warm 准备可使用同会话能力提示，绑定宿主/会话、逻辑来源/�
 
 文件与配置正确但角色未加载或当前会话无调用能力时，主会话立即明确提醒重启当前 Agent、在同一项目重新调用 Skill，附宿主、角色、路径、原反馈和最小恢复信息，停止受影响动作。原因未知不保证重启解决；配置、禁用、权限、来源、并发、网络、生命周期与业务失败按实际原因处理。六入口与后续编排统一引用[加载与调用核验](../skills/ric-devflow/references/bootstrap.md#文件加载调用分别核验)，已启动子角色只回交宿主。重启后重新核验，复用正确文件和原任务进度；仍失败则诊断，不重复安装、重复业务动作或循环重启。无 Root 不为恢复创建业务记录；不自动关闭客户端、不用通用 Agent 冒充。安装方式见 README，平台加载事实及来源见入口当前平台参考。
 
-现有语言参考覆盖 Python、JS/TS、Go、Java/Kotlin、Rust、C#、PHP/Ruby、Shell、SQL；领域涵盖架构、API、前后端、数据库、安全、DevOps、分布式系统、AI Agent。UI 复用现有组件/Token/交互，覆盖适用加载/错误/空/权限/离线、响应/焦点/i18n；不创建平行视觉体系。实现准则仍由这些参考及宿主规则维护，不因本文精简而取消。
+现有语言参考覆盖 Python、JS/TS、Go、Java/Kotlin、Rust、C#、PHP/Ruby、Shell、SQL；领域涵盖架构、API、前后端、数据库、安全、DevOps、分布式系统、AI Agent。所有用户可见界面改动遵循[前端体验与审核](../skills/ric-devflow/references/shared/frontend-review.md)，在相应阶段落实设计对标、面向用户的文案、实机自查和独立验收。检查深度按实际影响确定，并复用现有界面资产、报告和门禁。
 
 Planner 在规划前、Implementer 在设计与实现前按单份[设计模式参考与模块化设计](../skills/ric-devflow/references/shared/modular-design.md)检测本地 `ric-design-patterns-skill`；发现可用技能时分别实际读取，按语言和变化点参考。Planner 落实工程级职责与依赖方向，Implementer 落实代码级职责分离、边界封装与可测试性；记录复用现有 Spec／Decision 和实现报告字段。未发现技能不阻塞，也不自动补装；读取或来源缺口只暂停依赖该参考的工作。采用模式须有真实收益，不扩大预算、不自动拆分 Task；外部技能不是安装闭包或第七个发布 Skill，三平台原生角色继续消费共享入口。
 

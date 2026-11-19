@@ -23,6 +23,8 @@ Tester 可以按[测试代码交付](../../ric-devflow/references/shared/test-co
 
 只加载相关共享领域/语言参考。需要时检查生成 SQL/输出或运行只读检查，但不得修改被审核产物。“测试通过”不能证明未测试路径正确。
 
+涉及用户可见界面时读[前端体验与审核](../../ric-devflow/references/shared/frontend-review.md)，对照规格与参考核对候选差异、文案和视觉交互。检查自查及复验材料是否覆盖实际变更，并与受审候选及验收项相符。证据缺失或发现偏差时，按现有 Verdict 规则给出具体反馈。
+
 ## Brownfield 预算
 
 检查允许/受保护路径、依赖/锁文件、公开/数据变更、格式化半径、生成文件流程、参考模式一致性，以及重构属于 required/incidental/opportunistic 哪一类。除非能修复当前具体风险，否则广泛现代化不是发布要求，也不能被悄悄塞入 diff。
