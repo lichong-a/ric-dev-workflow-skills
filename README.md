@@ -17,7 +17,7 @@
 
 ## 快速开始
 
-已安装 Node.js 后，在终端执行以下命令，将 Skill 安装到用户范围：
+通过标准安装器首次安装到用户范围前，先核对[工具与依赖最低要求](docs/TOOL_REQUIREMENTS.md)。然后在终端执行以下命令：
 
 ```bash
 npx skills add lichong-a/ric-dev-workflow-skills -g
@@ -207,11 +207,11 @@ Reviewer 必须在一轮中完成全部适用维度，并一次性返回当时�
 
 以下 CLI **只适用于首次安装，且每个所选 Skill 的实际宿主目标和 canonical 目标均不存在**；已有空目录、完整安装和不完整安装也不能用这些命令重装或补装。先核验包含新布局的本地 checkout 及完整 SHA，再完成下述只读预检；不能用一次 `skills add` 试运行来发现目标。[标准 Skills 安装器](https://github.com/vercel-labs/skills)支持根 `skills/` 发现、本地路径、`--skill`、`-a` 和 `-g`；本轮未运行 CLI。
 
-1. 确认实际将运行的安装器版本、当前工作目录、可信源码路径、所选宿主、项目/用户范围和安装模式。只读核对该版本的路径计算与宿主目录映射，列出每个 Skill 的**实际宿主路径及 canonical 路径**；即使只指定 Claude，也不能漏查安装器使用的共享 canonical 目录。本文引用的固定源码不是对 `npx` 此后下载版本的保证，不能猜测路径或等写入后看结果。
+1. 确认实际安装器、当前工作目录、可信源码路径、所选宿主、项目/用户范围和安装模式。按[工具与依赖最低要求](docs/TOOL_REQUIREMENTS.md#安装与运行)核对该发行版。只读核对其路径计算与宿主目录映射，列出每个 Skill 的**实际宿主路径及 canonical 路径**，包括安装器使用的共享 canonical 目录。
 2. 对清单中的全部目标及其父目录做只读类型与链接核验，例如使用 `lstat`、`readlink` 和父目录解析；区分最终目标确实不存在与无读取权限、断链、链接循环等检查失败。确认父目录解析后的实际写入位置也在已批准范围，所有 Skill 最终目标均不存在，没有来源重叠或其他写入者；有效链接、普通文件、空目录和任何已有内容都不满足首次安装条件。不要删除或清空目标来制造这一前提。
 3. 只有全部路径和范围已确认且目标仍缺失，才执行下方一条命令；交互选择必须保持预检过的宿主、范围和模式，任何变化都要先停止并重新预检。不能确定该版本所有实际/canonical 目标，或不能排除执行前路径变化时，放弃 CLI，改用下方先确认明确新目标、排他创建目录的普通复制方式。**已有或不完整安装只能由入口 bootstrap 核对同源字节后补缺**；冲突或来源缺失则保留现状并报告。
 
-这一限制来自安装器行为：固定 Commit `d667282815248da03a08a18272b5d2eef9caf77c` 的 copy 路径会清理宿主目标，symlink 路径会清理 canonical 目标，因此 CLI 不能代替本包的只补缺流程。[安装实现源码](https://github.com/vercel-labs/skills/blob/d667282815248da03a08a18272b5d2eef9caf77c/src/installer.ts) 同一版本还会在检测到 AI Agent 时自动进入非交互模式；移除 `-y` 并不能保证出现确认提示，安全边界必须是执行前的完整目标预检。[调用与确认源码](https://github.com/vercel-labs/skills/blob/d667282815248da03a08a18272b5d2eef9caf77c/src/add.ts)
+安装器的 copy 路径可能清理宿主目标，symlink 路径可能清理 canonical 目标。在 AI Agent 环境中，安装器可能自动采用非交互模式。执行前须完成全部目标预检。 [安装器行为依据](docs/TOOL_REQUIREMENTS.md#安装与运行)
 
 ```bash
 # 仅在上述全部首次安装预检通过后选择一条命令。
@@ -450,7 +450,7 @@ skills/
 
 ## 验证
 
-包级复现、隔离复制、缺件/冲突/中断与验证器负控方法见[验证指南](docs/DEVFLOW_SKILLS_VALIDATION_GUIDE.md)。实际结果追加到[验证报告](docs/DEVFLOW_SKILLS_VALIDATION.md)，历史原文按报告原 SHA 或迁移基线恢复，不修写历史数字或链接；当前新增内容的坏链接必须失败。
+先核对[源码验证所需工具与依赖](docs/TOOL_REQUIREMENTS.md#源码验证)。包级复现、隔离复制、缺件/冲突/中断与验证器负控方法见[验证指南](docs/DEVFLOW_SKILLS_VALIDATION_GUIDE.md)。实际结果追加到[验证报告](docs/DEVFLOW_SKILLS_VALIDATION.md)，历史原文按报告原 SHA 或迁移基线恢复，不修写历史数字或链接；当前新增内容的坏链接必须失败。
 
 基础 Skill 检查可在本源码根执行，按当前环境指定实际 bundled validator；所有失败须返回非零：
 
